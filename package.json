@@ -1,6 +1,6 @@
 {
   "name": "fukubikiya-shift-app",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "福引屋 シフト・日次損益ダッシュボード（デスクトップアプリ版）",
   "main": "main.js",
   "author": "福引屋",
