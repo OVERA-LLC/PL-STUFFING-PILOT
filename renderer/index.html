@@ -209,10 +209,11 @@
     <ul>
       <li>勤務時間はプルダウンではなく、1マスに「9-17」「6-14」「5.5-13.5」のように直接入力する方式です（開始-終了をハイフンでつなげてください。「9:00-17:00」のような書き方にも対応）。入力形式が読み取れない場合はマスが赤く表示されます。空欄・「休」などは休みとして扱われます。</li>
       <li>初期状態はすべて0／空欄です。売上・夕食朝食人数・シフトは、CSV読み込みまたは手入力で反映してください。</li>
-      <li>売上＝入金明細CSVの「回収金額＋事前入金＋ポイント利用」の日付ベース合計（ご指示による概算計算）。楽天・じゃらん・Booking.com・一休.com は15%手数料控除、それ以外（直予約等）は控除なし。「③ innto入金明細CSVを読み込む」で反映されます。</li>
+      <li>売上＝入金明細CSVの「回収金額＋事前入金＋ポイント利用」の日付ベース合計（ご指示による概算計算）。CSVの日付はチェックアウト日のため、実際に宿泊・食事が発生した日に近づけるよう<b>1日前倒し</b>して集計しています。楽天・じゃらん・Booking.com・一休.com は15%手数料控除、それ以外（直予約等）は控除なし。「③ innto入金明細CSVを読み込む」で反映されます。</li>
       <li>夕食原価＝1,700円/名（8,000円×21.25%）、朝食原価＝588.6円/名。夕食人数＝予約状況サマリーの「１泊２食人数」、朝食人数＝「１泊２食人数＋無料朝食人数」と連動しています。「②リンカーン台帳CSVを読み込む」を使うと、その集計結果が予約状況サマリー側に自動入力されます（大人＋子供A・Bのみ集計、子供C・Dは対象外）。</li>
       <li>施設運転費＝35,000円/日（電気代20,000＋灯油代15,000＝Main_DBの基本値）が初期値です。「施設運転費 基本値」欄で全日一括変更、または「日別に上書き」で特定の日だけ金額を変えられます（上書きした日は金額の横に★が付きます）。</li>
       <li>従業員の時給・休憩は「時給・休憩を非表示にする」ボタンでシフト表上の表示を隠せます（計算には引き続き使われます）。非表示から再び表示する時だけパスワードが必要です。</li>
+      <li>デスクトップアプリ版では「⬆ みんなに共有」でこのパソコンの内容をクラウドにアップロード、「⬇ 最新を取り込む」で他の端末が共有した最新の内容をダウンロードできます（自動ではなく、ボタンを押した時だけ通信します）。</li>
       <li>下の「予約状況サマリー」は「①innto予約CSVを読み込む」から自動集計しますが、団体人数・連泊人数などCSVだけでは判定しきれない項目も含むため、<b>全セル手入力で上書き可能</b>です。</li>
       <li>シフト表の各セル下部の項目名（初期表示「仕事」）をクリックすると、項目名の手入力＋好きな色の指定でそのマスを塗り分けられます。「よく使う項目」に一度使った組み合わせが自動で追加され、次回からワンクリックで選べます。各項目の「×」で個別削除、「リセット」で初期8項目に戻せます。実際にセルに色を設定すると「従業員シフト表・日次損益」の見出し横に使用中の色の凡例が表示されます（未使用時は非表示）。予約状況サマリーとシフト表の間には「仕事内容 日別集計」（項目ごとの日別人数）が自動で表示されます（未使用時は非表示。有給・休・希休・振休・欠勤はここには含まれず、シフト表右端の勤怠集計列でカウントされます）。印刷プレビューではこの色分けボタン・凡例・日別集計は非表示になります。</li>
       <li>「表示する月」欄で月を選ぶと、予約状況サマリー・仕事内容日別集計・シフト表すべての日付/曜日が選んだ月に切り替わります（CSV読み込みによる自動判定と併用できます）。</li>
@@ -268,7 +269,10 @@
     <button class="btn" id="printPreviewBtn" onclick="togglePrintPreview()">🖨 印刷プレビュー（縦に連結して表示）</button>
     <span style="width:1px;height:22px;background:var(--line);margin:0 6px;" id="desktopDivider"></span>
     <button class="btn" id="saveBtn" onclick="saveToDesktopApp()" style="display:none;">💾 保存</button>
+    <button class="btn" id="cloudPushBtn" onclick="uploadToCloud()" style="display:none;">⬆ みんなに共有</button>
+    <button class="btn" id="cloudPullBtn" onclick="downloadFromCloud()" style="display:none;">⬇ 最新を取り込む</button>
     <span id="saveStatus" class="filestatus"></span>
+    <span id="cloudStatus" class="filestatus"></span>
     <span id="updateStatus" class="filestatus"></span>
   </div>
 
@@ -1195,13 +1199,16 @@ document.getElementById("paymentFile").addEventListener("change", async (e)=>{
 });
 
 function computeRevenue(objs){
-  const dateList = objs.map(o=>parseDateFlexible(o["#日付"])).filter(Boolean);
+  // 入金明細の#日付は「チェックアウト日」なので、実際に宿泊・食事が発生した日に近づけるため1日前倒しする
+  const shiftBack1Day = (d)=>{ if(!d) return null; const nd = new Date(d); nd.setDate(nd.getDate()-1); return nd; };
+
+  const dateList = objs.map(o=>shiftBack1Day(parseDateFlexible(o["#日付"]))).filter(Boolean);
   detectAndApplyMonth(dateList);
 
   const rev = {};
   let matched = 0;
   objs.forEach(o=>{
-    const d = parseDateFlexible(o["#日付"]);
+    const d = shiftBack1Day(parseDateFlexible(o["#日付"]));
     if(!d || d.getFullYear()!==CURRENT_YEAR || d.getMonth()!==CURRENT_MONTH-1) return;
     const day = d.getDate();
     const base = parseFloat((o["回収金額"]||"0").toString().replace(/,/g,"")) || 0;
@@ -1344,9 +1351,48 @@ async function loadFromDesktopApp(){
   }
 }
 
+async function uploadToCloud(){
+  if(!window.electronAPI) return;
+  const status = document.getElementById("cloudStatus");
+  status.textContent = "アップロード中…";
+  status.classList.remove("ok");
+  const result = await window.electronAPI.pushCloud(collectState());
+  if(result.ok){
+    status.textContent = "共有しました（" + new Date().toLocaleTimeString("ja-JP") + "）";
+    status.classList.add("ok");
+  } else {
+    status.textContent = "共有に失敗しました: " + result.error;
+  }
+}
+
+async function downloadFromCloud(){
+  if(!window.electronAPI) return;
+  const status = document.getElementById("cloudStatus");
+  status.textContent = "確認中…";
+  status.classList.remove("ok");
+  const result = await window.electronAPI.pullCloud();
+  if(!result.ok){
+    status.textContent = "取り込みに失敗しました: " + result.error;
+    return;
+  }
+  if(!result.row){
+    status.textContent = "クラウドにはまだデータがありません（先に「⬆ みんなに共有」を押してください）";
+    return;
+  }
+  if(!confirm("他の端末の最新データを取り込みます。今この画面で入力中の内容は上書きされます。よろしいですか？")){
+    status.textContent = "取り込みをキャンセルしました";
+    return;
+  }
+  applyState(result.row.payload);
+  status.textContent = "取り込みました（更新日時: " + new Date(result.row.updated_at).toLocaleString("ja-JP") + "）";
+  status.classList.add("ok");
+}
+
 function initDesktopIntegration(){
   if(!window.electronAPI) return; // ブラウザで直接開いている場合は何もしない
   document.getElementById("saveBtn").style.display = "";
+  document.getElementById("cloudPushBtn").style.display = "";
+  document.getElementById("cloudPullBtn").style.display = "";
   window.electronAPI.onUpdateStatus((msg)=>{
     const el = document.getElementById("updateStatus");
     if(el) el.textContent = msg;
