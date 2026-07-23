@@ -4,6 +4,8 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("electronAPI", {
   saveData: (jsonState) => ipcRenderer.invoke("data:save", jsonState),
   loadData: () => ipcRenderer.invoke("data:load"),
+  pushCloud: (jsonState) => ipcRenderer.invoke("cloud:push", jsonState),
+  pullCloud: () => ipcRenderer.invoke("cloud:pull"),
   onUpdateStatus: (callback) => {
     ipcRenderer.on("update:status", (event, message) => callback(message));
   },

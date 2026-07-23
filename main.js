@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const path = require("path");
 const { autoUpdater } = require("electron-updater");
 const { getData, saveData } = require("./src/db");
+const cloud = require("./src/cloud");
 
 let mainWindow;
 
@@ -43,6 +44,25 @@ ipcMain.handle("data:save", async (event, jsonState) => {
 
 ipcMain.handle("data:load", async () => {
   return getData();
+});
+
+/* ===================== クラウド同期（Supabase・手動ボタン方式） ===================== */
+ipcMain.handle("cloud:push", async (event, jsonState) => {
+  try {
+    await cloud.pushState(jsonState);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+
+ipcMain.handle("cloud:pull", async () => {
+  try {
+    const row = await cloud.pullState();
+    return { ok: true, row };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
 });
 
 /* ===================== 自動アップデート関連の通知 ===================== */
