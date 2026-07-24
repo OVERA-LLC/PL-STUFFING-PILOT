@@ -34,6 +34,11 @@
   header p{margin:0;font-size:13px;opacity:.85;letter-spacing:.02em;}
 
   .notes{background:var(--paper-soft);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:10px;padding:16px 20px;margin-bottom:20px;font-size:12.5px;line-height:1.85;}
+  .notes summary{cursor:pointer;list-style:none;}
+  .notes summary::-webkit-details-marker{display:none;}
+  .notes summary::before{content:"▶ ";font-size:11px;color:var(--gold);}
+  .notes[open] summary::before{content:"▼ ";}
+  .notes summary b{color:var(--teal-deep);}
   .notes b{color:var(--teal-deep);}
   .notes ul{margin:6px 0 0;padding-left:1.2em;}
   .notes ul.notes-numbered{list-style:none;padding-left:0;}
@@ -87,6 +92,12 @@
   .cat{font-size:10px;color:var(--gold);display:block;}
   .name{font-weight:600;}
   .wagewrap{display:flex;gap:4px;align-items:center;margin-top:2px;}
+  .namewrap{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+  .reorderbtns{display:flex;gap:2px;flex:0 0 auto;}
+  .reorderbtns .rmbtn{margin-left:0;padding:0 5px;font-size:10px;}
+  .reorderbtns .rmbtn:disabled{opacity:.3;cursor:not-allowed;}
+  body.print-preview .reorderbtns{display:none;}
+  @media print{ .reorderbtns{display:none;} }
   .wagewrap input{width:52px;font-size:10px;padding:2px;border:1px solid var(--line);border-radius:4px;}
   .wagewrap input.missing{border-color:var(--loss-ink);background:#FBEAEA;}
   .wagewrap span{font-size:9.5px;color:#7a746a;}
@@ -208,13 +219,13 @@
     </div>
   </header>
 
-  <div class="notes">
-    <b>この試作版の前提条件</b>
+  <details class="notes">
+    <summary><b>この試作版の前提条件</b></summary>
     <ul class="notes-numbered">
       <li>①　勤務時間はプルダウンではなく、1マスに「9-17」「6-14」「5.5-13.5」のように直接入力する方式です（開始-終了をハイフンでつなげてください。「9:00-17:00」のような書き方にも対応）。入力形式が読み取れない場合はマスが赤く表示されます。空欄・「休」などは休みとして扱われます。</li>
       <li>②　初期状態はすべて0／空欄です。売上・夕食朝食人数・シフトは、CSV読み込みまたは手入力で反映してください。</li>
-      <li>③　売上＝入金明細CSVの「回収金額＋事前入金＋ポイント利用」の日付ベース合計（ご指示による概算計算）。CSVの日付はチェックアウト日のため、実際に宿泊・食事が発生した日に近づけるよう<b>1日前倒し</b>して集計しています。楽天・じゃらん・Booking.com・一休.com は15%手数料控除、それ以外（直予約等）は控除なし。「③ innto入金明細CSVを読み込む」で反映されます。</li>
-      <li>④　夕食原価＝1,700円/名（8,000円×21.25%）、朝食原価＝588.6円/名。夕食人数＝予約状況サマリーの「１泊２食人数」、朝食人数＝「無料朝食人数」とそのまま連動しています。「②リンカーン台帳CSVを読み込む」を使うと、その集計結果が予約状況サマリー側に自動入力されます（大人＋子供A・Bのみ集計、子供C・Dは対象外）。</li>
+      <li>③　売上＝入金明細CSVの「回収金額＋事前入金＋ポイント利用」の日付ベース合計（ご指示による概算計算）。CSVの日付はチェックアウト日のため、実際に宿泊・食事が発生した日に近づけるよう<b>1日前倒し</b>して集計しています。楽天・じゃらん・Booking.com・一休.com は15%手数料控除、それ以外（直予約等）は控除なし。「② innto入金明細CSVを読み込む」で反映されます。</li>
+      <li>④　夕食原価＝1,700円/名（8,000円×21.25%）、朝食原価＝588.6円/名。夕食人数＝予約状況サマリーの「１泊２食人数」、朝食人数＝「無料朝食人数」とそのまま連動しています（大人＋子供A・Bのみ集計、子供C・Dは対象外）。</li>
       <li>⑤　施設運転費＝35,000円/日（電気代20,000＋灯油代15,000＝Main_DBの基本値）が初期値です。「施設運転費 基本値」欄で全日一括変更、または「日別に上書き」で特定の日だけ金額を変えられます（上書きした日は金額の横に★が付きます）。</li>
       <li>⑥　従業員の時給・休憩は「時給・休憩を非表示にする」ボタンでシフト表上の表示を隠せます（計算には引き続き使われます）。非表示から再び表示する時だけパスワードが必要です。</li>
       <li>⑦　デスクトップアプリ版では「⬆ みんなに共有」でこのパソコンの内容をクラウドにアップロード、「⬇ 最新を取り込む」で他の端末が共有した最新の内容をダウンロードできます（自動ではなく、ボタンを押した時だけ通信します）。</li>
@@ -229,7 +240,7 @@
       <li>⑪　シフト表の右端に「合計日数・出勤日数・有給・休日合計・休・希休・振休・欠勤」を追加しました。合計日数（月の日数）・出勤日数（時間が入力されている日数）は自動計算。有給・休・希休・振休・欠勤は、セルの「仕事内容」項目タグと連動しており、そのマスに「有給」「休」「希休」「振休」「欠勤」という項目名を設定すると自動でカウントされます（「よく使う項目」にこの5つも初期登録済みです）。休日合計は休＋希休＋振休＋欠勤の自動合計です。印刷プレビュー・印刷ではこの8列は非表示になります。</li>
       <li>⑫　印刷プレビュー・印刷では、予約状況サマリー・仕事内容日別集計・シフト表の3表すべてで列幅（項目列70px・日付列30px）を完全に揃えているので、縦に連結した時に列がズレません。</li>
     </ul>
-  </div>
+  </details>
 
   <div class="toolbar">
     <div class="tool">
@@ -238,12 +249,7 @@
       <span class="filestatus" id="inntoStatus">未読み込み</span>
     </div>
     <div class="tool">
-      <span class="t-label">② リンカーン台帳CSVを読み込む</span>
-      <input type="file" id="lincolnFile" accept=".csv">
-      <span class="filestatus" id="lincolnStatus">未読み込み</span>
-    </div>
-    <div class="tool">
-      <span class="t-label">③ innto入金明細CSVを読み込む（売上）</span>
+      <span class="t-label">② innto入金明細CSVを読み込む（売上）</span>
       <input type="file" id="paymentFile" accept=".csv">
       <span class="filestatus" id="paymentStatus">未読み込み</span>
     </div>
@@ -586,7 +592,13 @@ function renderStaffTable(){
         </div>`
       : `<div class="wagewrap"><span>🔒 非表示</span></div>`;
     tbody += `<tr data-staff="${si}"><td class="staffcol"${cellW(true)}>
-      <span class="cat">${st.cat}</span><span class="name">${st.name}</span>
+      <div class="namewrap">
+        <span class="cat">${st.cat}</span><span class="name">${st.name}</span>
+        <span class="reorderbtns">
+          <button class="rmbtn" onclick="moveStaff(${si},-1)" title="上に移動" ${si===0?'disabled':''}>↑</button>
+          <button class="rmbtn" onclick="moveStaff(${si},1)" title="下に移動" ${si===STAFF.length-1?'disabled':''}>↓</button>
+        </span>
+      </div>
       ${wageHtml}</td>`;
     for(let d=1; d<=DAYS; d++){
       const shiftKey = cellColorKey(st.name, d);
@@ -687,6 +699,16 @@ function addStaff(){
 
 function removeStaff(si){
   STAFF.splice(si,1);
+  renderStaffTable();
+  recalc();
+}
+
+function moveStaff(si, dir){
+  const target = si + dir;
+  if(target < 0 || target >= STAFF.length) return;
+  const tmp = STAFF[si];
+  STAFF[si] = STAFF[target];
+  STAFF[target] = tmp;
   renderStaffTable();
   recalc();
 }
@@ -1177,58 +1199,6 @@ function computeInntoSummaryLegacy(objs){
     setSumVal("consecutive",d,s[d].consecutive);
     setSumVal("group",d,s[d].group);
     setSumVal("freebreak",d,s[d].freebreak);
-  }
-  recalc();
-  return matched;
-}
-
-/* ===================== リンカーン台帳CSV ===================== */
-document.getElementById("lincolnFile").addEventListener("change", async (e)=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  const status = document.getElementById("lincolnStatus");
-  try{
-    const text = await readFileAsShiftJIS(file);
-    const objs = csvToObjects(parseCSV(text));
-    const matched = computeLincolnCounts(objs);
-    status.textContent = `読込完了：全${objs.length}件中、8月チェックインとして認識${matched}件`;
-    status.classList.add("ok");
-    if(matched===0){
-      console.warn("台帳CSVのヘッダー例:", Object.keys(objs[0]||{}));
-      console.warn("チェックイン日列の値の例:", objs.slice(0,3).map(o=>o["チェックイン日"]));
-    }
-  }catch(err){
-    status.textContent = "読込エラー：" + err.message;
-  }
-});
-
-function computeLincolnCounts(objs){
-  const ciDates = objs.map(o=>parseDateFlexible(o["チェックイン日"])).filter(Boolean);
-  detectAndApplyMonth(ciDates);
-
-  const dinner = {}, breakfast = {};
-  let matched = 0;
-  objs.forEach(o=>{
-    const ci = parseDateFlexible(o["チェックイン日"]);
-    if(!ci || ci.getFullYear()!==CURRENT_YEAR || ci.getMonth()!==CURRENT_MONTH-1) return;
-    const day = ci.getDate();
-    matched++;
-    // 子供A・子供Bのみ抽出（C・Dは対象外）
-    const heads = (parseInt(o["大人人員(男性)合計"]||"0",10)||0)
-                + (parseInt(o["大人人員(女性)合計"]||"0",10)||0)
-                + (parseInt(o["子供A人数合計"]||"0",10)||0)
-                + (parseInt(o["子供B人数合計"]||"0",10)||0);
-    const cond = (o["泊食条件"]||"").trim();
-    if(cond==="朝夕食付" || cond==="2食付"){
-      dinner[day] = (dinner[day]||0) + heads;
-    } else if(cond==="朝食付"){
-      breakfast[day] = (breakfast[day]||0) + heads; // 朝食のみ＝無料朝食人数側に積む
-    }
-  });
-  // 予約状況サマリーの「１泊２食人数」「無料朝食人数」に反映（夕食・朝食人数はここから自動計算される）
-  for(let d=1; d<=DAYS; d++){
-    if(dinner[d]!==undefined) setSumVal("twomealguests", d, dinner[d]);
-    if(breakfast[d]!==undefined) setSumVal("freebreak", d, breakfast[d]);
   }
   recalc();
   return matched;
