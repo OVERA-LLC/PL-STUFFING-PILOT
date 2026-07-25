@@ -47,10 +47,12 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
     },
-   "publish": [
-    {
-      "provider": "github",
-      "owner": "OVERA-LLC",
-      "repo": "PL-STUFFING-PILOT"
-    }
-  ]
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "OVERA-LLC",
+        "repo": "PL-STUFFING-PILOT"
+      }
+    ]
+  }
+}
