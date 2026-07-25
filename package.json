@@ -1,7 +1,7 @@
 {
   "name": "pl-stuffing-pilot",
-  "version": "1.0.23",
-  "description": "PL STUFFING PILOT（シフト・日次損益ダッシュボード）",
+  "version": "1.0.24",
+  "description": "PL STUFFING PILOT",
   "main": "main.js",
   "author": "OVERA.LLC",
   "license": "UNLICENSED",
