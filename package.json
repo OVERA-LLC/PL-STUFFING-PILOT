@@ -1,9 +1,9 @@
 {
-  "name": "fukubikiya-shift-app",
-  "version": "1.0.22",
-  "description": "福引屋 シフト・日次損益ダッシュボード（デスクトップアプリ版）",
+  "name": "pl-stuffing-pilot",
+  "version": "1.0.23",
+  "description": "PL STUFFING PILOT",
   "main": "main.js",
-  "author": "福引屋",
+  "author": "OVERA.LLC",
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
@@ -18,13 +18,12 @@
     "electron-updater": "^6.3.4"
   },
   "devDependencies": {
-    "@electron/rebuild": "^4.2.0",
     "electron": "^31.3.1",
     "electron-builder": "^24.13.3"
   },
   "build": {
     "appId": "jp.fukubikiya.shiftapp",
-    "productName": "福引屋シフト管理",
+    "productName": "PL STUFFING PILOT",
     "files": [
       "main.js",
       "preload.js",
@@ -51,8 +50,8 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "OVERA-LLC",
-        "repo": "fukubikiya-shift-PL-app"
+        "owner": "YOUR_GITHUB_USERNAME",
+        "repo": "YOUR_REPOSITORY_NAME"
       }
     ]
   }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>福引屋 シフト・日次損益ダッシュボード / 2026年8月</title>
+<title>PL STUFFING PILOT</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -89,7 +89,9 @@
   thead tr.wk th.sun{background:#B36B6B;}
   .staffcol{position:sticky;left:0;background:var(--paper-soft);z-index:2;text-align:left;min-width:160px;box-shadow:2px 0 0 var(--line);}
   thead .staffcol{background:var(--teal-deep);z-index:4;}
-  .cat{font-size:10px;color:var(--gold);display:block;}
+  .cat{font-size:10px;color:var(--gold);}
+  .catname{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 auto;}
+  .catname .name{font-weight:600;}
   .name{font-weight:600;}
   .wagewrap{display:flex;gap:4px;align-items:center;margin-top:2px;}
   .namewrap{display:flex;align-items:center;justify-content:space-between;gap:6px;}
@@ -169,14 +171,14 @@
   body.print-preview .scroll{overflow-x:visible;}
   body.print-preview table{table-layout:fixed;width:auto;min-width:0;font-size:9px;}
   body.print-preview th,
-  body.print-preview td{padding:2px 1px;white-space:normal;word-break:break-word;overflow:hidden;}
+  body.print-preview td{padding:1px 1px;white-space:normal;word-break:break-word;overflow:hidden;line-height:1.1;}
   body.print-preview .staffcol{position:static;box-shadow:none;}
-  body.print-preview .shifttime{width:100%;min-width:0;font-size:8px;padding:0;border:none;background:transparent;pointer-events:none;}
+  body.print-preview .shifttime{width:100%;min-width:0;font-size:7px;padding:0;border:none;background:transparent;pointer-events:none;line-height:1.1;height:11px;}
   body.print-preview .attcol{display:none !important;}
   body.print-preview .attinput{width:100%;min-width:0;font-size:8px;padding:0;border:none;background:transparent;pointer-events:none;}
   body.print-preview .cellpair{gap:0;}
   body.print-preview .sumtable input{width:100%;min-width:0;font-size:8px;padding:0;border:none;background:transparent;pointer-events:none;text-align:center;}
-  body.print-preview input.jobcount{width:100%;min-width:0;font-size:8px;padding:0;border:none;background:transparent;pointer-events:none;}
+  body.print-preview input.jobcount{width:100%;min-width:0;font-size:8px;padding:0;border:none;background:transparent;pointer-events:none;text-align:center;}
   body.print-preview .wagewrap{font-size:8px;}
   body.print-preview .cat{font-size:8px;}
 
@@ -188,18 +190,18 @@
     .tablecard{box-shadow:none;border-radius:0;}
     .scroll{overflow-x:visible;}
     table{table-layout:fixed;width:auto;font-size:8px;min-width:0;}
-    th,td{padding:2px 1px;white-space:normal;word-break:break-word;overflow:hidden;}
+    th,td{padding:1px 1px;white-space:normal;word-break:break-word;overflow:hidden;line-height:1.1;}
     .staffcol{position:static;box-shadow:none;width:70px;min-width:70px;max-width:70px;}
     #sumtable col:not(:first-child),
     #jobsummarytable col:not(:first-child){width:30px !important;}
     #sumtable col:first-child,
     #jobsummarytable col:first-child{width:70px !important;}
-    .shifttime{width:100%;min-width:0;font-size:7px;padding:0;border:none;background:transparent;}
+    .shifttime{width:100%;min-width:0;font-size:7px;padding:0;border:none;background:transparent;line-height:1.1;height:10px;}
     .attcol{display:none !important;}
     .attinput{width:100%;min-width:0;font-size:7px;padding:0;border:none;background:transparent;}
     .cellpair{gap:0;}
     .sumtable input{width:100%;min-width:0;font-size:7px;padding:0;border:none;background:transparent;text-align:center;}
-    input.jobcount{width:100%;min-width:0;font-size:7px;padding:0;border:none;background:transparent;}
+    input.jobcount{width:100%;min-width:0;font-size:7px;padding:0;border:none;background:transparent;text-align:center;}
     .sectiontitle{font-size:11px;margin:8px 0 4px;}
     .printjoin-top{margin-bottom:0;border-bottom:none;}
     .printjoin-bottom{margin-top:0;}
@@ -384,12 +386,24 @@ function setMonthManually(){
 
 // 3表（予約状況サマリー／仕事内容日別集計／シフト表）の列幅をJS側で確実に一致させる
 // PRINT_MODEがfalse（通常表示）: サマリー系2表は160/64px固定、シフト表はcolgroupなし（内容に応じて自動）
-// PRINT_MODEがtrue（印刷プレビュー/印刷）: 3表とも70/30pxで統一
+// PRINT_MODEがtrue（印刷プレビュー）: 画面の横幅いっぱいに広がるよう動的に計算した値を3表で共有
+// 実際に紙へ印刷する瞬間だけは、画面幅に関係なくA4横向きに確実に収まる固定値に切り替える（beforeprintで実施）
 let PRINT_MODE = false;
 const NORMAL_STAFFCOL_W = 160;
 const NORMAL_DAYCOL_W = 64;
-const PRINT_STAFFCOL_W = 70;
-const PRINT_DAYCOL_W = 30;
+const A4_STAFFCOL_W = 84;
+const A4_DAYCOL_W = 30;
+let PRINT_STAFFCOL_W = A4_STAFFCOL_W;
+let PRINT_DAYCOL_W = A4_DAYCOL_W;
+
+// 画面上の印刷プレビューで、カード幅いっぱいに列を均等配分して余白が出ないようにする
+function computePrintPreviewColWidths(){
+  const card = document.querySelector(".printjoin-top") || document.querySelector(".tablecard");
+  const avail = card ? card.clientWidth : (A4_STAFFCOL_W + A4_DAYCOL_W*DAYS);
+  const dayW = Math.max(A4_DAYCOL_W, Math.floor((avail - A4_STAFFCOL_W) / DAYS));
+  const staffW = Math.max(A4_STAFFCOL_W, avail - dayW*DAYS); // 端数の余りは項目／従業員列にすべて割り当てて余白をなくす
+  return {staffW, dayW};
+}
 
 // 予約状況サマリー・仕事内容日別集計用：常に明示的な列幅を持つ
 function buildAlignedColgroup(){
@@ -593,7 +607,7 @@ function renderStaffTable(){
       : `<div class="wagewrap"><span>🔒 非表示</span></div>`;
     tbody += `<tr data-staff="${si}"><td class="staffcol"${cellW(true)}>
       <div class="namewrap">
-        <span class="cat">${st.cat}</span><span class="name">${st.name}</span>
+        <span class="catname"><span class="cat">${st.cat}</span>：<span class="name">${st.name}</span></span>
         <span class="reorderbtns">
           <button class="rmbtn" onclick="moveStaff(${si},-1)" title="上に移動" ${si===0?'disabled':''}>↑</button>
           <button class="rmbtn" onclick="moveStaff(${si},1)" title="下に移動" ${si===STAFF.length-1?'disabled':''}>↓</button>
@@ -764,6 +778,11 @@ function togglePrintPreview(){
   document.getElementById("printPreviewBtn").textContent = on
     ? "← 前の画面に戻る"
     : "🖨 印刷プレビュー（縦に連結して表示）";
+  if(on){
+    const w = computePrintPreviewColWidths();
+    PRINT_STAFFCOL_W = w.staffW;
+    PRINT_DAYCOL_W = w.dayW;
+  }
   renderSummaryTable();
   renderJobSummaryTable();
   renderStaffTable();
@@ -776,6 +795,9 @@ function printNow(){
     document.body.classList.add("print-preview");
     PRINT_MODE = true;
     document.getElementById("printPreviewBtn").textContent = "← 前の画面に戻る";
+    const w = computePrintPreviewColWidths();
+    PRINT_STAFFCOL_W = w.staffW;
+    PRINT_DAYCOL_W = w.dayW;
     renderSummaryTable();
     renderJobSummaryTable();
     renderStaffTable();
@@ -1430,16 +1452,27 @@ function initDesktopIntegration(){
 
 /* ===================== 初期化 ===================== */
 window.addEventListener("beforeprint", function(){
-  if(!PRINT_MODE){
-    PRINT_MODE = true;
+  // 実際の紙面（A4横）は画面の幅に関係なく必ず収まる固定値を使う
+  PRINT_MODE = true;
+  PRINT_STAFFCOL_W = A4_STAFFCOL_W;
+  PRINT_DAYCOL_W = A4_DAYCOL_W;
+  renderSummaryTable();
+  renderJobSummaryTable();
+  renderStaffTable();
+  recalc();
+});
+window.addEventListener("afterprint", function(){
+  const isPreviewing = document.body.classList.contains("print-preview");
+  if(isPreviewing){
+    // 印刷プレビュー画面に戻す：カード幅いっぱいに収まる動的な値へ再計算
+    const w = computePrintPreviewColWidths();
+    PRINT_STAFFCOL_W = w.staffW;
+    PRINT_DAYCOL_W = w.dayW;
     renderSummaryTable();
     renderJobSummaryTable();
     renderStaffTable();
     recalc();
-  }
-});
-window.addEventListener("afterprint", function(){
-  if(!document.body.classList.contains("print-preview") && PRINT_MODE){
+  } else {
     PRINT_MODE = false;
     renderSummaryTable();
     renderJobSummaryTable();
