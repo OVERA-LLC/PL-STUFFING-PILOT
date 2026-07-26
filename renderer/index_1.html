@@ -226,7 +226,7 @@
     <ul class="notes-numbered">
       <li>①　勤務時間はプルダウンではなく、1マスに「9-17」「6-14」「5.5-13.5」のように直接入力する方式です（開始-終了をハイフンでつなげてください。「9:00-17:00」のような書き方にも対応）。入力形式が読み取れない場合はマスが赤く表示されます。空欄・「休」などは休みとして扱われます。</li>
       <li>②　初期状態はすべて0／空欄です。売上・夕食朝食人数・シフトは、CSV読み込みまたは手入力で反映してください。</li>
-      <li>③　売上＝入金明細CSVの「回収金額＋事前入金＋ポイント利用」の日付ベース合計（ご指示による概算計算）。CSVの日付はチェックアウト日のため、実際に宿泊・食事が発生した日に近づけるよう<b>1日前倒し</b>して集計しています。楽天・じゃらん・Booking.com・一休.com は15%手数料控除、それ以外（直予約等）は控除なし。「② innto入金明細CSVを読み込む」で反映されます。</li>
+      <li>③　売上＝「②売上CSVを読み込む」で日別集計済みの売上CSV（日付・合計(税込)の列があるもの）を読み込むと、B列「合計(税込)」の値がそのまま日別売上に反映されます。旧形式（入金明細CSV・1予約1行）を読み込んだ場合は、これまで通り「回収金額＋事前入金＋ポイント利用」の日付ベース合計（チェックアウト日を1日前倒し、OTA4社は15%手数料控除）で自動計算されます。</li>
       <li>④　夕食原価＝1,700円/名（8,000円×21.25%）、朝食原価＝588.6円/名。夕食人数＝予約状況サマリーの「１泊２食人数」、朝食人数＝「無料朝食人数」とそのまま連動しています（大人＋子供A・Bのみ集計、子供C・Dは対象外）。</li>
       <li>⑤　施設運転費＝35,000円/日（電気代20,000＋灯油代15,000＝Main_DBの基本値）が初期値です。「施設運転費 基本値」欄で全日一括変更、または「日別に上書き」で特定の日だけ金額を変えられます（上書きした日は金額の横に★が付きます）。</li>
       <li>⑥　従業員の時給・休憩は「時給・休憩を非表示にする」ボタンでシフト表上の表示を隠せます（計算には引き続き使われます）。非表示から再び表示する時だけパスワードが必要です。</li>
@@ -246,12 +246,12 @@
 
   <div class="toolbar">
     <div class="tool">
-      <span class="t-label">① innto予約CSVを読み込む</span>
+      <span class="t-label">① 予約CSVを読み込む</span>
       <input type="file" id="inntoFile" accept=".csv">
       <span class="filestatus" id="inntoStatus">未読み込み</span>
     </div>
     <div class="tool">
-      <span class="t-label">② innto入金明細CSVを読み込む（売上）</span>
+      <span class="t-label">② 売上CSVを読み込む</span>
       <input type="file" id="paymentFile" accept=".csv">
       <span class="filestatus" id="paymentStatus">未読み込み</span>
     </div>
@@ -1249,6 +1249,34 @@ document.getElementById("paymentFile").addEventListener("change", async (e)=>{
 });
 
 function computeRevenue(objs){
+  if(objs.length && "日付" in objs[0] && "合計(税込)" in objs[0]){
+    return computeRevenueAggregated(objs);
+  }
+  return computeRevenueLegacy(objs);
+}
+
+// 新形式：innto側で日別集計済みの売上CSV（1日1行）。B列「合計(税込)」の値だけをそのまま日別集計に反映する
+function computeRevenueAggregated(objs){
+  const dateList = objs.map(o=>parseDateFlexible(o["日付"])).filter(Boolean);
+  detectAndApplyMonth(dateList);
+
+  const rev = {};
+  let matched = 0;
+  objs.forEach(o=>{
+    const d = parseDateFlexible(o["日付"]);
+    if(!d || d.getFullYear()!==CURRENT_YEAR || d.getMonth()!==CURRENT_MONTH-1) return;
+    const day = d.getDate();
+    const amount = parseFloat((o["合計(税込)"]||"0").toString().replace(/,/g,"")) || 0;
+    rev[day] = amount;
+    matched++;
+  });
+  REVENUE = rev;
+  recalc();
+  return matched;
+}
+
+// 旧形式：入金明細CSV（1予約1行、OTAチャネル別に手数料控除・1日前倒し）
+function computeRevenueLegacy(objs){
   // 入金明細の#日付は「チェックアウト日」なので、実際に宿泊・食事が発生した日に近づけるため1日前倒しする
   const shiftBack1Day = (d)=>{ if(!d) return null; const nd = new Date(d); nd.setDate(nd.getDate()-1); return nd; };
 
