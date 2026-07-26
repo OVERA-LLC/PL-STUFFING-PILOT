@@ -369,13 +369,43 @@ function updateMonthLabel(){
   if(sel) sel.value = `${CURRENT_YEAR}-${String(CURRENT_MONTH).padStart(2,"0")}`;
 }
 
+/* ===================== 月別データストア ===================== */
+// 従業員一覧（STAFF）・よく使う項目（PRESETS）は月をまたいで共通。
+// シフト入力・仕事内容タグ・予約状況サマリー・日別集計の手入力・売上・施設運転費の日別上書きは月ごとに保存する。
+let MONTHLY_DATA = {}; // key: "YYYY-M" -> {CELL_TAG, SHIFT_TEXT, SUMMARY_VALUES, JOB_SUMMARY_OVERRIDE, REVENUE, FACILITY_OVERRIDE}
+function monthKey(y,m){ return `${y}-${m}`; }
+
+function saveCurrentMonthToStore(){
+  MONTHLY_DATA[monthKey(CURRENT_YEAR, CURRENT_MONTH)] = {
+    CELL_TAG, SHIFT_TEXT, SUMMARY_VALUES, JOB_SUMMARY_OVERRIDE, REVENUE, FACILITY_OVERRIDE
+  };
+}
+
+function loadMonthFromStore(y, m){
+  const data = MONTHLY_DATA[monthKey(y,m)];
+  CELL_TAG = data ? (data.CELL_TAG||{}) : {};
+  SHIFT_TEXT = data ? (data.SHIFT_TEXT||{}) : {};
+  SUMMARY_VALUES = data ? (data.SUMMARY_VALUES||{}) : {};
+  JOB_SUMMARY_OVERRIDE = data ? (data.JOB_SUMMARY_OVERRIDE||{}) : {};
+  REVENUE = data ? (data.REVENUE||{}) : {};
+  FACILITY_OVERRIDE = data ? (data.FACILITY_OVERRIDE||{}) : {};
+}
+
+// 表示する月を切り替える：今の月の内容をMONTHLY_DATAへ保存してから、切替先の月の内容を読み込む
+function switchToMonth(y, m){
+  saveCurrentMonthToStore();
+  CURRENT_YEAR = y;
+  CURRENT_MONTH = m;
+  DAYS = new Date(CURRENT_YEAR, CURRENT_MONTH, 0).getDate();
+  loadMonthFromStore(y, m);
+}
+
 function setMonthManually(){
   const val = document.getElementById("monthSelector").value; // "YYYY-MM"
   if(!val) return;
   const [y,m] = val.split("-").map(Number);
-  CURRENT_YEAR = y; CURRENT_MONTH = m;
-  DAYS = new Date(CURRENT_YEAR, CURRENT_MONTH, 0).getDate();
-  FACILITY_OVERRIDE = {};
+  if(y===CURRENT_YEAR && m===CURRENT_MONTH) return;
+  switchToMonth(y, m);
   updateMonthLabel();
   renderFacilityDaySelect();
   renderSummaryTable();
@@ -468,9 +498,7 @@ function detectAndApplyMonth(dateList){
   Object.keys(counts).forEach(k=>{ if(counts[k]>bestCount){ bestCount=counts[k]; bestKey=k; } });
   const [y,m] = bestKey.split("-").map(Number);
   if(y===CURRENT_YEAR && m===CURRENT_MONTH) return false;
-  CURRENT_YEAR = y; CURRENT_MONTH = m;
-  DAYS = new Date(CURRENT_YEAR, CURRENT_MONTH, 0).getDate();
-  FACILITY_OVERRIDE = {};
+  switchToMonth(y, m);
   updateMonthLabel();
   renderFacilityDaySelect();
   renderSummaryTable();
@@ -479,8 +507,6 @@ function detectAndApplyMonth(dateList){
 }
 
 let REVENUE = {};
-let DINNER  = {};
-let BREAKFAST = {};
 
 const DINNER_UNIT = 1700;
 const BREAKFAST_UNIT = 588.6;
@@ -1371,10 +1397,11 @@ function setText(prefix,day,val){
 /* ===================== デスクトップアプリ連携（Electron + SQLite） ===================== */
 // window.electronAPI は Electron 上で開いた時だけ存在する（ブラウザで直接開いた場合はundefined）
 function collectState(){
+  saveCurrentMonthToStore(); // 今表示中の月の内容をMONTHLY_DATAへ確実に反映してから保存する
   return {
     CURRENT_YEAR, CURRENT_MONTH,
-    STAFF, CELL_TAG, SHIFT_TEXT, PRESETS, SUMMARY_VALUES, JOB_SUMMARY_OVERRIDE,
-    REVENUE, DINNER, BREAKFAST, FACILITY_OVERRIDE,
+    STAFF, PRESETS,
+    MONTHLY_DATA,
     facilityBase: document.getElementById("facilityInput") ? document.getElementById("facilityInput").value : "35000",
     wagesVisible
   };
@@ -1382,20 +1409,15 @@ function collectState(){
 
 function applyState(state){
   if(!state) return;
+  if(state.STAFF) STAFF = state.STAFF;
+  if(state.PRESETS) PRESETS = state.PRESETS;
+  if(state.MONTHLY_DATA) MONTHLY_DATA = state.MONTHLY_DATA;
+  if(typeof state.wagesVisible === "boolean") wagesVisible = state.wagesVisible;
+
   if(state.CURRENT_YEAR) CURRENT_YEAR = state.CURRENT_YEAR;
   if(state.CURRENT_MONTH) CURRENT_MONTH = state.CURRENT_MONTH;
   DAYS = new Date(CURRENT_YEAR, CURRENT_MONTH, 0).getDate();
-  if(state.STAFF) STAFF = state.STAFF;
-  if(state.CELL_TAG) CELL_TAG = state.CELL_TAG;
-  if(state.SHIFT_TEXT) SHIFT_TEXT = state.SHIFT_TEXT;
-  if(state.PRESETS) PRESETS = state.PRESETS;
-  if(state.SUMMARY_VALUES) SUMMARY_VALUES = state.SUMMARY_VALUES;
-  if(state.JOB_SUMMARY_OVERRIDE) JOB_SUMMARY_OVERRIDE = state.JOB_SUMMARY_OVERRIDE;
-  if(state.REVENUE) REVENUE = state.REVENUE;
-  if(state.DINNER) DINNER = state.DINNER;
-  if(state.BREAKFAST) BREAKFAST = state.BREAKFAST;
-  if(state.FACILITY_OVERRIDE) FACILITY_OVERRIDE = state.FACILITY_OVERRIDE;
-  if(typeof state.wagesVisible === "boolean") wagesVisible = state.wagesVisible;
+  loadMonthFromStore(CURRENT_YEAR, CURRENT_MONTH); // 保存されていた月の中身を今の表示に反映する
 
   updateMonthLabel();
   renderFacilityDaySelect();
