@@ -1411,11 +1411,29 @@ function applyState(state){
   if(!state) return;
   if(state.STAFF) STAFF = state.STAFF;
   if(state.PRESETS) PRESETS = state.PRESETS;
-  if(state.MONTHLY_DATA) MONTHLY_DATA = state.MONTHLY_DATA;
   if(typeof state.wagesVisible === "boolean") wagesVisible = state.wagesVisible;
 
-  if(state.CURRENT_YEAR) CURRENT_YEAR = state.CURRENT_YEAR;
-  if(state.CURRENT_MONTH) CURRENT_MONTH = state.CURRENT_MONTH;
+  const stateYear = state.CURRENT_YEAR || CURRENT_YEAR;
+  const stateMonth = state.CURRENT_MONTH || CURRENT_MONTH;
+
+  if(state.MONTHLY_DATA){
+    // 新形式：月ごとに分かれたデータ
+    MONTHLY_DATA = state.MONTHLY_DATA;
+  } else if(state.CELL_TAG || state.SHIFT_TEXT || state.SUMMARY_VALUES || state.REVENUE){
+    // 旧形式（月の区別がなかった頃のデータ）を、そのまま保存時点の月のデータとして引き継ぐ
+    MONTHLY_DATA = MONTHLY_DATA || {};
+    MONTHLY_DATA[monthKey(stateYear, stateMonth)] = {
+      CELL_TAG: state.CELL_TAG || {},
+      SHIFT_TEXT: state.SHIFT_TEXT || {},
+      SUMMARY_VALUES: state.SUMMARY_VALUES || {},
+      JOB_SUMMARY_OVERRIDE: state.JOB_SUMMARY_OVERRIDE || {},
+      REVENUE: state.REVENUE || {},
+      FACILITY_OVERRIDE: state.FACILITY_OVERRIDE || {},
+    };
+  }
+
+  CURRENT_YEAR = stateYear;
+  CURRENT_MONTH = stateMonth;
   DAYS = new Date(CURRENT_YEAR, CURRENT_MONTH, 0).getDate();
   loadMonthFromStore(CURRENT_YEAR, CURRENT_MONTH); // 保存されていた月の中身を今の表示に反映する
 
