@@ -339,6 +339,16 @@
   </div>
 </div>
 
+<div id="confirmModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <div class="color-popup-title" id="confirmModalText">よろしいですか？</div>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn" style="flex:1;" onclick="confirmModalYes()">はい</button>
+      <button class="rmbtn" style="flex:1;" onclick="confirmModalNo()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <div id="colorPopup" class="color-popup" style="display:none;">
   <div class="color-popup-title">仕事内容を設定</div>
   <div class="color-popup-row">
@@ -795,6 +805,24 @@ function submitWagePassword(){
     input.value = "";
     input.focus();
   }
+}
+
+/* ===================== 自作の確認ダイアログ（Electronのconfirm()はフォーカスが壊れる不具合があるため使わない） ===================== */
+let _confirmResolve = null;
+function askConfirm(message){
+  document.getElementById("confirmModalText").textContent = message;
+  document.getElementById("confirmModal").style.display = "flex";
+  return new Promise((resolve)=>{ _confirmResolve = resolve; });
+}
+function confirmModalYes(){
+  document.getElementById("confirmModal").style.display = "none";
+  if(_confirmResolve) _confirmResolve(true);
+  _confirmResolve = null;
+}
+function confirmModalNo(){
+  document.getElementById("confirmModal").style.display = "none";
+  if(_confirmResolve) _confirmResolve(false);
+  _confirmResolve = null;
 }
 
 function togglePrintPreview(){
@@ -1497,7 +1525,8 @@ async function downloadFromCloud(){
     status.textContent = "クラウドにはまだデータがありません（先に「⬆ みんなに共有」を押してください）";
     return;
   }
-  if(!confirm("他の端末の最新データを取り込みます。今この画面で入力中の内容は上書きされます。よろしいですか？")){
+  const proceed = await askConfirm("他の端末の最新データを取り込みます。今この画面で入力中の内容は上書きされます。よろしいですか？");
+  if(!proceed){
     status.textContent = "取り込みをキャンセルしました";
     return;
   }
