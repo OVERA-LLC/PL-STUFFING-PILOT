@@ -60,12 +60,23 @@ const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
 
   // データ受信（innto側のブックマークレットから）
-  if (req.method === "POST" && url.pathname === "/ingest") {
+  // fetch()経由（JSON）と、CSP回避用のhiddenフォーム送信（application/x-www-form-urlencoded）の両方を受け付ける
+  if (req.method === "POST" && (url.pathname === "/ingest" || url.pathname === "/ingest-form")) {
     let body = "";
     req.on("data", (chunk) => (body += chunk));
     req.on("end", () => {
       try {
-        const payload = JSON.parse(body);
+        const contentType = req.headers["content-type"] || "";
+        let payload;
+        if (contentType.includes("application/json")) {
+          payload = JSON.parse(body);
+        } else {
+          // application/x-www-form-urlencoded 形式：payload=<URLエンコードされたJSON文字列>
+          const params = new URLSearchParams(body);
+          const raw = params.get("payload");
+          if (!raw) throw new Error("payloadフィールドが見つかりません");
+          payload = JSON.parse(raw);
+        }
         const type = payload.type || "default";
         const record = {
           type,
@@ -76,9 +87,20 @@ const server = http.createServer((req, res) => {
         };
         fs.writeFileSync(dataFilePath(type), JSON.stringify(record, null, 1), "utf-8");
         console.log(`[受信] type=${type} rows=${(payload.rows || []).length}件 (${new Date().toLocaleString("ja-JP")})`);
+        // hiddenフォーム送信はブラウザが遷移結果を表示できるよう、簡単なHTMLを返す
+        if (url.pathname === "/ingest-form") {
+          res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+          res.end("<html><body>OK</body></html>");
+          return;
+        }
         sendJson(res, 200, { ok: true });
       } catch (e) {
         console.error("受信データの処理に失敗:", e);
+        if (url.pathname === "/ingest-form") {
+          res.writeHead(400, { "Content-Type": "text/html; charset=utf-8" });
+          res.end("<html><body>ERROR</body></html>");
+          return;
+        }
         sendJson(res, 400, { ok: false, error: String(e) });
       }
     });
