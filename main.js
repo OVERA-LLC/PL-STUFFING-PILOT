@@ -58,6 +58,9 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
   startBridgeServer();
+  cloud.subscribeToChanges((update) => {
+    if (mainWindow) mainWindow.webContents.send("cloud:remote-update", update);
+  });
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -70,6 +73,7 @@ app.on("window-all-closed", () => {
 
 app.on("before-quit", () => {
   stopBridgeServer();
+  cloud.unsubscribeFromChanges();
 });
 
 /* ===================== データの保存・読み込み（SQLite） ===================== */

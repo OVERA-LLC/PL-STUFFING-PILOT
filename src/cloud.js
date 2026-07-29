@@ -1,7 +1,9 @@
 // Supabase（クラウドデータベース）へ、アプリの状態をまるごと1行のJSONとして
-// アップロード（push）／ダウンロード（pull）するだけのシンプルな同期モジュールです。
-// リアルタイムではなく、「同期ボタン」を押した時だけ通信します。
+// アップロード（push）／ダウンロード（pull）する同期モジュールです。
+// pushState/pullStateは今まで通り（手動ボタン用）、
+// subscribeToChanges/unsubscribeFromChangesはRealtime購読（自動反映用）です。
 
+const { createClient } = require("@supabase/supabase-js");
 const CONFIG = require("./cloud-config");
 
 function isConfigured() {
@@ -63,4 +65,49 @@ async function pullState() {
   return rows[0]; // { payload, updated_at }
 }
 
-module.exports = { pushState, pullState, isConfigured };
+/* ===================== Realtime購読（自動反映用） ===================== */
+let supabaseClient = null;
+function getClient() {
+  if (!isConfigured()) return null;
+  if (!supabaseClient) {
+    supabaseClient = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+  }
+  return supabaseClient;
+}
+
+let realtimeChannel = null;
+
+// onChange({payload, updated_at}) が、他の端末がapp_stateを更新するたびに呼ばれる
+function subscribeToChanges(onChange) {
+  const client = getClient();
+  if (!client) return;
+  if (realtimeChannel) return; // すでに購読中なら何もしない
+  realtimeChannel = client
+    .channel("app_state_changes")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "app_state" },
+      (payload) => {
+        const row = payload.new;
+        if (row && row.payload) {
+          onChange({ payload: row.payload, updated_at: row.updated_at });
+        }
+      }
+    )
+    .subscribe();
+}
+
+function unsubscribeFromChanges() {
+  if (realtimeChannel) {
+    realtimeChannel.unsubscribe();
+    realtimeChannel = null;
+  }
+}
+
+module.exports = {
+  pushState,
+  pullState,
+  isConfigured,
+  subscribeToChanges,
+  unsubscribeFromChanges,
+};

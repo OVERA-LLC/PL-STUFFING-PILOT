@@ -230,8 +230,8 @@
       <li>④　夕食原価＝1,700円/名（8,000円×21.25%）、朝食原価＝588.6円/名。夕食人数＝予約状況サマリーの「１泊２食人数」、朝食人数＝「無料朝食人数」とそのまま連動しています（大人＋子供A・Bのみ集計、子供C・Dは対象外）。</li>
       <li>⑤　施設運転費＝35,000円/日（電気代20,000＋灯油代15,000＝Main_DBの基本値）が初期値です。「施設運転費 基本値」欄で全日一括変更、または「日別に上書き」で特定の日だけ金額を変えられます（上書きした日は金額の横に★が付きます）。</li>
       <li>⑥　従業員の時給・休憩は「時給・休憩を非表示にする」ボタンでシフト表上の表示を隠せます（計算には引き続き使われます）。非表示から再び表示する時だけパスワードが必要です。</li>
-      <li>⑦　デスクトップアプリ版では「⬆ みんなに共有」でこのパソコンの内容をクラウドにアップロード、「⬇ 最新を取り込む」で他の端末が共有した最新の内容をダウンロードできます（自動ではなく、ボタンを押した時だけ通信します）。</li>
-      <li>⑧　下の「予約状況サマリー」は「①innto予約CSVを読み込む」から自動集計しますが、団体人数・連泊人数などCSVだけでは判定しきれない項目も含むため、<b>全セル手入力で上書き可能</b>です。
+      <li>⑦　デスクトップアプリ版では、入力してから数秒後に自動的にパソコンへの保存とクラウドへの共有が行われます。また、他の端末が更新すると、リアルタイムで自動的に画面へ反映されます。手動のボタン操作は不要です。</li>
+      <li>⑧　下の「予約状況サマリー」は「①innto予約CSVを読み込む」、または「③ innto連携で最新データを取得」（ローカルサーバー経由でinntoのブックマークレット実行結果を自動取得）から集計できます。団体人数・連泊人数などCSVだけでは判定しきれない項目も含むため、<b>全セル手入力で上書き可能</b>です。
         <ul class="notes-sub">
           <li>※　台帳予約／団体を含む「CI人数」＝宿泊者数（子供A・B・C・D含む）です。</li>
           <li>※　予約者名に「○○会社」「○○組」などの法人・団体を思わせる文字列が含まれていると、innto側で自動的に「団体」として扱われます。実際は団体・宴会ではない場合、正しい条件になるよう<b>【手動】での修正が必須</b>です。</li>
@@ -271,7 +271,7 @@
     <button class="btn" onclick="addStaff()">追加</button>
     <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
     <span class="t-label">施設運転費 基本値（円/日）：</span>
-    <input type="number" id="facilityInput" value="35000" onchange="recalc()" style="width:90px;">
+    <input type="number" id="facilityInput" value="35000" onchange="recalc(); scheduleAutoSync();" style="width:90px;">
     <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
     <span class="t-label">日別に上書き：</span>
     <select id="facilityDaySelect"></select>
@@ -290,10 +290,6 @@
     <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
     <button class="btn" id="printPreviewBtn" onclick="togglePrintPreview()">🖨 印刷プレビュー（縦に連結して表示）</button>
     <span style="width:1px;height:22px;background:var(--line);margin:0 6px;" id="desktopDivider"></span>
-    <button class="btn" id="saveBtn" onclick="saveToDesktopApp()" style="display:none;">💾 保存</button>
-    <button class="btn" id="cloudPushBtn" onclick="uploadToCloud()" style="display:none;">⬆ みんなに共有</button>
-    <button class="btn" id="cloudPullBtn" onclick="downloadFromCloud()" style="display:none;">⬇ 最新を取り込む</button>
-    <span id="saveStatus" class="filestatus"></span>
     <span id="cloudStatus" class="filestatus"></span>
     <span id="updateStatus" class="filestatus"></span>
   </div>
@@ -493,12 +489,14 @@ function applyFacilityOverride(){
   if(isNaN(amt)){ alert("金額を入力してください"); return; }
   FACILITY_OVERRIDE[day] = amt;
   recalc();
+  scheduleAutoSync();
 }
 
 function clearFacilityOverride(){
   const day = parseInt(document.getElementById("facilityDaySelect").value,10);
   delete FACILITY_OVERRIDE[day];
   recalc();
+  scheduleAutoSync();
 }
 
 // CSVの日付群から最頻出の年月を検出し、必要なら表全体を作り直す
@@ -619,6 +617,7 @@ function updateShiftText(el){
   const v = el.value.trim();
   if(v) SHIFT_TEXT[key] = v; else delete SHIFT_TEXT[key];
   recalc();
+  scheduleAutoSync();
 }
 
 /* ===================== 従業員シフト表 ===================== */
@@ -702,6 +701,7 @@ function updateWage(el){
   STAFF[si][field] = isNaN(v) ? null : v;
   el.classList.toggle("missing", field==="wage" && (STAFF[si].wage===null));
   recalc();
+  scheduleAutoSync();
 }
 
 // 出勤日数（時間が入力されている日をカウント）・有給/休/希休/振休/欠勤（項目タグ連動）・休日合計・合計日数を自動計算
@@ -750,12 +750,14 @@ function addStaff(){
   document.getElementById("newBrk").value = "";
   renderStaffTable();
   recalc();
+  scheduleAutoSync();
 }
 
 function removeStaff(si){
   STAFF.splice(si,1);
   renderStaffTable();
   recalc();
+  scheduleAutoSync();
 }
 
 function moveStaff(si, dir){
@@ -766,6 +768,7 @@ function moveStaff(si, dir){
   STAFF[target] = tmp;
   renderStaffTable();
   recalc();
+  scheduleAutoSync();
 }
 
 const WAGE_UNLOCK_PASSWORD = "29biki8";
@@ -1002,6 +1005,7 @@ function updateJobSummaryOverride(el){
   const label = el.dataset.label, d = el.dataset.d;
   const v = parseFloat(el.value);
   JOB_SUMMARY_OVERRIDE[label + "_" + d] = isNaN(v) ? 0 : v;
+  scheduleAutoSync();
 }
 
 function applyTag(label, color){
@@ -1018,6 +1022,7 @@ function applyTag(label, color){
   renderJobSummaryTable();
   updateAttendanceSummary();
   closeColorPicker();
+  scheduleAutoSync();
 }
 
 function clearCellColor(){
@@ -1034,6 +1039,7 @@ function clearCellColor(){
   renderJobSummaryTable();
   updateAttendanceSummary();
   closeColorPicker();
+  scheduleAutoSync();
 }
 
 function renderCellColorLegend(){
@@ -1109,6 +1115,7 @@ function updateSummaryValue(el,id,d){
   const v = parseFloat(el.value);
   SUMMARY_VALUES[summaryKey(id,d)] = isNaN(v) ? 0 : v;
   recalc();
+  scheduleAutoSync();
 }
 
 function setSumVal(prefix,day,val){
@@ -1208,7 +1215,7 @@ function rowsToObjects_inntoBridge(rows){
 
 async function fetchFromInntoBridge(){
   const statusEl = document.getElementById("inntoBridgeStatus");
-  if(statusEl){ statusEl.textContent = "取得中…"; statusEl.style.color = "#666"; }
+  if(statusEl){ statusEl.textContent = "取得中…"; statusEl.classList.remove("ok"); }
   try{
     const res = await fetch("http://localhost:8791/latest?type=monthly");
     const data = await res.json();
@@ -1218,12 +1225,12 @@ async function fetchFromInntoBridge(){
     const receivedDate = new Date(data.receivedAt).toLocaleString("ja-JP");
     if(statusEl){
       statusEl.textContent = `取得完了（${receivedDate} 時点）`;
-      statusEl.style.color = "#2b6cb0";
+      statusEl.classList.add("ok");
     }
   }catch(e){
     if(statusEl){
       statusEl.textContent = "取得できませんでした（ローカルサーバー未起動、またはinnto側で未実行の可能性）";
-      statusEl.style.color = "#c53030";
+      statusEl.classList.remove("ok");
     }
     console.error("innto連携エラー:", e);
   }
@@ -1267,6 +1274,7 @@ function computeInntoSummaryAggregated(objs){
     setSumVal("banquet", day, num(o["宴会"]));
   });
   recalc();
+  scheduleAutoSync();
   return matched;
 }
 
@@ -1317,6 +1325,7 @@ function computeInntoSummaryLegacy(objs){
     setSumVal("freebreak",d,s[d].freebreak);
   }
   recalc();
+  scheduleAutoSync();
   return matched;
 }
 
@@ -1366,6 +1375,7 @@ function computeRevenueAggregated(objs){
   });
   REVENUE = rev;
   recalc();
+  scheduleAutoSync();
   return matched;
 }
 
@@ -1394,6 +1404,7 @@ function computeRevenueLegacy(objs){
   });
   REVENUE = rev;
   recalc();
+  scheduleAutoSync();
   return matched;
 }
 
@@ -1515,15 +1526,44 @@ function applyState(state){
   recalc();
 }
 
-async function saveToDesktopApp(){
+/* ===================== 自動保存・自動共有（リアルタイム化） ===================== */
+// 何か入力・変更するたびに呼び出す。数秒後にまとめて「保存」「共有」を自動実行する（連続入力中に何度も通信しないため）
+let autoSyncTimer = null;
+function scheduleAutoSync(){
+  if(!window.electronAPI) return; // ブラウザで直接開いている場合は何もしない
+  if(autoSyncTimer) clearTimeout(autoSyncTimer);
+  autoSyncTimer = setTimeout(runAutoSync, 4000);
+}
+
+async function runAutoSync(){
   if(!window.electronAPI) return;
-  const status = document.getElementById("saveStatus");
+  const state = collectState();
+  try{ await window.electronAPI.saveData(state); }catch(e){}
+  const status = document.getElementById("cloudStatus");
   try{
-    await window.electronAPI.saveData(collectState());
-    status.textContent = "保存しました（" + new Date().toLocaleTimeString("ja-JP") + "）";
-    status.classList.add("ok");
+    const result = await window.electronAPI.pushCloud(state);
+    if(status){
+      if(result.ok){
+        status.textContent = "自動共有しました（" + new Date().toLocaleTimeString("ja-JP") + "）";
+        status.classList.add("ok");
+      } else {
+        status.textContent = "自動共有に失敗しました: " + result.error;
+        status.classList.remove("ok");
+      }
+    }
   }catch(e){
-    status.textContent = "保存に失敗しました: " + e.message;
+    if(status){ status.textContent = "自動共有に失敗しました"; status.classList.remove("ok"); }
+  }
+}
+
+// 他の端末からの更新をリアルタイムで受け取った時の処理
+function applyRemoteUpdate(update){
+  if(!update || !update.payload) return;
+  applyState(update.payload);
+  const status = document.getElementById("cloudStatus");
+  if(status){
+    status.textContent = "他の端末の更新を反映しました（" + new Date(update.updated_at).toLocaleTimeString("ja-JP") + "）";
+    status.classList.add("ok");
   }
 }
 
@@ -1537,52 +1577,14 @@ async function loadFromDesktopApp(){
   }
 }
 
-async function uploadToCloud(){
-  if(!window.electronAPI) return;
-  const status = document.getElementById("cloudStatus");
-  status.textContent = "アップロード中…";
-  status.classList.remove("ok");
-  const result = await window.electronAPI.pushCloud(collectState());
-  if(result.ok){
-    status.textContent = "共有しました（" + new Date().toLocaleTimeString("ja-JP") + "）";
-    status.classList.add("ok");
-  } else {
-    status.textContent = "共有に失敗しました: " + result.error;
-  }
-}
-
-async function downloadFromCloud(){
-  if(!window.electronAPI) return;
-  const status = document.getElementById("cloudStatus");
-  status.textContent = "確認中…";
-  status.classList.remove("ok");
-  const result = await window.electronAPI.pullCloud();
-  if(!result.ok){
-    status.textContent = "取り込みに失敗しました: " + result.error;
-    return;
-  }
-  if(!result.row){
-    status.textContent = "クラウドにはまだデータがありません（先に「⬆ みんなに共有」を押してください）";
-    return;
-  }
-  const proceed = await askConfirm("他の端末の最新データを取り込みます。今この画面で入力中の内容は上書きされます。よろしいですか？");
-  if(!proceed){
-    status.textContent = "取り込みをキャンセルしました";
-    return;
-  }
-  applyState(result.row.payload);
-  status.textContent = "取り込みました（更新日時: " + new Date(result.row.updated_at).toLocaleString("ja-JP") + "）";
-  status.classList.add("ok");
-}
-
 function initDesktopIntegration(){
   if(!window.electronAPI) return; // ブラウザで直接開いている場合は何もしない
-  document.getElementById("saveBtn").style.display = "";
-  document.getElementById("cloudPushBtn").style.display = "";
-  document.getElementById("cloudPullBtn").style.display = "";
   window.electronAPI.onUpdateStatus((msg)=>{
     const el = document.getElementById("updateStatus");
     if(el) el.textContent = msg;
+  });
+  window.electronAPI.onRemoteUpdate((update)=>{
+    applyRemoteUpdate(update);
   });
   loadFromDesktopApp();
 }

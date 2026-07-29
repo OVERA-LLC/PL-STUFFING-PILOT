@@ -9,4 +9,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   onUpdateStatus: (callback) => {
     ipcRenderer.on("update:status", (event, message) => callback(message));
   },
+  onRemoteUpdate: (callback) => {
+    ipcRenderer.on("cloud:remote-update", (event, update) => callback(update));
+  },
 });
