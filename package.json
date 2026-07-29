@@ -1,6 +1,6 @@
 {
   "name": "pl-stuffing-pilot",
-  "version": "1.0.30",
+  "version": "1.0.31",
   "description": "PL STUFFING PILOT",
   "main": "main.js",
   "author": "OVERA.LLC",
@@ -27,9 +27,13 @@
     "files": [
       "main.js",
       "preload.js",
+      "local_server.js",
       "src/**/*",
       "renderer/**/*",
       "build/**/*"
+    ],
+    "asarUnpack": [
+      "local_server.js"
     ],
     "directories": {
       "output": "dist"
@@ -56,3 +60,4 @@
     ]
   }
 }
+

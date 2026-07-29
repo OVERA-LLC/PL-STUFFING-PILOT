@@ -255,6 +255,11 @@
       <input type="file" id="paymentFile" accept=".csv">
       <span class="filestatus" id="paymentStatus">未読み込み</span>
     </div>
+    <div class="tool">
+      <span class="t-label">③ innto連携で最新データを取得</span>
+      <button class="btn" type="button" id="fetchFromInntoBridgeBtn" onclick="fetchFromInntoBridge()">🔄 最新データを取得</button>
+      <span class="filestatus" id="inntoBridgeStatus">未取得</span>
+    </div>
   </div>
 
   <div class="staffadd">
@@ -1188,6 +1193,41 @@ document.getElementById("inntoFile").addEventListener("change", async (e)=>{
     status.textContent = "読込エラー：" + err.message;
   }
 });
+
+/* ===================== innto連携（ローカルサーバー経由） ===================== */
+// rows（先頭行が見出しの配列の配列）を、csvToObjects と同じ形のオブジェクト配列に変換する
+function rowsToObjects_inntoBridge(rows){
+  if(!rows || rows.length < 2) return [];
+  const headers = rows[0].map(h => String(h).trim());
+  return rows.slice(1).map(r=>{
+    const o = {};
+    headers.forEach((h,i)=> o[h] = (r[i]===undefined || r[i]===null) ? "" : String(r[i]));
+    return o;
+  });
+}
+
+async function fetchFromInntoBridge(){
+  const statusEl = document.getElementById("inntoBridgeStatus");
+  if(statusEl){ statusEl.textContent = "取得中…"; statusEl.style.color = "#666"; }
+  try{
+    const res = await fetch("http://localhost:8791/latest?type=monthly");
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error || "取得に失敗しました");
+    const objs = rowsToObjects_inntoBridge(data.rows);
+    computeInntoSummary(objs);
+    const receivedDate = new Date(data.receivedAt).toLocaleString("ja-JP");
+    if(statusEl){
+      statusEl.textContent = `取得完了（${receivedDate} 時点）`;
+      statusEl.style.color = "#2b6cb0";
+    }
+  }catch(e){
+    if(statusEl){
+      statusEl.textContent = "取得できませんでした（ローカルサーバー未起動、またはinnto側で未実行の可能性）";
+      statusEl.style.color = "#c53030";
+    }
+    console.error("innto連携エラー:", e);
+  }
+}
 
 function computeInntoSummary(objs){
   if(objs.length && "日付" in objs[0] && "予約部屋数" in objs[0]){

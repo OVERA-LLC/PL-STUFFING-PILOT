@@ -1,10 +1,42 @@
 const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const path = require("path");
+const { fork } = require("child_process");
 const { autoUpdater } = require("electron-updater");
 const { getData, saveData } = require("./src/db");
 const cloud = require("./src/cloud");
 
 let mainWindow;
+let bridgeServerProcess = null;
+
+/* ===================== innto連携ローカルサーバーの自動起動 ===================== */
+function startBridgeServer() {
+  const serverPath = path.join(__dirname, "local_server.js");
+  try {
+    bridgeServerProcess = fork(serverPath, [], {
+      stdio: "ignore",
+      env: {
+        ...process.env,
+        // パッケージ化されたアプリの中でも書き込めるよう、専用の保存場所を渡す
+        INNTO_BRIDGE_DATA_DIR: path.join(app.getPath("userData"), "innto_bridge_data"),
+      },
+    });
+    bridgeServerProcess.on("error", (err) => {
+      console.error("innto連携サーバーの起動に失敗しました:", err);
+    });
+    bridgeServerProcess.on("exit", (code) => {
+      bridgeServerProcess = null;
+    });
+  } catch (e) {
+    console.error("innto連携サーバーの起動に失敗しました:", e);
+  }
+}
+
+function stopBridgeServer() {
+  if (bridgeServerProcess) {
+    bridgeServerProcess.kill();
+    bridgeServerProcess = null;
+  }
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -25,6 +57,7 @@ function createWindow() {
 
 app.whenReady().then(() => {
   createWindow();
+  startBridgeServer();
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -33,6 +66,10 @@ app.whenReady().then(() => {
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
+});
+
+app.on("before-quit", () => {
+  stopBridgeServer();
 });
 
 /* ===================== データの保存・読み込み（SQLite） ===================== */
