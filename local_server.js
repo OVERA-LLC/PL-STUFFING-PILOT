@@ -111,6 +111,30 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // データ受信（別タブでの画面遷移経由・GET）：innto側のCSPが一切及ばない、最も確実な受け口
+  if (req.method === "GET" && url.pathname === "/ingest-page") {
+    let html;
+    try {
+      const raw = url.searchParams.get("payload");
+      if (!raw) throw new Error("payloadパラメータが見つかりません");
+      const payload = JSON.parse(raw);
+      saveIngestPayload(payload);
+      html = `<html><body style="font-family:sans-serif;padding:24px;">
+        <h3>取り込み完了</h3>
+        <p>PL STUFFING PILOTへのデータ送信が完了しました。このタブは自動的に閉じます。</p>
+      </body></html>`;
+    } catch (e) {
+      console.error("受信データの処理に失敗（別タブ経由）:", e);
+      html = `<html><body style="font-family:sans-serif;padding:24px;">
+        <h3 style="color:#c53030;">取り込みに失敗しました</h3>
+        <p>${String(e).replace(/</g, "&lt;")}</p>
+      </body></html>`;
+    }
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+    res.end(html);
+    return;
+  }
+
   // データ受信（imgタグ経由・GET）：connect-src / frame-src どちらにも縛られない img-src 経由の送信方式
   if (req.method === "GET" && url.pathname === "/ingest-img") {
     // 1x1透明GIF（imgのsrcとして呼ばれるので、画像らしいレスポンスを返しておく）
