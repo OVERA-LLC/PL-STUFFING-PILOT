@@ -1,6 +1,6 @@
 {
   "name": "pl-stuffing-pilot",
-  "version": "1.0.36",
+  "version": "1.0.37",
   "description": "PL STUFFING PILOT",
   "main": "main.js",
   "author": "OVERA.LLC",
@@ -16,7 +16,8 @@
   "dependencies": {
     "better-sqlite3": "^11.3.0",
     "electron-updater": "^6.3.4",
-    "@supabase/supabase-js": "^2.45.0"
+    "@supabase/supabase-js": "^2.45.0",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "electron": "^31.3.1",

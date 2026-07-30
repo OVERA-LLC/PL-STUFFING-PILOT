@@ -4,6 +4,7 @@
 // subscribeToChanges/unsubscribeFromChangesはRealtime購読（自動反映用）です。
 
 const { createClient } = require("@supabase/supabase-js");
+const ws = require("ws");
 const CONFIG = require("./cloud-config");
 
 function isConfigured() {
@@ -70,7 +71,10 @@ let supabaseClient = null;
 function getClient() {
   if (!isConfigured()) return null;
   if (!supabaseClient) {
-    supabaseClient = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    supabaseClient = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
+      // ElectronのメインプロセスはNode.js 22未満のため、WebSocketの実装を明示的に渡す必要がある
+      realtime: { transport: ws },
+    });
   }
   return supabaseClient;
 }
