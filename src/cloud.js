@@ -78,9 +78,12 @@ function getClient() {
 let realtimeChannel = null;
 
 // onChange({payload, updated_at}) が、他の端末がapp_stateを更新するたびに呼ばれる
-function subscribeToChanges(onChange) {
+function subscribeToChanges(onChange, onStatusChange) {
   const client = getClient();
-  if (!client) return;
+  if (!client) {
+    if (onStatusChange) onStatusChange("NOT_CONFIGURED", null);
+    return;
+  }
   if (realtimeChannel) return; // すでに購読中なら何もしない
   realtimeChannel = client
     .channel("app_state_changes")
@@ -94,7 +97,11 @@ function subscribeToChanges(onChange) {
         }
       }
     )
-    .subscribe();
+    .subscribe((status, err) => {
+      // status: "SUBSCRIBED" | "CHANNEL_ERROR" | "TIMED_OUT" | "CLOSED" など
+      console.log("[Realtime] status:", status, err ? String(err) : "");
+      if (onStatusChange) onStatusChange(status, err ? String(err) : null);
+    });
 }
 
 function unsubscribeFromChanges() {

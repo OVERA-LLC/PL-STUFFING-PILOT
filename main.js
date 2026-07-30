@@ -58,9 +58,14 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
   startBridgeServer();
-  cloud.subscribeToChanges((update) => {
-    if (mainWindow) mainWindow.webContents.send("cloud:remote-update", update);
-  });
+  cloud.subscribeToChanges(
+    (update) => {
+      if (mainWindow) mainWindow.webContents.send("cloud:remote-update", update);
+    },
+    (status, err) => {
+      if (mainWindow) mainWindow.webContents.send("cloud:realtime-status", { status, err });
+    }
+  );
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

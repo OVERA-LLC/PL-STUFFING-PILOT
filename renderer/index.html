@@ -289,9 +289,11 @@
     <input type="month" id="monthSelector" onchange="setMonthManually()">
     <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
     <button class="btn" id="printPreviewBtn" onclick="togglePrintPreview()">🖨 印刷プレビュー（縦に連結して表示）</button>
+    <button class="btn" onclick="printNow()">🖨 今すぐ印刷する</button>
     <span style="width:1px;height:22px;background:var(--line);margin:0 6px;" id="desktopDivider"></span>
     <span id="cloudStatus" class="filestatus"></span>
     <span id="updateStatus" class="filestatus"></span>
+    <span id="realtimeStatus" class="filestatus"></span>
   </div>
 
   <div id="printzone">
@@ -1586,10 +1588,31 @@ function initDesktopIntegration(){
   window.electronAPI.onRemoteUpdate((update)=>{
     applyRemoteUpdate(update);
   });
+  window.electronAPI.onRealtimeStatus((info)=>{
+    const el = document.getElementById("realtimeStatus");
+    if(!el) return;
+    const labels = {
+      SUBSCRIBED: "🟢 リアルタイム接続: 正常",
+      CHANNEL_ERROR: "🔴 リアルタイム接続: エラー",
+      TIMED_OUT: "🔴 リアルタイム接続: タイムアウト",
+      CLOSED: "⚪ リアルタイム接続: 切断",
+      NOT_CONFIGURED: "⚪ リアルタイム接続: 未設定",
+    };
+    el.textContent = labels[info.status] || ("リアルタイム接続: " + info.status);
+    el.title = info.err || "";
+    el.classList.toggle("ok", info.status === "SUBSCRIBED");
+  });
   loadFromDesktopApp();
 }
 
 /* ===================== 初期化 ===================== */
+document.addEventListener("keydown", function(e){
+  // Electronアプリは既定でCtrl+P（Macの場合Cmd+P）に印刷が割り当てられていないため、明示的に対応する
+  if((e.ctrlKey || e.metaKey) && (e.key === "p" || e.key === "P")){
+    e.preventDefault();
+    window.print();
+  }
+});
 window.addEventListener("beforeprint", function(){
   // 実際の紙面（A4横）は画面の幅に関係なく必ず収まる固定値を使う
   PRINT_MODE = true;
