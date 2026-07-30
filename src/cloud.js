@@ -95,6 +95,7 @@ function subscribeToChanges(onChange, onStatusChange) {
       "postgres_changes",
       { event: "*", schema: "public", table: "app_state" },
       (payload) => {
+        console.log("[Realtime] change received:", payload.eventType, "updated_at=", payload.new && payload.new.updated_at);
         const row = payload.new;
         if (row && row.payload) {
           onChange({ payload: row.payload, updated_at: row.updated_at });

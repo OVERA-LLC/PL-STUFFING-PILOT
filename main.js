@@ -60,6 +60,7 @@ app.whenReady().then(() => {
   startBridgeServer();
   cloud.subscribeToChanges(
     (update) => {
+      console.log("[Realtime] forwarding update to renderer, updated_at=", update.updated_at);
       if (mainWindow) mainWindow.webContents.send("cloud:remote-update", update);
     },
     (status, err) => {
