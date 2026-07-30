@@ -1572,11 +1572,28 @@ function applyRemoteUpdate(update){
 
 async function loadFromDesktopApp(){
   if(!window.electronAPI) return;
+  // ①まずローカル保存を読み込み、すぐに画面を表示する（オフラインでも動くように）
   try{
-    const state = await window.electronAPI.loadData();
-    if(state) applyState(state);
+    const localState = await window.electronAPI.loadData();
+    if(localState) applyState(localState);
   }catch(e){
-    console.error("読み込みエラー", e);
+    console.error("ローカル読み込みエラー", e);
+  }
+  // ②そのあと、クラウドの最新状態を必ず確認し、あればそちらを優先して反映する。
+  //   これが無いと、起動直後にこのパソコンの古いローカル内容で自動共有してしまい、
+  //   他の端末が積み上げた最新のデータをクラウド側で上書きしてしまう事故につながるため必須の処理。
+  try{
+    const result = await window.electronAPI.pullCloud();
+    if(result && result.ok && result.row){
+      applyState(result.row.payload);
+      const status = document.getElementById("cloudStatus");
+      if(status){
+        status.textContent = "起動時にクラウドの最新を取り込みました（" + new Date(result.row.updated_at).toLocaleTimeString("ja-JP") + "）";
+        status.classList.add("ok");
+      }
+    }
+  }catch(e){
+    console.error("クラウド読み込みエラー", e);
   }
 }
 
