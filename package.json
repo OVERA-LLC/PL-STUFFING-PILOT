@@ -1,6 +1,6 @@
 {
   "name": "pl-stuffing-pilot",
-  "version": "1.0.40",
+  "version": "1.0.41",
   "description": "PL STUFFING PILOT",
   "main": "main.js",
   "author": "OVERA.LLC",
@@ -62,4 +62,3 @@
     ]
   }
 }
-
