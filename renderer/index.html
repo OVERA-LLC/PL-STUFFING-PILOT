@@ -750,9 +750,7 @@
       <label>厚生年金保険料率（労働者負担・%）：
         <input type="number" id="laborPensionRateInput" min="0" step="0.01" style="width:100%;margin-top:3px;">
       </label>
-      <label>所得税 概算天引き率（%）：
-        <input type="number" id="laborIncomeTaxRateInput" min="0" step="0.01" style="width:100%;margin-top:3px;">
-      </label>
+      <div style="font-size:11px;color:var(--muted-ink,#7a8a8e);">所得税は、従業員設定の「配偶者の有無」「扶養人数」をもとに国税庁の源泉徴収税額表（令和8年分・電算機計算特例）で自動計算されるため、ここでの設定は不要です。</div>
       <label>社会保険の加入対象とする週の勤務時間（時間以上）：
         <input type="number" id="laborSocialThresholdInput" min="0" step="0.5" style="width:100%;margin-top:3px;">
       </label>
@@ -932,7 +930,6 @@ let LABOR_SETTINGS = {
   employmentInsuranceRate: 0.5,     // 雇用保険料率（労働者負担分・%）令和8年度・一般の事業の値を初期値とする
   healthInsuranceRate: 5.0,         // 健康保険料率（労働者負担分・%、都道府県協会けんぽにより異なる。要設定）
   pensionRate: 9.15,                // 厚生年金保険料率（労働者負担分・%、全国一律18.3%の折半）
-  incomeTaxRate: 3.0,               // 所得税の概算天引き率（%、正確な源泉徴収税額表の代用。要確認）
   socialInsuranceWeeklyHours: 30,   // 週の平均勤務時間がこれ以上で社会保険加入対象とみなす（4分の3基準の簡易判定）
 };
 
@@ -1194,6 +1191,13 @@ function updateWage(el){
   scheduleAutoSync();
 }
 
+function updateWageCheckbox(el){
+  const si = el.dataset.si, field = el.dataset.field;
+  STAFF[si][field] = el.checked;
+  recalc();
+  scheduleAutoSync();
+}
+
 /* ===================== 交通費設定 ===================== */
 let commuteEditIndex = null;
 
@@ -1250,7 +1254,6 @@ function openLaborSettingsModal(){
   document.getElementById("laborEmploymentRateInput").value = LABOR_SETTINGS.employmentInsuranceRate;
   document.getElementById("laborHealthRateInput").value = LABOR_SETTINGS.healthInsuranceRate;
   document.getElementById("laborPensionRateInput").value = LABOR_SETTINGS.pensionRate;
-  document.getElementById("laborIncomeTaxRateInput").value = LABOR_SETTINGS.incomeTaxRate;
   document.getElementById("laborSocialThresholdInput").value = LABOR_SETTINGS.socialInsuranceWeeklyHours;
   document.getElementById("laborSettingsModal").style.display = "flex";
 }
@@ -1264,7 +1267,6 @@ function saveLaborSettings(){
     employmentInsuranceRate: parseFloat(document.getElementById("laborEmploymentRateInput").value) || 0,
     healthInsuranceRate: parseFloat(document.getElementById("laborHealthRateInput").value) || 0,
     pensionRate: parseFloat(document.getElementById("laborPensionRateInput").value) || 0,
-    incomeTaxRate: parseFloat(document.getElementById("laborIncomeTaxRateInput").value) || 0,
     socialInsuranceWeeklyHours: parseFloat(document.getElementById("laborSocialThresholdInput").value) || 0,
   };
   closeLaborSettingsModal();
@@ -1307,7 +1309,9 @@ function computeStaffMonthlySummary(si){
   const employmentInsurance = grossWage * (LABOR_SETTINGS.employmentInsuranceRate/100);
   const healthInsurance = isSocialInsured ? grossWage * (LABOR_SETTINGS.healthInsuranceRate/100) : 0;
   const pensionInsurance = isSocialInsured ? grossWage * (LABOR_SETTINGS.pensionRate/100) : 0;
-  const incomeTaxEstimate = Math.max(0, grossWage - employmentInsurance - healthInsurance - pensionInsurance) * (LABOR_SETTINGS.incomeTaxRate/100);
+  // 所得税：国税庁の月額表（甲欄）電算機計算特例に基づく正確な計算
+  const afterSocialInsurance = Math.max(0, grossWage - employmentInsurance - healthInsurance - pensionInsurance);
+  const incomeTaxEstimate = calcIncomeTaxWithholding(afterSocialInsurance, !!st.hasSpouse, st.dependents||0);
   return {
     name: st.name, workDays, totalHours, avgWeeklyHours, grossWage,
     isSocialInsured, employmentInsurance, healthInsurance, pensionInsurance,
@@ -1416,7 +1420,9 @@ function addStaff(){
     brk: brkRaw ? parseFloat(brkRaw) : null,
     pre: new Array(14).fill(null),
     commute: { method:"公共交通機関", fixedAmount:0, distanceKm:0, ratePerKm:0 },
-    scheduledHours: 8 // 所定労働時間（有給休暇の賃金計算に使用）
+    scheduledHours: 8, // 所定労働時間（有給休暇の賃金計算に使用）
+    hasSpouse: false, // 源泉控除対象配偶者の有無（所得税の源泉徴収計算に使用）
+    dependents: 0 // 扶養親族等の数（所得税の源泉徴収計算に使用）
   });
   document.getElementById("newCat").value = "";
   document.getElementById("newName").value = "";
@@ -1483,7 +1489,8 @@ function renderStaffSettingsTable(){
   const table = document.getElementById("staffsettingstable");
   if(!table) return;
   let html = `<thead><tr>
-    <th class="staffcol">区分・氏名</th><th>時給（円）</th><th>休憩（分）</th><th>所定労働時間（h）</th><th>交通費</th><th></th>
+    <th class="staffcol">区分・氏名</th><th>時給（円）</th><th>休憩（分）</th><th>所定労働時間（h）</th>
+    <th>配偶者</th><th>扶養人数</th><th>交通費</th><th></th>
   </tr></thead><tbody>`;
   STAFF.forEach((st,si)=>{
     const missing = st.wage===null || st.wage===undefined;
@@ -1492,6 +1499,8 @@ function renderStaffSettingsTable(){
       <td><input type="number" class="${missing?'missing':''}" value="${st.wage??''}" placeholder="時給" data-si="${si}" data-field="wage" onchange="updateWage(this)" style="width:70px;"></td>
       <td><input type="number" value="${st.brk??''}" placeholder="休憩" data-si="${si}" data-field="brk" onchange="updateWage(this)" style="width:60px;"></td>
       <td><input type="number" value="${st.scheduledHours??8}" placeholder="8" data-si="${si}" data-field="scheduledHours" onchange="updateWage(this)" style="width:60px;" title="有給休暇取得日の賃金計算に使用（時給×所定労働時間）"></td>
+      <td><input type="checkbox" ${st.hasSpouse?'checked':''} data-si="${si}" data-field="hasSpouse" onchange="updateWageCheckbox(this)" title="源泉控除対象配偶者の有無（所得税の計算に使用）"></td>
+      <td><input type="number" min="0" value="${st.dependents??0}" data-si="${si}" data-field="dependents" onchange="updateWage(this)" style="width:50px;" title="扶養親族等の数（所得税の計算に使用）"></td>
       <td><button class="rmbtn" onclick="openCommuteModal(${si})">🚃交通費を設定</button></td>
       <td><button class="rmbtn" onclick="removeStaff(${si})">削除</button></td>
     </tr>`;
@@ -2255,6 +2264,47 @@ function calcStaffDailyWage(startHour, endHour, wage, isHolidayWork){
     if(overtime>0) pay += overtime * wage * 0.25; // 時間外割増
   }
   return pay;
+}
+
+// 国税庁「給与所得の源泉徴収税額表 月額表・甲欄を適用する給与等に対する税額の電算機計算の特例」
+// （令和8年分以降）に基づく、正確な所得税源泉徴収額の計算。
+// A：その月の社会保険料等控除後の給与等の金額
+function calcIncomeTaxWithholding(A, hasSpouse, dependents){
+  if(A <= 0) return 0;
+  // 第1表：給与所得控除の額
+  let deduction1;
+  if(A <= 158333) deduction1 = 54167;
+  else if(A <= 299999) deduction1 = A*0.3 + 6667;
+  else if(A <= 549999) deduction1 = A*0.2 + 36667;
+  else if(A <= 708330) deduction1 = A*0.1 + 91667;
+  else deduction1 = 162500;
+
+  // 第2表：配偶者控除・扶養控除の額
+  const spouseDeduction = hasSpouse ? 31667 : 0;
+  const dependentDeduction = 31667 * (dependents||0);
+
+  // 第3表：基礎控除の額
+  let basicDeduction;
+  if(A < 2120834) basicDeduction = 48334;
+  else if(A <= 2162499) basicDeduction = 40000;
+  else if(A <= 2204166) basicDeduction = 26667;
+  else if(A <= 2245833) basicDeduction = 13334;
+  else basicDeduction = 0;
+
+  const B = A - deduction1 - spouseDeduction - dependentDeduction - basicDeduction; // その月の課税給与所得金額
+  if(B <= 0) return 0;
+
+  // 第4表：税額の算式
+  let tax;
+  if(B <= 162500) tax = B*0.05105;
+  else if(B <= 275000) tax = B*0.10210 - 8296;
+  else if(B <= 579166) tax = B*0.20420 - 36374;
+  else if(B <= 750000) tax = B*0.23483 - 54113;
+  else if(B <= 1500000) tax = B*0.33693 - 130688;
+  else if(B <= 3333333) tax = B*0.40840 - 237893;
+  else tax = B*0.45945 - 408061;
+
+  return Math.max(0, Math.round(tax/10)*10); // 10円未満四捨五入
 }
 
 function recalc(){
