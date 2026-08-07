@@ -8,13 +8,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#1E2A32;
-    --paper:#F1EEE4;
-    --paper-soft:#F8F6F0;
-    --teal:#2F5D62;
-    --teal-deep:#20444A;
+    --ink:#1A2740;
+    --paper:#F4F6FA;
+    --paper-soft:#FFFFFF;
+    --teal:#2A4C82;
+    --teal-deep:#122A52;
     --gold:#B98B3E;
-    --line:#D9D2C0;
+    --line:#D7DEEA;
     --profit-bg:#DCEEDD;
     --profit-ink:#1F5C33;
     --loss-bg:#F6DCDC;
@@ -39,6 +39,141 @@
   .notes summary::before{content:"▶ ";font-size:11px;color:var(--gold);}
   .notes[open] summary::before{content:"▼ ";}
   .notes summary b{color:var(--teal-deep);}
+
+  /* ===================== Daily Pilot ===================== */
+  .dailypilot{background:var(--paper-soft);border:1px solid var(--line);border-left:4px solid var(--teal-deep);border-radius:10px;padding:16px 20px;margin-bottom:20px;}
+  .dailypilot summary{cursor:pointer;list-style:none;font-size:14px;margin-bottom:6px;}
+  .dailypilot summary::-webkit-details-marker{display:none;}
+  .dailypilot summary::before{content:"▶ ";font-size:11px;color:var(--teal-deep);}
+  .dailypilot[open] summary::before{content:"▼ ";}
+  .dp-daytabs{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0 14px;}
+  .dp-daytab{padding:4px 9px;border-radius:6px;border:1px solid var(--line);background:#fff;font-size:11px;cursor:pointer;white-space:nowrap;}
+  .dp-daytab.active{background:var(--teal-deep);color:#fff;border-color:var(--teal-deep);font-weight:700;}
+  .dp-timeline-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+  .dp-timeline-title{font-weight:700;color:var(--teal-deep);font-size:13px;margin-right:6px;}
+  .dp-rows{display:flex;flex-direction:column;gap:10px;margin-bottom:18px;}
+  .dp-row{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;gap:10px;align-items:flex-start;}
+  .dp-row-side{flex:0 0 130px;width:130px;}
+  .dp-row-name{font-weight:700;font-size:12.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;}
+  .dp-row-btns{display:flex;gap:4px;flex-wrap:wrap;}
+  .dp-row-main{flex:1;min-width:0;}
+  .dp-scale{display:flex;font-size:9px;color:var(--muted-ink,#7a8a8e);border-bottom:1px dashed var(--line);margin-bottom:4px;padding-bottom:2px;position:relative;height:14px;}
+  .dp-scale span{position:absolute;transform:translateX(-50%);}
+  .dp-track{position:relative;height:40px;background:repeating-linear-gradient(to right, #F4F1E7 0, #F4F1E7 calc(100%/18 - 1px), #E3DCC9 calc(100%/18 - 1px), #E3DCC9 calc(100%/18));border-radius:5px;}
+  .dp-gauge{position:absolute;top:3px;bottom:3px;border-radius:5px;color:#fff;font-size:10.5px;display:flex;align-items:center;overflow:hidden;cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,0.25);user-select:none;}
+  .dp-gauge:active{cursor:grabbing;}
+  .dp-gauge .dp-gauge-text{flex:1;padding:0 5px;outline:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:transparent;border:none;color:#fff;font-size:10.5px;pointer-events:none;}
+  .dp-gauge .dp-gauge-text.editing{pointer-events:auto;background:rgba(0,0,0,0.2);}
+  .dp-gauge .dp-gauge-text:focus{white-space:normal;overflow:visible;}
+  .dp-gauge-handle{width:7px;align-self:stretch;cursor:ew-resize;background:rgba(255,255,255,0.35);flex:0 0 auto;}
+  .dp-gauge-color{width:14px;height:14px;border:none;padding:0;flex:0 0 auto;margin-left:2px;cursor:pointer;background:transparent;}
+  .dp-gauge-edit{flex:0 0 auto;background:rgba(255,255,255,0.3);color:#fff;border:none;width:16px;height:16px;line-height:16px;font-size:10px;border-radius:4px;margin-right:2px;cursor:pointer;padding:0;}
+  .dp-gauge-del{flex:0 0 auto;background:rgba(0,0,0,0.25);color:#fff;border:none;width:14px;height:14px;line-height:14px;font-size:10px;border-radius:50%;margin:0 3px;cursor:pointer;}
+  .dp-floor-head{font-weight:700;color:var(--teal-deep);font-size:13px;margin:4px 0 8px;}
+  .dp-floorplans{display:flex;gap:16px;flex-wrap:wrap;}
+  .dp-floorplan-wrap{flex:1 1 380px;min-width:320px;}
+  .dp-floorplan-title{font-size:12px;font-weight:700;margin-bottom:4px;}
+  .dp-floorplan-toolbar{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap;}
+  .dp-floorplan-canvas{position:relative;width:100%;height:320px;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .dp-shape{position:absolute;cursor:grab;box-sizing:border-box;}
+  .dp-shape:active{cursor:grabbing;}
+  .dp-shape.rect{border:2px solid #2F5D62;background:rgba(47,93,98,0.15);}
+  .dp-shape.circle{border:2px solid #B98B3E;background:rgba(185,139,62,0.18);border-radius:50%;}
+  .dp-shape.line{border-top:3px solid #8C2F2F;background:transparent;height:3px !important;}
+  .dp-shape.text{border:1px dashed #999;background:rgba(255,255,255,0.7);font-size:11px;padding:2px 4px;}
+  .dp-shape-text{width:100%;height:100%;outline:none;font-size:11px;text-align:center;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none;}
+  .dp-shape-text.editing{pointer-events:auto;background:rgba(255,255,255,0.6);}
+  .dp-shape-resize{position:absolute;right:-4px;bottom:-4px;width:10px;height:10px;background:#333;border-radius:2px;cursor:nwse-resize;}
+  .dp-shape-del{position:absolute;top:-8px;right:-8px;width:16px;height:16px;line-height:16px;border-radius:50%;background:#8C2F2F;color:#fff;font-size:10px;border:none;cursor:pointer;text-align:center;padding:0;}
+
+  /* ===================== 人事評価シート ===================== */
+  .eval-controls{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;
+    position:sticky;top:0;z-index:5;background:#fff;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.06);
+  }
+  .eval-sheet{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 22px;max-width:1440px;margin:0 auto;font-size:11px;}
+  .eval-title{text-align:center;font-size:15px;font-weight:700;color:var(--teal-deep);margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;}
+  .eval-title input{width:60px;text-align:center;padding:2px;}
+  .eval-box{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin-bottom:6px;}
+  .eval-box-title{font-weight:700;color:var(--teal-deep);font-size:11px;margin-bottom:4px;}
+  .eval-info-grid{display:grid;grid-template-columns:78px 1fr 78px 1fr;gap:3px 8px;font-size:10.5px;align-items:center;}
+  .eval-info-grid input{width:100%;padding:2px 4px;font-size:10.5px;}
+  .eval-criteria{font-size:10px;line-height:1.5;color:#5c584e;}
+  .eval-half-head{display:flex;justify-content:flex-end;margin-bottom:2px;}
+  .eval-half-head .eval-half-cols{width:280px;}
+  .eval-half-head .eval-half-cols span{flex:1;text-align:center;font-weight:700;color:var(--teal-deep);font-size:11.5px;}
+  .eval-item{border-top:1px dashed var(--line);padding:4px 0;}
+  .eval-item:first-child{border-top:none;}
+  .eval-item-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:1px;}
+  .eval-item-name-wrap{display:flex;align-items:center;gap:6px;flex:1;min-width:0;}
+  .eval-item-name-input{flex:1;min-width:0;font-weight:700;font-size:10.5px;padding:2px 4px;border:1px solid transparent;border-radius:4px;background:transparent;font-family:inherit;}
+  .eval-item-name-input:hover, .eval-item-name-input:focus{border-color:var(--line);background:#fff;}
+  .eval-item-del{flex:0 0 auto;font-size:9px;padding:1px 6px;}
+  .eval-item-bullets-input{width:100%;min-height:34px;font-size:9.5px;color:#5c584e;line-height:1.35;margin:2px 0 0;padding:4px 6px;border:1px solid transparent;border-radius:4px;background:transparent;font-family:inherit;resize:vertical;}
+  .eval-item-bullets-input:hover, .eval-item-bullets-input:focus{border-color:var(--line);background:#fff;}
+  .eval-item-add{margin-top:4px;font-size:10.5px;}
+  .eval-item-bullets{font-size:9.5px;color:#5c584e;line-height:1.35;margin:0 0 2px 14px;}
+  .eval-half-cols{display:flex;gap:6px;flex:0 0 auto;width:280px;}
+  .eval-half-cols > *{flex:1;min-width:0;}
+  /* 上期・下期を見分けやすいよう、間に仕切り線を入れて余白を広めに取る */
+  .eval-item-head .eval-half-cols,
+  .eval-half-head .eval-half-cols{gap:0;}
+  .eval-item-head .eval-half-cols > *,
+  .eval-half-head .eval-half-cols > *{padding:0 14px;}
+  .eval-item-head .eval-half-cols > *:first-child,
+  .eval-half-head .eval-half-cols > *:first-child{border-right:1px dashed var(--line);}
+  .eval-rating{display:flex;gap:2px;justify-content:center;}
+  .eval-rating button{width:18px;height:18px;border-radius:5px;border:1px solid var(--line);background:#fff;font-size:9px;font-weight:700;cursor:pointer;color:var(--ink);padding:0;}
+  .eval-rating button.selected{background:var(--teal-deep);color:#fff;border-color:var(--teal-deep);}
+  .eval-total{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:12px;padding:5px 10px;background:var(--paper-soft);border-radius:6px;margin-bottom:6px;}
+  .eval-total .eval-half-cols{width:320px;font-size:11px;gap:0;}
+  .eval-total .eval-half-cols > *{padding:0 16px;}
+  .eval-total .eval-half-cols > *:first-child{border-right:1px dashed var(--line);}
+  .eval-half-label{font-size:9.5px;font-weight:700;color:var(--teal-deep);margin-bottom:2px;}
+  .eval-comment textarea{width:100%;min-height:38px;font-family:inherit;font-size:10px;padding:4px;border:1px solid var(--line);border-radius:5px;resize:vertical;}
+  .eval-comment .eval-half-cols{width:100%;gap:20px;}
+  .eval-comment .eval-half-cols > *{padding:0;border-right:none;}
+  .eval-signer.eval-half-cols{width:100%;gap:20px;}
+  .eval-signer.eval-half-cols > *{padding:0;border-right:none;}
+  .eval-signer input{width:100%;padding:2px 4px;font-size:10.5px;}
+
+  body.printing-selected .tabpanel#panelEvaluation.print-chosen{ display:block !important; }
+  body.printing-selected #panelEvaluation.print-chosen .eval-controls{ display:none !important; }
+  body.printing-selected #panelEvaluation.print-chosen .eval-sheet{ max-width:none; border:none; padding:0; margin:0; font-size:11px; }
+  body.printing-selected #panelEvaluation.print-chosen .eval-rating button{ width:18px; height:18px; font-size:9px; }
+  body.printing-selected #panelEvaluation.print-chosen .eval-item-del,
+  body.printing-selected #panelEvaluation.print-chosen .eval-item-add{ display:none !important; }
+  body.printing-selected #panelEvaluation.print-chosen .eval-item-name-input,
+  body.printing-selected #panelEvaluation.print-chosen .eval-item-bullets-input{ border:none !important; background:transparent !important; pointer-events:none; }
+
+  /* ===================== Daily Pilotを印刷対象に選んだ時のコンパクト表示（40名想定） ===================== */
+  body.printing-selected .dailypilot.print-chosen .dp-daytabs{ display:none; }
+  body.printing-selected .dailypilot.print-chosen .dp-timeline-head button,
+  body.printing-selected .dailypilot.print-chosen .dp-timeline-head select,
+  body.printing-selected .dailypilot.print-chosen .dp-timeline-head span{ display:none; }
+  body.printing-selected .dailypilot.print-chosen .dp-timeline-head::before{
+    content: attr(data-print-title);
+    font-weight:700; font-size:13px;
+  }
+  body.printing-selected .dailypilot.print-chosen .dp-row-btns{ display:none; }
+  body.printing-selected .dailypilot.print-chosen .dp-row-side{ flex-basis:70px; width:70px; }
+  body.printing-selected .dailypilot.print-chosen .dp-row-name{ font-size:8px; line-height:1.1; margin-bottom:0; }
+  body.printing-selected .dailypilot.print-chosen .dp-row{ border:none; border-bottom:1px solid #E3DCC9; border-radius:0; padding:1px 0; margin:0; }
+  body.printing-selected .dailypilot.print-chosen .dp-scale{ height:9px; font-size:6.5px; margin-bottom:1px; padding-bottom:0; }
+  body.printing-selected .dailypilot.print-chosen .dp-row:not(:first-child) .dp-scale{ display:none; }
+  body.printing-selected .dailypilot.print-chosen .dp-track{ height:11px; border-radius:2px; }
+  body.printing-selected .dailypilot.print-chosen .dp-gauge{ top:1px; bottom:1px; border-radius:2px; }
+  body.printing-selected .dailypilot.print-chosen .dp-gauge-text{ font-size:6.5px; padding:0 2px; pointer-events:none; }
+  body.printing-selected .dailypilot.print-chosen .dp-gauge-handle,
+  body.printing-selected .dailypilot.print-chosen .dp-gauge-del,
+  body.printing-selected .dailypilot.print-chosen .dp-gauge-edit,
+  body.printing-selected .dailypilot.print-chosen .dp-gauge-color{ display:none; }
+  body.printing-selected .dailypilot.print-chosen .dp-floor-head{ margin:6px 0 4px; font-size:11px; }
+  body.printing-selected .dailypilot.print-chosen .dp-floorplan-toolbar{ display:none; }
+  body.printing-selected .dailypilot.print-chosen .dp-shape-del,
+  body.printing-selected .dailypilot.print-chosen .dp-shape-resize{ display:none; }
+  body.printing-selected .dailypilot.print-chosen .dp-floorplan-canvas{ height:230px; }
   .notes b{color:var(--teal-deep);}
   .notes ul{margin:6px 0 0;padding-left:1.2em;}
   .notes ul.notes-numbered{list-style:none;padding-left:0;}
@@ -47,6 +182,16 @@
   .notes ul.notes-sub > li{color:#7a5c1e;margin-bottom:3px;}
 
   .toolbar,.printcontrols{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+
+  /* ===================== タブ ===================== */
+  .tabpanel{border:1px solid var(--line);border-top:none;border-radius:0 0 10px 10px;padding:16px 18px;margin-bottom:20px;background:#fff;}
+  .tabpanel > summary{cursor:pointer;font-weight:700;font-size:15px;color:var(--teal-deep);list-style:none;margin:-16px -18px 12px;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--paper-soft);border-radius:0;}
+  .tabpanel > summary::-webkit-details-marker{display:none;}
+  .tabpanel > summary::before{content:"▼ ";font-size:11px;}
+  .tabpanel:not([open]) > summary::before{content:"▶ ";}
+  .tabpanel:not([open]) > summary{margin-bottom:0;border-bottom:none;border-radius:0 0 10px 10px;}
+  .printselect{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--paper-soft);border:1px solid var(--line);border-radius:8px;padding:8px 14px;margin:10px 0 16px;font-size:12px;}
+  .printselect label{display:flex;align-items:center;gap:4px;cursor:pointer;}
   .tool{background:var(--paper-soft);border:1px solid var(--line);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;flex:1 1 300px;}
   .tool .t-label{font-size:12px;font-weight:600;color:var(--teal-deep);white-space:nowrap;}
   .tool input[type=file]{font-size:11px;max-width:230px;}
@@ -72,14 +217,14 @@
   .sectiontitle{font-family:'Noto Sans JP',sans-serif;font-weight:700;font-size:16px;color:var(--teal-deep);margin:6px 0 10px;}
   .cellcolor-legend{display:flex;gap:10px;flex-wrap:wrap;font-family:'Noto Sans JP',sans-serif;font-weight:500;font-size:11px;color:#5c584e;}
   .cellcolor-legend .swatch{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px;}
-  body.print-preview .cellcolor-legend{display:none;}
-  body.print-preview #jobSummaryTitle,
-  body.print-preview #jobSummaryCard{display:none !important;}
-  @media print{ .cellcolor-legend{display:none;} #jobSummaryTitle,#jobSummaryCard{display:none !important;} }
+  body.printing-selected .cellcolor-legend{display:none;}
+  @media print{ .cellcolor-legend{display:none;} }
 
   .tablecard{background:var(--paper-soft);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:26px;}
   .scroll{overflow-x:auto;}
   table{border-collapse:collapse;font-size:12px;min-width:1900px;width:100%;}
+  #labortable{min-width:0;}
+  #labortable th, #labortable td{white-space:normal;}
   #sumtable, #jobsummarytable{table-layout:fixed;min-width:0;width:auto;}
   #sumtable th, #sumtable td, #jobsummarytable th, #jobsummarytable td{overflow:hidden;}
   th,td{border:1px solid var(--line);padding:4px 6px;text-align:center;white-space:nowrap;}
@@ -98,7 +243,7 @@
   .reorderbtns{display:flex;gap:2px;flex:0 0 auto;}
   .reorderbtns .rmbtn{margin-left:0;padding:0 5px;font-size:10px;}
   .reorderbtns .rmbtn:disabled{opacity:.3;cursor:not-allowed;}
-  body.print-preview .reorderbtns{display:none;}
+  body.printing-selected .reorderbtns{display:none;}
   @media print{ .reorderbtns{display:none;} }
   .wagewrap input{width:52px;font-size:10px;padding:2px;border:1px solid var(--line);border-radius:4px;}
   .wagewrap input.missing{border-color:var(--loss-ink);background:#FBEAEA;}
@@ -107,10 +252,12 @@
   .shifttime{font-size:11.5px;font-family:'Noto Sans JP',sans-serif;border:1px solid var(--line);border-radius:4px;padding:3px 2px;width:64px;background:#fff;color:var(--ink);text-align:center;}
   .shifttime.invalid{border-color:var(--loss-ink);background:#FBEAEA;color:var(--loss-ink);}
   .cellpair{display:flex;gap:2px;justify-content:center;}
+  td.shiftcell{position:relative;}
+  .holiday-work-badge{position:absolute;top:1px;right:1px;background:var(--loss-ink);color:#fff;font-size:8px;font-weight:700;padding:0 3px;border-radius:3px;line-height:1.4;z-index:1;}
 
-  tfoot td{font-weight:600;background:#EDE8D9;}
+  tfoot td, #dailypltable td{font-weight:600;background:#EDE8D9;}
   tfoot tr.section-label td{background:var(--teal-deep);color:#F6F2E4;font-size:11px;text-align:left;padding-left:10px;}
-  tfoot .staffcol{background:#EDE8D9;}
+  tfoot .staffcol, #dailypltable .staffcol{background:#EDE8D9;}
   tr.pl td{font-size:13px;}
   td.profit{background:var(--profit-bg);color:var(--profit-ink);}
   td.loss{background:var(--loss-bg);color:var(--loss-ink);}
@@ -121,6 +268,10 @@
 
   /* summary panel */
   .sumtable input.cnt{width:44px;font-size:11px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:2px 1px;background:#fff;}
+  .sumtable input.cnt:disabled{background:#EDEFF3;color:#8891A0;cursor:not-allowed;border-color:#D7DEEA;}
+  td.past-locked{position:relative;}
+  .past-lock-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;color:#8891A0;background:#F4F6FA;border:1px solid var(--line);border-radius:8px;padding:7px 12px;margin-bottom:10px;}
+  .past-lock-bar.unlocked{color:var(--profit-ink);background:var(--profit-bg);border-color:#BFE0C6;}
   input.jobcount{width:44px;font-size:11px;font-weight:700;text-align:center;border:1px solid rgba(0,0,0,0.2);border-radius:4px;padding:2px 1px;background:rgba(255,255,255,0.6);}
   .row-resrooms input{background:#FFF3B0;}
   .row-plainrooms input,.row-plainguests input{background:#DFF2E1;}
@@ -149,74 +300,80 @@
   .swatchbtn:hover{outline:2px solid var(--teal-deep);}
   .swatchremove{position:absolute;right:2px;top:2px;bottom:2px;width:16px;border:none;background:rgba(255,255,255,0.55);border-radius:4px;font-size:10px;line-height:1;cursor:pointer;color:#8C2F2F;font-weight:700;}
   .swatchremove:hover{background:#fff;}
-  body.print-preview .colorbar{display:none;}
+  body.printing-selected .colorbar{display:none;}
   @media print{ .colorbar{display:none;} .color-popup{display:none !important;} .modal-overlay{display:none !important;} }
 
   .modal-overlay{position:fixed;inset:0;background:rgba(30,42,50,0.45);z-index:200;display:flex;align-items:center;justify-content:center;}
   .modal-box{background:#fff;border-radius:12px;padding:20px 22px;min-width:280px;box-shadow:0 12px 40px rgba(0,0,0,0.25);}
   .modal-box input[type=password]{width:100%;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;margin-top:8px;}
 
-  /* ---- 印刷プレビュー（縦連結・列幅を完全一致させる） ---- */
-  body.print-preview .toolbar,
-  body.print-preview .staffadd,
-  body.print-preview .notes,
-  body.print-preview header{display:none;}
-  body.print-preview .wrap{max-width:none;}
-  body.print-preview .cards{display:none;}
-  body.print-preview #maintable tfoot{display:none;}
-  body.print-preview .legend{display:none;}
-  body.print-preview .sectiontitle{margin:14px 0 4px;font-size:13px;}
-  body.print-preview .printjoin-top{border-radius:10px 10px 0 0;margin-bottom:0;border-bottom:none;}
-  body.print-preview .printjoin-bottom{border-radius:0 0 10px 10px;margin-top:0;}
-  body.print-preview .scroll{overflow-x:visible;}
-  body.print-preview table{table-layout:fixed;width:auto;min-width:0;font-size:9px;}
-  body.print-preview th,
-  body.print-preview td{padding:1px 1px;white-space:normal;word-break:break-word;overflow:hidden;line-height:1.1;}
-  body.print-preview .staffcol{position:static;box-shadow:none;}
-  body.print-preview .shifttime{width:100%;min-width:0;font-size:7px;padding:0;border:none;background:transparent;pointer-events:none;line-height:1.1;height:11px;}
-  body.print-preview .attcol{display:none !important;}
-  body.print-preview .attinput{width:100%;min-width:0;font-size:8px;padding:0;border:none;background:transparent;pointer-events:none;}
-  body.print-preview .cellpair{gap:0;}
-  body.print-preview .sumtable input{width:100%;min-width:0;font-size:8px;padding:0;border:none;background:transparent;pointer-events:none;text-align:center;}
-  body.print-preview input.jobcount{width:100%;min-width:0;font-size:8px;padding:0;border:none;background:transparent;pointer-events:none;text-align:center;}
-  body.print-preview .wagewrap{font-size:8px;}
-  body.print-preview .cat{font-size:8px;}
+  /* ---- タブ単位の印刷（最大2タブ・カラー印刷対応） ---- */
+  body.printing-selected .toolbar,
+  body.printing-selected .staffadd,
+  body.printing-selected .notes,
+  body.printing-selected .printselect,
+  body.printing-selected .past-lock-bar,
+  body.printing-selected header{display:none;}
+  body.printing-selected .wrap{max-width:none;}
+  body.printing-selected .cards{display:none;}
+  body.printing-selected #maintable tfoot{display:none;}
+  body.printing-selected .legend{display:none;}
+  body.printing-selected .tabpanel{ display:none !important; }
+  body.printing-selected .tabpanel.print-chosen{
+    display:block !important; border:none; border-radius:0; padding:0; margin:0 0 16px;
+  }
+  body.printing-selected .tabpanel.print-chosen > summary{
+    margin:0 0 6px; padding:0; background:transparent; border:none; font-size:13px;
+  }
+  body.printing-selected .scroll{overflow-x:visible;}
+  body.printing-selected table{table-layout:fixed;width:100% !important;min-width:0;font-size:9px;}
+  body.printing-selected th,
+  body.printing-selected td{padding:1px 1px;white-space:normal;word-break:break-word;overflow:hidden;line-height:1.1;}
+  body.printing-selected .staffcol{position:static;box-shadow:none;}
+  body.printing-selected .shifttime{width:100%;min-width:0;font-size:7px;padding:0;border:none;background:transparent;pointer-events:none;line-height:1.1;height:11px;}
+  body.printing-selected .attcol{display:none !important;}
+  body.printing-selected .attinput{width:100%;min-width:0;font-size:8px;padding:0;border:none;background:transparent;pointer-events:none;}
+  body.printing-selected .cellpair{gap:0;}
+  body.printing-selected .sumtable input{width:100%;min-width:0;font-size:8px;padding:0;border:none;background:transparent;pointer-events:none;text-align:center;}
+  body.printing-selected input.jobcount{width:100%;min-width:0;font-size:8px;padding:0;border:none;background:transparent;pointer-events:none;text-align:center;}
+  body.printing-selected .wagewrap{font-size:8px;}
+  body.printing-selected .cat{font-size:8px;}
+
+  /* 背景色などを含めてそのままカラー印刷されるようにする */
+  @media print{
+    *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important; }
+  }
 
   @media print{
     body{background:#fff;}
-    header,.toolbar,.printcontrols,.staffadd,.notes,.cards,footer,.legend{display:none !important;}
+    header,.toolbar,.printcontrols,.staffadd,.notes,.cards,footer,.legend,.tabbar,.printselect,.past-lock-bar{display:none !important;}
     #maintable tfoot{display:none;}
     .wrap{max-width:none;padding:0;}
     .tablecard{box-shadow:none;border-radius:0;}
     .scroll{overflow-x:visible;}
-    table{table-layout:fixed;width:auto;font-size:8px;min-width:0;}
+    table{table-layout:fixed;width:100% !important;font-size:8px;min-width:0;}
     th,td{padding:1px 1px;white-space:normal;word-break:break-word;overflow:hidden;line-height:1.1;}
-    .staffcol{position:static;box-shadow:none;width:70px;min-width:70px;max-width:70px;}
-    #sumtable col:not(:first-child),
-    #jobsummarytable col:not(:first-child){width:30px !important;}
-    #sumtable col:first-child,
-    #jobsummarytable col:first-child{width:70px !important;}
+    .staffcol{position:static;box-shadow:none;}
     .shifttime{width:100%;min-width:0;font-size:7px;padding:0;border:none;background:transparent;line-height:1.1;height:10px;}
     .attcol{display:none !important;}
     .attinput{width:100%;min-width:0;font-size:7px;padding:0;border:none;background:transparent;}
     .cellpair{gap:0;}
     .sumtable input{width:100%;min-width:0;font-size:7px;padding:0;border:none;background:transparent;text-align:center;}
     input.jobcount{width:100%;min-width:0;font-size:7px;padding:0;border:none;background:transparent;text-align:center;}
-    .sectiontitle{font-size:11px;margin:8px 0 4px;}
-    .printjoin-top{margin-bottom:0;border-bottom:none;}
-    .printjoin-bottom{margin-top:0;}
-    @page{ size: A4 landscape; margin: 6mm; }
+    .tabpanel{display:none !important;}
+    .tabpanel.print-chosen{display:block !important;}
   }
 </style>
+<style id="dynamicPageStyle">@page{ size: A4 landscape; margin: 6mm; }</style>
 
 </head>
 <body>
 <div class="wrap">
 
   <header>
-    <div class="mon">福</div>
+    <div class="mon">宿</div>
     <div>
-      <h1>福引屋 シフト・日次損益ダッシュボード</h1>
+      <h1>PL STUFFING PILOT <span id="facilityCodeLabel" style="font-size:15px;font-weight:500;opacity:0.85;"></span></h1>
       <p><span id="monthLabel">2026年8月</span>　勤務時間を入力すると、その日の黒字／赤字が自動で判定されます</p>
     </div>
   </header>
@@ -240,7 +397,7 @@
       <li>⑨　シフト表の各セル下部の項目名（初期表示「仕事」）をクリックすると、項目名の手入力＋好きな色の指定でそのマスを塗り分けられます。「よく使う項目」に一度使った組み合わせが自動で追加され、次回からワンクリックで選べます。各項目の「×」で個別削除、「リセット」で初期8項目に戻せます。実際にセルに色を設定すると「従業員シフト表・日次損益」の見出し横に使用中の色の凡例が表示されます（未使用時は非表示）。予約状況サマリーとシフト表の間には「仕事内容 日別集計」（項目ごとの日別人数）が自動で表示されます（未使用時は非表示。有給・休・希休・振休・欠勤はここには含まれず、シフト表右端の勤怠集計列でカウントされます）。印刷プレビューではこの色分けボタン・凡例・日別集計は非表示になります。</li>
       <li>⑩　「表示する月」欄で月を選ぶと、予約状況サマリー・仕事内容日別集計・シフト表すべての日付/曜日が選んだ月に切り替わります（CSV読み込みによる自動判定と併用できます）。</li>
       <li>⑪　シフト表の右端に「合計日数・出勤日数・有給・休日合計・休・希休・振休・欠勤」を追加しました。合計日数（月の日数）・出勤日数（時間が入力されている日数）は自動計算。有給・休・希休・振休・欠勤は、セルの「仕事内容」項目タグと連動しており、そのマスに「有給」「休」「希休」「振休」「欠勤」という項目名を設定すると自動でカウントされます（「よく使う項目」にこの5つも初期登録済みです）。休日合計は休＋希休＋振休＋欠勤の自動合計です。印刷プレビュー・印刷ではこの8列は非表示になります。</li>
-      <li>⑫　印刷プレビュー・印刷では、予約状況サマリー・仕事内容日別集計・シフト表の3表すべてで列幅（項目列70px・日付列30px）を完全に揃えているので、縦に連結した時に列がズレません。</li>
+      <li>⑫　横向きで印刷する項目（予約状況サマリー・仕事内容日別集計・シフト表・日次損益）は、選んだ項目どうしで列幅の比率を完全に揃えつつ、月の日数（28〜31日）に関わらず紙面の横幅いっぱいに広がるよう自動調整されます。</li>
     </ul>
   </details>
 
@@ -262,69 +419,186 @@
     </div>
   </div>
 
-  <div class="staffadd">
-    <span class="t-label">従業員追加：</span>
-    <input type="text" id="newCat" placeholder="区分（例：仲居）">
-    <input type="text" id="newName" placeholder="氏名">
-    <input type="number" id="newWage" placeholder="時給">
-    <input type="number" id="newBrk" placeholder="休憩(分)">
-    <button class="btn" onclick="addStaff()">追加</button>
-    <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
-    <span class="t-label">施設運転費 基本値（円/日）：</span>
-    <input type="number" id="facilityInput" value="35000" onchange="recalc(); scheduleAutoSync();" style="width:90px;">
-    <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
-    <span class="t-label">日別に上書き：</span>
-    <select id="facilityDaySelect"></select>
-    <input type="number" id="facilityDayAmount" placeholder="金額" style="width:90px;">
-    <button class="btn" onclick="applyFacilityOverride()">この日に適用</button>
-    <button class="btn" style="background:#8C2F2F;" onclick="clearFacilityOverride()">この日の上書きを解除</button>
-    <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
-    <button class="btn" id="wageToggleBtn" onclick="toggleWageVisibility()">時給・休憩を非表示にする</button>
-  </div>
+  <details class="notes" id="staffAddSection" open>
+    <summary><b>従業員追加・施設運転費の設定</b></summary>
+    <div class="staffadd">
+      <span class="t-label">従業員追加：</span>
+      <input type="text" id="newCat" placeholder="区分（例：仲居）">
+      <input type="text" id="newName" placeholder="氏名">
+      <input type="number" id="newWage" placeholder="時給">
+      <input type="number" id="newBrk" placeholder="休憩(分)">
+      <button class="btn" onclick="addStaff()">追加</button>
+      <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
+      <span class="t-label">施設運転費 基本値（円/日）：</span>
+      <input type="number" id="facilityInput" value="35000" onchange="recalc(); scheduleAutoSync();" style="width:90px;">
+      <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
+      <span class="t-label">日別に上書き：</span>
+      <select id="facilityDaySelect"></select>
+      <input type="number" id="facilityDayAmount" placeholder="金額" style="width:90px;">
+      <button class="btn" onclick="applyFacilityOverride()">この日に適用</button>
+      <button class="btn" style="background:#8C2F2F;" onclick="clearFacilityOverride()">この日の上書きを解除</button>
+      <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
+      <button class="btn" id="wageToggleBtn" onclick="toggleWageVisibility()">時給・休憩を非表示にする</button>
+      <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
+      <span class="t-label">施設コード：<b id="facilitySettingsLabel">-</b></span>
+      <button class="rmbtn" onclick="openFacilityChangeStep1Modal()">施設コードを変更</button>
+    </div>
+  </details>
 
-  <div class="cards" id="cards"></div>
+  <details class="notes" id="cardsSection" open>
+    <summary><b>月間サマリー（売上・人件費・原価・収支）</b></summary>
+    <div class="cards" id="cards"></div>
+  </details>
 
   <div class="printcontrols">
     <span class="t-label">表示する月：</span>
     <input type="month" id="monthSelector" onchange="setMonthManually()">
-    <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
-    <button class="btn" id="printPreviewBtn" onclick="togglePrintPreview()">🖨 印刷プレビュー（縦に連結して表示）</button>
-    <button class="btn" onclick="printNow()">🖨 今すぐ印刷する</button>
     <span style="width:1px;height:22px;background:var(--line);margin:0 6px;" id="desktopDivider"></span>
     <span id="cloudStatus" class="filestatus"></span>
     <span id="updateStatus" class="filestatus"></span>
     <span id="realtimeStatus" class="filestatus"></span>
   </div>
 
+  <div class="printselect" id="printSelectBar">
+    <button class="btn" onclick="printSelectedTabs()">🖨 印刷する</button>
+    <span class="t-label">印刷する項目を選択（最大2つ）：</span>
+    <label><input type="checkbox" class="printselect-cb" data-tab="summary" onchange="togglePrintSelect(this)"> 予約状況サマリー</label>
+    <label id="printSelectJobSummaryLabel" style="display:none;"><input type="checkbox" class="printselect-cb" data-tab="jobsummary" onchange="togglePrintSelect(this)"> 仕事内容日別集計</label>
+    <label><input type="checkbox" class="printselect-cb" data-tab="dailypilot" onchange="togglePrintSelect(this)"> Daily Pilot</label>
+    <label><input type="checkbox" class="printselect-cb" data-tab="staff" onchange="togglePrintSelect(this)"> シフト表</label>
+    <label><input type="checkbox" class="printselect-cb" data-tab="dailypl" onchange="togglePrintSelect(this)"> 日次損益</label>
+  </div>
+
   <div id="printzone">
-    <div class="sectiontitle">予約状況サマリー（innto予約CSV連動・全セル編集可）</div>
-    <div class="tablecard printjoin-top">
-      <div class="scroll">
-        <table id="sumtable" class="sumtable"></table>
+    <details class="tabpanel" data-tab="summary" id="panelSummary" open>
+      <summary>予約状況サマリー（innto予約CSV連動・全セル編集可）</summary>
+      <div class="past-lock-bar" id="pastLockBar">
+        <span id="pastLockStatus">🔒 過去の日付は編集ロック中（誤って上書きされるのを防止）</span>
+        <input type="text" id="pastLockCodeInput" placeholder="施設コードを入力" style="max-width:160px;">
+        <button class="btn" onclick="unlockPastDates()">ロック解除</button>
+        <button class="rmbtn" id="pastLockRelockBtn" style="display:none;" onclick="relockPastDates()">再ロックする</button>
       </div>
-    </div>
+      <div class="tablecard">
+        <div class="scroll">
+          <table id="sumtable" class="sumtable"></table>
+        </div>
+      </div>
+    </details>
 
-    <div class="sectiontitle" id="jobSummaryTitle" style="display:none;">仕事内容 日別集計（色分けされたマスの人数）</div>
-    <div class="tablecard" id="jobSummaryCard" style="display:none;">
-      <div class="scroll">
-        <table id="jobsummarytable"></table>
+    <details class="tabpanel" data-tab="jobsummary" id="panelJobSummary" style="display:none;">
+      <summary>仕事内容 日別集計（色分けされたマスの人数）</summary>
+      <div class="tablecard">
+        <div class="scroll">
+          <table id="jobsummarytable"></table>
+        </div>
       </div>
-    </div>
+    </details>
 
-    <div class="sectiontitle" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-      <span>従業員シフト表・日次損益</span>
-      <span id="cellColorLegend" class="cellcolor-legend"></span>
-    </div>
-    <div class="tablecard printjoin-bottom">
-      <div class="scroll">
-        <table id="maintable"></table>
+    <details class="tabpanel dailypilot" data-tab="dailypilot" id="panelDailyPilot" open>
+      <summary><b>📊 Daily Pilot（日別・時間帯別 人員配置）</b></summary>
+      <div style="font-size:11px;color:var(--muted-ink,#7a8a8e);margin-bottom:8px;">操作方法：ゲージ・図形は<b>ドラッグで移動</b>、端や角をドラッグで<b>拡大縮小</b>、<b>ダブルクリックで文字入力</b>できます。</div>
+      <div class="dp-daytabs" id="dpDayTabs"></div>
+      <div class="dp-body" id="dpBody">
+        <div class="dp-timeline-head" id="dpTimelineHead">
+          <span class="dp-timeline-title">スタッフタイムライン</span>
+          <select id="dpStaffSelect"></select>
+          <button class="btn" onclick="dpAddRow()">＋ 行を追加</button>
+        </div>
+        <div class="dp-rows" id="dpRows"></div>
+
+        <div class="dp-floor-head">会場図面</div>
+        <div class="dp-floorplans">
+          <div class="dp-floorplan-wrap">
+            <div class="dp-floorplan-title">会場図面 ①</div>
+            <div class="dp-floorplan-toolbar" data-fp="0">
+              <button class="rmbtn" onclick="dpAddShape(0,'rect')">▭ 四角</button>
+              <button class="rmbtn" onclick="dpAddShape(0,'circle')">◯ 丸</button>
+              <button class="rmbtn" onclick="dpAddShape(0,'line')">─ 線</button>
+              <button class="rmbtn" onclick="dpAddShape(0,'text')">Ａ テキスト</button>
+              <button class="rmbtn" onclick="dpClearFloorplan(0)">全消去</button>
+            </div>
+            <div class="dp-floorplan-canvas" id="dpFloorplan0"></div>
+          </div>
+          <div class="dp-floorplan-wrap">
+            <div class="dp-floorplan-title">会場図面 ②</div>
+            <div class="dp-floorplan-toolbar" data-fp="1">
+              <button class="rmbtn" onclick="dpAddShape(1,'rect')">▭ 四角</button>
+              <button class="rmbtn" onclick="dpAddShape(1,'circle')">◯ 丸</button>
+              <button class="rmbtn" onclick="dpAddShape(1,'line')">─ 線</button>
+              <button class="rmbtn" onclick="dpAddShape(1,'text')">Ａ テキスト</button>
+              <button class="rmbtn" onclick="dpClearFloorplan(1)">全消去</button>
+            </div>
+            <div class="dp-floorplan-canvas" id="dpFloorplan1"></div>
+          </div>
+        </div>
       </div>
-      <div class="legend">
-        <span><span class="swatch" style="background:var(--profit-bg);border:1px solid var(--profit-ink);"></span>黒字の日</span>
-        <span><span class="swatch" style="background:var(--loss-bg);border:1px solid var(--loss-ink);"></span>赤字の日</span>
-        <span>収支＝売上（手数料控除後）－人件費－夕食原価－朝食原価－施設運転費</span>
+    </details>
+
+    <details class="tabpanel" data-tab="staff" id="panelStaff" open>
+      <summary style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span>従業員シフト表</span>
+        <span id="cellColorLegend" class="cellcolor-legend"></span>
+      </summary>
+      <div class="tablecard">
+        <div class="scroll">
+          <table id="maintable"></table>
+        </div>
       </div>
-    </div>
+    </details>
+
+    <details class="tabpanel" data-tab="dailypl" id="panelDailyPL" open>
+      <summary>日次損益（人件費・原価・施設運転費・売上・収支）</summary>
+      <div class="tablecard">
+        <div class="scroll">
+          <table id="dailypltable"></table>
+        </div>
+        <div class="legend">
+          <span><span class="swatch" style="background:var(--profit-bg);border:1px solid var(--profit-ink);"></span>黒字の日</span>
+          <span><span class="swatch" style="background:var(--loss-bg);border:1px solid var(--loss-ink);"></span>赤字の日</span>
+          <span>収支＝売上（手数料控除後）－人件費－夕食原価－朝食原価－施設運転費</span>
+        </div>
+      </div>
+    </details>
+
+    <details class="tabpanel" data-tab="evaluation" id="panelEvaluation" open>
+      <summary id="evalSummaryLabel">🔒 人事評価シート（従業員別・パスワード保護）</summary>
+
+      <div id="evalLockedView">
+        <p style="font-size:12.5px;color:var(--muted-ink,#7a8a8e);margin:0 0 10px;">この項目はパスワードで保護されています。パスワードを入力すると閲覧・編集できます。</p>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input type="password" id="evalPasswordInput" placeholder="パスワード" style="max-width:200px;" onkeydown="if(event.key==='Enter') unlockEvaluation();">
+          <button class="btn" onclick="unlockEvaluation()">ロック解除</button>
+        </div>
+        <div id="evalPasswordError" style="color:var(--loss-ink);font-size:11px;margin-top:6px;min-height:14px;"></div>
+      </div>
+
+      <div id="evalUnlockedView" style="display:none;">
+        <div class="eval-controls">
+          <span class="t-label">対象者：</span>
+          <select id="evalStaffSelect" onchange="evalOnStaffChange()"></select>
+          <span class="t-label">評価期間：</span>
+          <select id="evalRecordSelect" onchange="evalOnRecordChange()"></select>
+          <button class="btn" onclick="evalAddRecord()">＋ 新しい評価を追加</button>
+          <button class="rmbtn" onclick="evalDeleteRecord()">この評価を削除</button>
+          <button class="btn" onclick="printEvaluationNow()">🖨 この評価をA4縦で印刷</button>
+          <button class="rmbtn" onclick="lockEvaluation()">🔒 ロックする</button>
+        </div>
+        <div id="evalFormArea"></div>
+      </div>
+    </details>
+
+    <details class="tabpanel" data-tab="labor" id="panelLabor" open>
+      <summary style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <span>労務（勤務時間・社会保険・雇用保険・所得税概算・交通費）</span>
+        <button class="rmbtn" onclick="openLaborSettingsModal()">⚙ 料率設定</button>
+      </summary>
+      <div style="font-size:11px;color:var(--loss-ink);margin-bottom:8px;">社会保険料・所得税は概算です。正確な金額は社労士・税理士にご確認ください。</div>
+      <div class="tablecard">
+        <div class="scroll">
+          <table id="labortable"></table>
+        </div>
+      </div>
+    </details>
   </div>
 
   <footer>by OVERA</footer>
@@ -332,8 +606,8 @@
 
 <div id="wagePasswordModal" class="modal-overlay" style="display:none;">
   <div class="modal-box">
-    <div class="color-popup-title">時給・休憩を表示するにはパスワードが必要です</div>
-    <input type="password" id="wagePasswordInput" placeholder="パスワード" onkeydown="if(event.key==='Enter') submitWagePassword();">
+    <div class="color-popup-title">時給・休憩を表示するには施設コードが必要です</div>
+    <input type="password" id="wagePasswordInput" placeholder="施設コード" onkeydown="if(event.key==='Enter') submitWagePassword();">
     <div id="wagePasswordError" style="color:var(--loss-ink);font-size:11px;margin-top:4px;min-height:14px;"></div>
     <div style="display:flex;gap:8px;margin-top:10px;">
       <button class="btn" style="flex:1;" onclick="submitWagePassword()">表示する</button>
@@ -352,6 +626,103 @@
   </div>
 </div>
 
+<div id="commuteModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <h3 id="commuteModalTitle">交通費設定</h3>
+    <div style="display:flex;flex-direction:column;gap:8px;font-size:12.5px;">
+      <label>通勤手段：
+        <select id="commuteMethodInput" onchange="updateCommuteFieldsVisibility()" style="width:100%;margin-top:3px;">
+          <option value="電車">電車</option>
+          <option value="バス">バス</option>
+          <option value="公共交通機関">公共交通機関（その他）</option>
+          <option value="自家用車">自家用車</option>
+        </select>
+      </label>
+      <div id="commuteFixedFields">
+        <label>1日あたりの固定額（円）：
+          <input type="number" id="commuteFixedAmountInput" min="0" style="width:100%;margin-top:3px;">
+        </label>
+      </div>
+      <div id="commuteCarFields" style="display:none;">
+        <label>通勤距離（km）：
+          <input type="number" id="commuteDistanceInput" min="0" step="0.1" style="width:100%;margin-top:3px;">
+        </label>
+        <label style="margin-top:6px;display:block;">1kmあたりの単価（円）：
+          <input type="number" id="commuteRateInput" min="0" style="width:100%;margin-top:3px;">
+        </label>
+      </div>
+      <div style="font-size:11px;color:var(--muted-ink,#7a8a8e);">出勤日ごとに自動計算され、日次損益・労務に反映されます。</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn" style="flex:1;" onclick="saveCommuteSettings()">保存</button>
+      <button class="rmbtn" style="flex:1;" onclick="closeCommuteModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<div id="laborSettingsModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <h3>労務・料率設定</h3>
+    <div style="font-size:11px;color:var(--loss-ink);margin-bottom:8px;">健康保険料率・所得税概算率は都道府県や個人状況により異なります。必ず社労士・税理士に確認の上、正しい数字を設定してください。</div>
+    <div style="display:flex;flex-direction:column;gap:8px;font-size:12.5px;">
+      <label>雇用保険料率（労働者負担・%）：
+        <input type="number" id="laborEmploymentRateInput" min="0" step="0.01" style="width:100%;margin-top:3px;">
+      </label>
+      <label>健康保険料率（労働者負担・%）：
+        <input type="number" id="laborHealthRateInput" min="0" step="0.01" style="width:100%;margin-top:3px;">
+      </label>
+      <label>厚生年金保険料率（労働者負担・%）：
+        <input type="number" id="laborPensionRateInput" min="0" step="0.01" style="width:100%;margin-top:3px;">
+      </label>
+      <label>所得税 概算天引き率（%）：
+        <input type="number" id="laborIncomeTaxRateInput" min="0" step="0.01" style="width:100%;margin-top:3px;">
+      </label>
+      <label>社会保険の加入対象とする週の勤務時間（時間以上）：
+        <input type="number" id="laborSocialThresholdInput" min="0" step="0.5" style="width:100%;margin-top:3px;">
+      </label>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn" style="flex:1;" onclick="saveLaborSettings()">保存</button>
+      <button class="rmbtn" style="flex:1;" onclick="closeLaborSettingsModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<div id="facilityOnboardingModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <h3>施設コードを入力してください</h3>
+    <p style="font-size:12px;color:var(--muted-ink,#7a8a8e);">この端末が、どの施設のデータを利用するかを決めます。同じ施設コードを入力した端末同士でデータが共有されます。初めてこのアプリを使う施設は、本部から案内された施設コードを入力してください。</p>
+    <input type="text" id="facilityOnboardingInput" placeholder="施設コード" style="width:100%;margin-top:6px;">
+    <div id="facilityOnboardingError" style="color:var(--loss-ink);font-size:11px;margin-top:4px;min-height:14px;"></div>
+    <button class="btn" style="width:100%;margin-top:10px;" onclick="submitFacilityOnboarding()">この施設コードで始める</button>
+  </div>
+</div>
+
+<div id="facilityChangeStep1Modal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <h3>施設コードの変更</h3>
+    <p style="font-size:12px;color:var(--muted-ink,#7a8a8e);">施設コードの変更には開発者IDが必要です。</p>
+    <input type="password" id="facilityChangeDevIdInput" placeholder="開発者ID">
+    <div id="facilityChangeStep1Error" style="color:var(--loss-ink);font-size:11px;margin-top:4px;min-height:14px;"></div>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn" style="flex:1;" onclick="verifyDeveloperIdForFacilityChange()">次へ</button>
+      <button class="rmbtn" style="flex:1;" onclick="closeFacilityChangeStep1Modal()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<div id="facilityChangeStep2Modal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <h3>新しい施設コードを入力</h3>
+    <p style="font-size:12px;color:var(--muted-ink,#7a8a8e);">現在の施設コード：<span id="facilityChangeCurrentLabel"></span></p>
+    <input type="text" id="facilityChangeNewInput" placeholder="新しい施設コード">
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn" style="flex:1;" onclick="confirmFacilityChange()">変更する</button>
+      <button class="rmbtn" style="flex:1;" onclick="closeFacilityChangeStep2Modal()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <div id="colorPopup" class="color-popup" style="display:none;">
   <div class="color-popup-title">仕事内容を設定</div>
   <div class="color-popup-row">
@@ -359,6 +730,10 @@
     <input type="color" id="tagColorInput" value="#F4CCCC">
   </div>
   <button class="btn" style="width:100%;margin-bottom:8px;" onclick="applyCellTag()">このマスに適用</button>
+  <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;margin-bottom:8px;cursor:pointer;">
+    <input type="checkbox" id="holidayWorkCheckbox" onchange="toggleHolidayWork(this.checked)">
+    法定休日出勤として計算する（給与+35%）
+  </label>
   <div class="color-popup-title" style="margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;">
     <span>よく使う項目から選ぶ</span>
     <button class="rmbtn" onclick="resetPresets()" title="よく使う項目を初期状態に戻す">リセット</button>
@@ -390,7 +765,7 @@ function monthKey(y,m){ return `${y}-${m}`; }
 
 function saveCurrentMonthToStore(){
   MONTHLY_DATA[monthKey(CURRENT_YEAR, CURRENT_MONTH)] = {
-    CELL_TAG, SHIFT_TEXT, SUMMARY_VALUES, JOB_SUMMARY_OVERRIDE, REVENUE, FACILITY_OVERRIDE
+    CELL_TAG, SHIFT_TEXT, SUMMARY_VALUES, JOB_SUMMARY_OVERRIDE, REVENUE, FACILITY_OVERRIDE, DAILY_PILOT, HOLIDAY_WORK
   };
 }
 
@@ -402,6 +777,9 @@ function loadMonthFromStore(y, m){
   JOB_SUMMARY_OVERRIDE = data ? (data.JOB_SUMMARY_OVERRIDE||{}) : {};
   REVENUE = data ? (data.REVENUE||{}) : {};
   FACILITY_OVERRIDE = data ? (data.FACILITY_OVERRIDE||{}) : {};
+  DAILY_PILOT = data ? (data.DAILY_PILOT||{}) : {};
+  HOLIDAY_WORK = data ? (data.HOLIDAY_WORK||{}) : {};
+  DP_CURRENT_DAY = 1;
 }
 
 // 表示する月を切り替える：今の月の内容をMONTHLY_DATAへ保存してから、切替先の月の内容を読み込む
@@ -424,36 +802,30 @@ function setMonthManually(){
   renderSummaryTable();
   renderJobSummaryTable();
   renderStaffTable();
+  renderDailyPilot();
   recalc();
 }
 
-// 3表（予約状況サマリー／仕事内容日別集計／シフト表）の列幅をJS側で確実に一致させる
-// PRINT_MODEがfalse（通常表示）: サマリー系2表は160/64px固定、シフト表はcolgroupなし（内容に応じて自動）
-// PRINT_MODEがtrue（印刷プレビュー）: 画面の横幅いっぱいに広がるよう動的に計算した値を3表で共有
-// 実際に紙へ印刷する瞬間だけは、画面幅に関係なくA4横向きに確実に収まる固定値に切り替える（beforeprintで実施）
+// 予約状況サマリー／仕事内容日別集計／シフト表の列幅をJS側で確実に一致させる。
+// PRINT_MODEがfalseの時（画面表示）は160/64px固定。
+// PRINT_MODEがtrueの時（実際に印刷する瞬間）は、%指定にして紙面の横幅ぴったりに埋める
+// （pxで固定すると、印刷エンジン側の実際のページ幅とズレて余白が出ることがあるため）。
 let PRINT_MODE = false;
 const NORMAL_STAFFCOL_W = 160;
 const NORMAL_DAYCOL_W = 64;
 const A4_STAFFCOL_W = 84;
 const A4_DAYCOL_W = 30;
+let PRINT_UNIT = "px";           // "px"（A4縦の固定サイズ用）または "%"（A4横で紙面いっぱいに埋める用）
 let PRINT_STAFFCOL_W = A4_STAFFCOL_W;
 let PRINT_DAYCOL_W = A4_DAYCOL_W;
-
-// 画面上の印刷プレビューで、カード幅いっぱいに列を均等配分して余白が出ないようにする
-function computePrintPreviewColWidths(){
-  const card = document.querySelector(".printjoin-top") || document.querySelector(".tablecard");
-  const avail = card ? card.clientWidth : (A4_STAFFCOL_W + A4_DAYCOL_W*DAYS);
-  const dayW = Math.max(A4_DAYCOL_W, Math.floor((avail - A4_STAFFCOL_W) / DAYS));
-  const staffW = Math.max(A4_STAFFCOL_W, avail - dayW*DAYS); // 端数の余りは項目／従業員列にすべて割り当てて余白をなくす
-  return {staffW, dayW};
-}
 
 // 予約状況サマリー・仕事内容日別集計用：常に明示的な列幅を持つ
 function buildAlignedColgroup(){
   const staffW = PRINT_MODE ? PRINT_STAFFCOL_W : NORMAL_STAFFCOL_W;
   const dayW = PRINT_MODE ? PRINT_DAYCOL_W : NORMAL_DAYCOL_W;
-  let html = `<colgroup><col style="width:${staffW}px">`;
-  for(let d=1; d<=DAYS; d++) html += `<col style="width:${dayW}px">`;
+  const unit = PRINT_MODE ? PRINT_UNIT : "px";
+  let html = `<colgroup><col style="width:${staffW}${unit}">`;
+  for(let d=1; d<=DAYS; d++) html += `<col style="width:${dayW}${unit}">`;
   html += "</colgroup>";
   return html;
 }
@@ -461,9 +833,10 @@ function buildAlignedColgroup(){
 // シフト表用：通常表示ではcolgroupなし（勤務時間入力欄の幅に合わせて自動）、印刷時のみ他の2表と同じ幅に固定
 function buildMainColgroup(extraCols){
   if(!PRINT_MODE) return "";
-  let html = `<colgroup><col style="width:${PRINT_STAFFCOL_W}px">`;
-  for(let d=1; d<=DAYS; d++) html += `<col style="width:${PRINT_DAYCOL_W}px">`;
-  for(let i=0; i<(extraCols||0); i++) html += `<col style="width:${PRINT_DAYCOL_W}px">`;
+  let html = `<colgroup><col style="width:${PRINT_STAFFCOL_W}${PRINT_UNIT}">`;
+  for(let d=1; d<=DAYS; d++) html += `<col style="width:${PRINT_DAYCOL_W}${PRINT_UNIT}">`;
+  // 勤怠集計列（extraCols）は印刷時に必ず非表示（.attcol{display:none}）になるため、
+  // colgroupにも含めない（含めると合計が100%を超えて余白の原因になる）
   html += "</colgroup>";
   return html;
 }
@@ -472,10 +845,21 @@ function buildMainColgroup(extraCols){
 function cellW(isStaffCol){
   if(!PRINT_MODE) return "";
   const w = isStaffCol ? PRINT_STAFFCOL_W : PRINT_DAYCOL_W;
-  return ` style="width:${w}px;min-width:${w}px;max-width:${w}px;"`;
+  return ` style="width:${w}${PRINT_UNIT};min-width:${w}${PRINT_UNIT};max-width:${w}${PRINT_UNIT};"`;
 }
 
 let FACILITY_OVERRIDE = {}; // {day: amount} 施設運転費の日別上書き
+
+// 労務関連の料率設定（施設ごとに1つ）。健康保険料率・所得税概算率は都道府県や個人の状況で変わるため、
+// 必ず施設側で正しい数字に設定してから使用すること（社労士・税理士に確認推奨）。
+let LABOR_SETTINGS = {
+  employmentInsuranceRate: 0.5,     // 雇用保険料率（労働者負担分・%）令和8年度・一般の事業の値を初期値とする
+  healthInsuranceRate: 5.0,         // 健康保険料率（労働者負担分・%、都道府県協会けんぽにより異なる。要設定）
+  pensionRate: 9.15,                // 厚生年金保険料率（労働者負担分・%、全国一律18.3%の折半）
+  incomeTaxRate: 3.0,               // 所得税の概算天引き率（%、正確な源泉徴収税額表の代用。要確認）
+  socialInsuranceWeeklyHours: 30,   // 週の平均勤務時間がこれ以上で社会保険加入対象とみなす（4分の3基準の簡易判定）
+};
+
 
 function renderFacilityDaySelect(){
   const sel = document.getElementById("facilityDaySelect");
@@ -517,7 +901,9 @@ function detectAndApplyMonth(dateList){
   updateMonthLabel();
   renderFacilityDaySelect();
   renderSummaryTable();
+  renderJobSummaryTable();
   renderStaffTable();
+  renderDailyPilot();
   return true;
 }
 
@@ -548,7 +934,28 @@ let PRESETS = [
  {label:"欠勤",color:LEAVE_COLORS["欠勤"]},
 ];
 let CELL_TAG = {}; // key: "氏名_日" -> {label, color}
+let HOLIDAY_WORK = {}; // key: "氏名_日" -> true（法定休日出勤として給与+35%で計算）
 let JOB_SUMMARY_OVERRIDE = {}; // key: "項目名_日" -> 仕事内容日別集計の手入力上書き
+let DAILY_PILOT = {}; // key: 日 -> {rows:[{id,staffName,blocks:[{id,startMin,endMin,text,color}]}], floorplans:[{shapes:[...]}, {shapes:[...]}]}
+let EVALUATIONS = {}; // key: 氏名 -> [ {id, year, half, affiliation, joinDate, periodPast, periodCurrent, ratings:{itemId:'S'|'A'|'B'|'C'|'D'}, comment, evaluatorName} ]
+let evaluationUnlocked = false; // パスワード解除状態（アプリ再起動・ロック操作でリセット）
+let EVAL_CURRENT_STAFF = null;
+let EVAL_CURRENT_RECORD_ID = null;
+const EVAL_PASSWORD = "29biki8";
+const EVAL_RATING_POINTS = { S:10, A:8, B:6, C:4, D:2 };
+let EVAL_ITEMS = [
+  { id:"rule", section:"態度評価", name:"1．規律性", bullets:["就業規則や規則・規程を遵守し、職場の秩序の維持に努めていたか","上司の指示・命令によく従って対応したか"] },
+  { id:"coop", section:"態度評価", name:"2．協調性", bullets:["上司、同僚としっかりとコミュニケーションを取り、仕事を進めていたか","自分勝手な行動はなかったか","他の同僚が忙しい時に、自ら進んでサポートする姿勢が見られたか"] },
+  { id:"resp", section:"態度評価", name:"3．責任感", bullets:["与えられた仕事を、最後まで責任を持って成し遂げたか","自分の役割をよく自覚し、期待に応えるよう仕事に取り組んだか"] },
+  { id:"active", section:"態度評価", name:"4．積極性", bullets:["与えられた仕事に対して、積極的に取り組んだか","仕事の改善や範囲拡大をしようとする姿勢が見られたか"] },
+  { id:"knowledge", section:"能力評価", name:"5．業務知識・遂行能力", bullets:["担当する仕事を遂行する上で、必要とされる実務的な知識を習得しているか","関連する業務について、一般的な知識を習得しているか"] },
+  { id:"understanding", section:"能力評価", name:"6．理解力", bullets:["上司からの指示・命令を正しく理解しているか","仕事の目的、内容を正しく理解しているか","同じことを何度も繰り返し聞くことはないか"] },
+  { id:"expression", section:"能力評価", name:"7．表現力", bullets:["仕事の進み具合や結果について、口頭だけでなく、文章で明確に報告できるか","話し方、書き方が回りくどくないか"] },
+  { id:"creativity", section:"成績評価", name:"8．創意工夫", bullets:["惰性で仕事へ取り組んでいないか","仕事の改善、効率化について、提案を行うことがあるか"] },
+  { id:"workload", section:"成績評価", name:"9．仕事の量", bullets:["与えられた仕事を、迅速に遂行したか","期限、期日に遅れることはなかったか","仕事の量は、能力にふさわしいものであったか"] },
+  { id:"quality", section:"成績評価", name:"10．仕事の質", bullets:["与えられた仕事を、正確に遂行したか","ミスを発生することはなかったか","仕事の出来栄えは良かったか"] },
+];
+let DP_CURRENT_DAY = 1; // Daily Pilotで今表示している日
 let SHIFT_TEXT = {}; // key: "氏名_日" -> 入力された勤務時間の文字列（再描画しても消えないように保持）
 let colorPopupTarget = null;
 function cellColorKey(name,d){ return name + "_" + d; }
@@ -644,6 +1051,7 @@ function renderStaffTable(){
           <span>円 /</span>
           <input type="number" value="${st.brk??''}" placeholder="休憩" data-si="${si}" data-field="brk" onchange="updateWage(this)" style="width:40px;">
           <span>分</span>
+          <button class="rmbtn" onclick="openCommuteModal(${si})" title="交通費設定">🚃交通費</button>
           <button class="rmbtn" onclick="removeStaff(${si})">削除</button>
         </div>`
       : `<div class="wagewrap"><span>🔒 非表示</span></div>`;
@@ -664,7 +1072,9 @@ function renderStaffTable(){
       const wDay = PRINT_MODE ? `width:${PRINT_DAYCOL_W}px;min-width:${PRINT_DAYCOL_W}px;max-width:${PRINT_DAYCOL_W}px;` : "";
       const bg = ` style="${tag ? `background:${tag.color};` : ""}${wDay}"`;
       const barText = tag ? tag.label : "仕事";
+      const holidayBadge = HOLIDAY_WORK[ckey] ? `<span class="holiday-work-badge" title="法定休日出勤（給与+35%）">休出</span>` : "";
       tbody += `<td class="shiftcell" data-name="${st.name}" data-d="${d}"${bg}>
+        ${holidayBadge}
         <div class="cellpair">${buildTimeInput(si,d,preVal)}</div>
         <div class="colorbar" onclick="openColorPicker(event,'${st.name.replace(/'/g,"\\'")}',${d})" title="仕事内容の色・項目を設定">${barText}</div>
       </td>`;
@@ -681,20 +1091,34 @@ function renderStaffTable(){
   });
   tbody += "</tbody>";
 
-  let tfoot = "<tfoot>";
-  tfoot += "<tr class='section-label'><td colspan='"+(DAYS+1+ATT_COLS.length)+"'>日別 集計</td></tr>";
-  const rows = [["labor","人件費（円）"],["dn","夕食人数"],["bn","朝食人数"],["dc","夕食原価（円）"],["bc","朝食原価（円）"],["fac","施設運転費（円）"],["rev","売上（手数料控除後・円）"],["pl","収支（黒字／赤字）"]];
-  rows.forEach(([id,label])=>{
-    tfoot += `<tr class="${id==='pl'?'pl':''}"><td class="staffcol">${label}</td>`;
-    for(let d=1; d<=DAYS; d++) tfoot += `<td id="${id}-${d}"></td>`;
-    ATT_COLS.forEach(()=> tfoot += `<td class="attcol"></td>`);
-    tfoot += "</tr>";
-  });
-  tfoot += "</tfoot>";
-
-  table.innerHTML = colgroup + thead + tbody + tfoot;
+  table.innerHTML = colgroup + thead + tbody;
   renderCellColorLegend();
   renderJobSummaryTable();
+  renderDailyPL();
+}
+
+// 日次損益（人件費・原価・施設運転費・売上・収支）：シフト表とは別の独立した表
+function renderDailyPL(){
+  const table = document.getElementById("dailypltable");
+  if(!table) return;
+  const colgroup = buildMainColgroup(0);
+
+  let thead = `<thead><tr><th class='staffcol'${cellW(true)}>項目</th>`;
+  for(let d=1; d<=DAYS; d++) thead += `<th${cellW(false)}>${d}日</th>`;
+  thead += `</tr><tr class='wk'><th class='staffcol'${cellW(true)}>曜日</th>`;
+  for(let d=1; d<=DAYS; d++) thead += `<th class="${wkClass(d)}"${cellW(false)}>${weekdayOf(d)}</th>`;
+  thead += "</tr></thead>";
+
+  let tbody = "<tbody>";
+  const rows = [["labor","人件費（円）"],["commute","交通費（円）"],["dn","夕食人数"],["bn","朝食人数"],["dc","夕食原価（円）"],["bc","朝食原価（円）"],["fac","施設運転費（円）"],["rev","売上（手数料控除後・円）"],["pl","収支（黒字／赤字）"]];
+  rows.forEach(([id,label])=>{
+    tbody += `<tr class="${id==='pl'?'pl':''}"><td class="staffcol"${cellW(true)}>${label}</td>`;
+    for(let d=1; d<=DAYS; d++) tbody += `<td id="${id}-${d}"${cellW(false)}></td>`;
+    tbody += "</tr>";
+  });
+  tbody += "</tbody>";
+
+  table.innerHTML = colgroup + thead + tbody;
 }
 
 function updateWage(el){
@@ -704,6 +1128,148 @@ function updateWage(el){
   el.classList.toggle("missing", field==="wage" && (STAFF[si].wage===null));
   recalc();
   scheduleAutoSync();
+}
+
+/* ===================== 交通費設定 ===================== */
+let commuteEditIndex = null;
+
+function openCommuteModal(si){
+  commuteEditIndex = si;
+  const st = STAFF[si];
+  const c = st.commute || { method:"公共交通機関", fixedAmount:0, distanceKm:0, ratePerKm:0 };
+  document.getElementById("commuteModalTitle").textContent = `交通費設定（${st.name}）`;
+  document.getElementById("commuteMethodInput").value = c.method || "公共交通機関";
+  document.getElementById("commuteFixedAmountInput").value = c.fixedAmount || 0;
+  document.getElementById("commuteDistanceInput").value = c.distanceKm || 0;
+  document.getElementById("commuteRateInput").value = c.ratePerKm || 0;
+  updateCommuteFieldsVisibility();
+  document.getElementById("commuteModal").style.display = "flex";
+}
+
+function updateCommuteFieldsVisibility(){
+  const isCar = document.getElementById("commuteMethodInput").value === "自家用車";
+  document.getElementById("commuteFixedFields").style.display = isCar ? "none" : "";
+  document.getElementById("commuteCarFields").style.display = isCar ? "" : "none";
+}
+
+function closeCommuteModal(){
+  commuteEditIndex = null;
+  document.getElementById("commuteModal").style.display = "none";
+}
+
+function saveCommuteSettings(){
+  if(commuteEditIndex===null) return;
+  const method = document.getElementById("commuteMethodInput").value;
+  STAFF[commuteEditIndex].commute = {
+    method,
+    fixedAmount: parseFloat(document.getElementById("commuteFixedAmountInput").value) || 0,
+    distanceKm: parseFloat(document.getElementById("commuteDistanceInput").value) || 0,
+    ratePerKm: parseFloat(document.getElementById("commuteRateInput").value) || 0,
+  };
+  closeCommuteModal();
+  recalc();
+  scheduleAutoSync();
+}
+
+// この従業員の「出勤1日あたり」の交通費（自家用車：距離×単価、その他：固定額）
+function calcDailyCommuteAmount(staff){
+  const c = staff.commute;
+  if(!c) return 0;
+  if(c.method === "自家用車"){
+    return (c.distanceKm||0) * (c.ratePerKm||0);
+  }
+  return c.fixedAmount || 0;
+}
+
+/* ===================== 労務・料率設定 ===================== */
+function openLaborSettingsModal(){
+  document.getElementById("laborEmploymentRateInput").value = LABOR_SETTINGS.employmentInsuranceRate;
+  document.getElementById("laborHealthRateInput").value = LABOR_SETTINGS.healthInsuranceRate;
+  document.getElementById("laborPensionRateInput").value = LABOR_SETTINGS.pensionRate;
+  document.getElementById("laborIncomeTaxRateInput").value = LABOR_SETTINGS.incomeTaxRate;
+  document.getElementById("laborSocialThresholdInput").value = LABOR_SETTINGS.socialInsuranceWeeklyHours;
+  document.getElementById("laborSettingsModal").style.display = "flex";
+}
+
+function closeLaborSettingsModal(){
+  document.getElementById("laborSettingsModal").style.display = "none";
+}
+
+function saveLaborSettings(){
+  LABOR_SETTINGS = {
+    employmentInsuranceRate: parseFloat(document.getElementById("laborEmploymentRateInput").value) || 0,
+    healthInsuranceRate: parseFloat(document.getElementById("laborHealthRateInput").value) || 0,
+    pensionRate: parseFloat(document.getElementById("laborPensionRateInput").value) || 0,
+    incomeTaxRate: parseFloat(document.getElementById("laborIncomeTaxRateInput").value) || 0,
+    socialInsuranceWeeklyHours: parseFloat(document.getElementById("laborSocialThresholdInput").value) || 0,
+  };
+  closeLaborSettingsModal();
+  renderLaborPanel();
+  scheduleAutoSync();
+}
+
+// 1人分・その月の勤務時間や各種保険料・税額（概算）をまとめて計算する
+function computeStaffMonthlySummary(si){
+  const st = STAFF[si];
+  let totalHours = 0, grossWage = 0, commuteTotal = 0, workDays = 0;
+  for(let d=1; d<=DAYS; d++){
+    const timeInput = document.querySelector(`input.shifttime[data-si="${si}"][data-d="${d}"]`);
+    if(!timeInput) continue;
+    const parsed = parseShift(timeInput.value);
+    if(parsed && parsed.e > parsed.s && st.wage){
+      const brkHrs = (st.brk||0)/60;
+      const workStart = parsed.s;
+      const workEnd = Math.max(parsed.s, parsed.e - brkHrs);
+      if(workEnd > workStart){
+        totalHours += (workEnd - workStart);
+        workDays++;
+        const key = cellColorKey(st.name, d);
+        grossWage += calcStaffDailyWage(workStart, workEnd, st.wage, !!HOLIDAY_WORK[key]);
+        commuteTotal += calcDailyCommuteAmount(st);
+      }
+    }
+  }
+  const weeksInMonth = DAYS / 7;
+  const avgWeeklyHours = weeksInMonth > 0 ? totalHours / weeksInMonth : 0;
+  const isSocialInsured = avgWeeklyHours >= LABOR_SETTINGS.socialInsuranceWeeklyHours;
+  const employmentInsurance = grossWage * (LABOR_SETTINGS.employmentInsuranceRate/100);
+  const healthInsurance = isSocialInsured ? grossWage * (LABOR_SETTINGS.healthInsuranceRate/100) : 0;
+  const pensionInsurance = isSocialInsured ? grossWage * (LABOR_SETTINGS.pensionRate/100) : 0;
+  const incomeTaxEstimate = Math.max(0, grossWage - employmentInsurance - healthInsurance - pensionInsurance) * (LABOR_SETTINGS.incomeTaxRate/100);
+  return {
+    name: st.name, workDays, totalHours, avgWeeklyHours, grossWage,
+    isSocialInsured, employmentInsurance, healthInsurance, pensionInsurance,
+    incomeTaxEstimate, commuteTotal,
+  };
+}
+
+function renderLaborPanel(){
+  const table = document.getElementById("labortable");
+  if(!table) return;
+  let html = `<thead><tr>
+    <th class="staffcol">氏名</th>
+    <th>出勤日数</th><th>総勤務時間</th><th>週平均時間</th>
+    <th>社保対象</th><th>総支給額</th><th>雇用保険料</th>
+    <th>健康保険料</th><th>厚生年金</th><th>所得税(概算)</th><th>交通費</th>
+  </tr></thead><tbody>`;
+  STAFF.forEach((st,si)=>{
+    const s = computeStaffMonthlySummary(si);
+    html += `<tr>
+      <td class="staffcol">${s.name}</td>
+      <td>${s.workDays}日</td>
+      <td>${s.totalHours.toFixed(1)}h</td>
+      <td>${s.avgWeeklyHours.toFixed(1)}h</td>
+      <td>${s.isSocialInsured ? "対象" : "対象外"}</td>
+      <td>¥${Math.round(s.grossWage).toLocaleString()}</td>
+      <td>¥${Math.round(s.employmentInsurance).toLocaleString()}</td>
+      <td>¥${Math.round(s.healthInsurance).toLocaleString()}</td>
+      <td>¥${Math.round(s.pensionInsurance).toLocaleString()}</td>
+      <td>¥${Math.round(s.incomeTaxEstimate).toLocaleString()}</td>
+      <td>¥${Math.round(s.commuteTotal).toLocaleString()}</td>
+    </tr>`;
+  });
+  html += "</tbody>";
+  table.innerHTML = html;
 }
 
 // 出勤日数（時間が入力されている日をカウント）・有給/休/希休/振休/欠勤（項目タグ連動）・休日合計・合計日数を自動計算
@@ -744,7 +1310,8 @@ function addStaff(){
     cat, name,
     wage: wageRaw ? parseFloat(wageRaw) : null,
     brk: brkRaw ? parseFloat(brkRaw) : null,
-    pre: new Array(14).fill(null)
+    pre: new Array(14).fill(null),
+    commute: { method:"公共交通機関", fixedAmount:0, distanceKm:0, ratePerKm:0 }
   });
   document.getElementById("newCat").value = "";
   document.getElementById("newName").value = "";
@@ -752,6 +1319,7 @@ function addStaff(){
   document.getElementById("newBrk").value = "";
   renderStaffTable();
   recalc();
+  if(document.getElementById("dpStaffSelect")) renderDailyPilotBody();
   scheduleAutoSync();
 }
 
@@ -759,6 +1327,7 @@ function removeStaff(si){
   STAFF.splice(si,1);
   renderStaffTable();
   recalc();
+  if(document.getElementById("dpStaffSelect")) renderDailyPilotBody();
   scheduleAutoSync();
 }
 
@@ -770,10 +1339,9 @@ function moveStaff(si, dir){
   STAFF[target] = tmp;
   renderStaffTable();
   recalc();
+  if(document.getElementById("dpStaffSelect")) renderDailyPilotBody();
   scheduleAutoSync();
 }
-
-const WAGE_UNLOCK_PASSWORD = "29biki8";
 
 function toggleWageVisibility(){
   if(!wagesVisible){
@@ -804,14 +1372,14 @@ function closeWagePasswordModal(){
 function submitWagePassword(){
   const input = document.getElementById("wagePasswordInput");
   const errEl = document.getElementById("wagePasswordError");
-  if(input.value === WAGE_UNLOCK_PASSWORD){
+  if(input.value === FACILITY_CODE){
     closeWagePasswordModal();
     wagesVisible = true;
     document.getElementById("wageToggleBtn").textContent = "時給・休憩を非表示にする";
     renderStaffTable();
     recalc();
   } else {
-    errEl.textContent = "パスワードが違います";
+    errEl.textContent = "施設コードが違います";
     input.value = "";
     input.focus();
   }
@@ -835,38 +1403,95 @@ function confirmModalNo(){
   _confirmResolve = null;
 }
 
-function togglePrintPreview(){
-  document.body.classList.toggle("print-preview");
-  const on = document.body.classList.contains("print-preview");
-  PRINT_MODE = on;
-  document.getElementById("printPreviewBtn").textContent = on
-    ? "← 前の画面に戻る"
-    : "🖨 印刷プレビュー（縦に連結して表示）";
-  if(on){
-    const w = computePrintPreviewColWidths();
+/* ===================== 印刷対象パネルの対応表 ===================== */
+let CURRENT_TAB = "summary"; // Ctrl+P時に何も選択されていない場合のデフォルト
+const TAB_PANEL_IDS = {
+  summary: "panelSummary",
+  jobsummary: "panelJobSummary",
+  dailypilot: "panelDailyPilot",
+  staff: "panelStaff",
+  dailypl: "panelDailyPL",
+};
+
+/* ===================== 印刷（タブ単位・最大2つまで選択） ===================== */
+let PRINT_SELECTED_TABS = [];
+
+function setPageOrientation(orientation){
+  const el = document.getElementById("dynamicPageStyle");
+  if(!el) return;
+  if(orientation==="portrait"){
+    el.textContent = "@page{ size: A4 portrait; margin: 8mm; }";
+  } else {
+    el.textContent = "@page{ size: A4 landscape; margin: 6mm; }";
+  }
+}
+
+function togglePrintSelect(cb){
+  const tab = cb.dataset.tab;
+  if(cb.checked){
+    if(PRINT_SELECTED_TABS.length>=2){
+      cb.checked = false;
+      alert("印刷できるタブは最大2つまでです。先にどちらかのチェックを外してください。");
+      return;
+    }
+    PRINT_SELECTED_TABS.push(tab);
+  } else {
+    PRINT_SELECTED_TABS = PRINT_SELECTED_TABS.filter(t=>t!==tab);
+  }
+}
+
+// 横向き印刷時、日数（28〜31日）に関わらず紙面いっぱいに列を広げて余白をなくす
+// 横向き印刷時、日数（28〜31日）に関わらず紙面いっぱいに列を広げて余白をなくす。
+// px単位で紙面の実際の幅を予測するのは印刷エンジンによってズレるため、
+// 「項目列：日付列×日数」の比率を保ったまま%で100%ちょうどに配分する。
+function computeLandscapePrintWidths(){
+  const totalUnits = A4_STAFFCOL_W + A4_DAYCOL_W * DAYS;
+  const staffPct = (A4_STAFFCOL_W / totalUnits) * 100;
+  const dayPct = (A4_DAYCOL_W / totalUnits) * 100;
+  return {staffW: staffPct, dayW: dayPct};
+}
+
+function printSelectedTabs(){
+  if(PRINT_SELECTED_TABS.length===0){
+    alert("印刷したいタブに1〜2個チェックを入れてください。");
+    return;
+  }
+
+  // Daily Pilotの印刷用タイトル（日付）をセット
+  if(PRINT_SELECTED_TABS.includes("dailypilot")){
+    const head = document.getElementById("dpTimelineHead");
+    if(head) head.setAttribute("data-print-title", `${CURRENT_YEAR}年${CURRENT_MONTH}月${DP_CURRENT_DAY}日（${weekdayOf(DP_CURRENT_DAY)}） Daily Pilot`);
+  }
+
+  // Daily Pilot単独の時だけA4縦、それ以外（表を含む組み合わせ）はA4横
+  const onlyDailyPilot = PRINT_SELECTED_TABS.length===1 && PRINT_SELECTED_TABS[0]==="dailypilot";
+  setPageOrientation(onlyDailyPilot ? "portrait" : "landscape");
+
+  PRINT_MODE = !onlyDailyPilot; // 表を印刷する場合のみA4横の固定列幅を使う
+  if(PRINT_MODE){
+    // 横向き印刷：紙面いっぱいに広がる幅を使う（予約状況サマリー・シフト表・日次損益・仕事内容日別集計）
+    PRINT_UNIT = "%";
+    const w = computeLandscapePrintWidths();
     PRINT_STAFFCOL_W = w.staffW;
     PRINT_DAYCOL_W = w.dayW;
+  } else {
+    PRINT_UNIT = "px";
+    PRINT_STAFFCOL_W = A4_STAFFCOL_W;
+    PRINT_DAYCOL_W = A4_DAYCOL_W;
   }
+
+  // 選択されたタブに印刷用クラスを付け、確実に開いた状態にする
+  PRINT_SELECTED_TABS.forEach(name=>{
+    const el = document.getElementById(TAB_PANEL_IDS[name]);
+    if(el){ el.classList.add("print-chosen"); el.open = true; el.style.display = ""; }
+  });
+
   renderSummaryTable();
   renderJobSummaryTable();
   renderStaffTable();
   recalc();
-}
 
-function printNow(){
-  const wasPreview = document.body.classList.contains("print-preview");
-  if(!wasPreview){
-    document.body.classList.add("print-preview");
-    PRINT_MODE = true;
-    document.getElementById("printPreviewBtn").textContent = "← 前の画面に戻る";
-    const w = computePrintPreviewColWidths();
-    PRINT_STAFFCOL_W = w.staffW;
-    PRINT_DAYCOL_W = w.dayW;
-    renderSummaryTable();
-    renderJobSummaryTable();
-    renderStaffTable();
-    recalc();
-  }
+  document.body.classList.add("printing-selected");
   window.print();
 }
 
@@ -879,6 +1504,7 @@ function openColorPicker(evt, staffName, d){
 
   document.getElementById("tagLabelInput").value = current ? current.label : "";
   document.getElementById("tagColorInput").value = current ? current.color : "#F4CCCC";
+  document.getElementById("holidayWorkCheckbox").checked = !!HOLIDAY_WORK[key];
 
   renderPresetSwatches();
 
@@ -950,9 +1576,20 @@ function applyCellTag(){
   }
 }
 
+// このマスを「法定休日出勤」として給与計算に反映するかどうかの切り替え
+function toggleHolidayWork(checked){
+  if(!colorPopupTarget) return;
+  const key = cellColorKey(colorPopupTarget.staffName, colorPopupTarget.d);
+  if(checked) HOLIDAY_WORK[key] = true;
+  else delete HOLIDAY_WORK[key];
+  recalc();
+  scheduleAutoSync();
+}
+
 function renderJobSummaryTable(){
-  const titleEl = document.getElementById("jobSummaryTitle");
-  const cardEl = document.getElementById("jobSummaryCard");
+  const tabBtn = document.getElementById("tabBtnJobSummary");
+  const printLabel = document.getElementById("printSelectJobSummaryLabel");
+  const panel = document.getElementById("panelJobSummary");
   const table = document.getElementById("jobsummarytable");
   if(!table) return;
 
@@ -969,13 +1606,15 @@ function renderJobSummaryTable(){
   });
 
   if(labelOrder.length===0){
-    titleEl.style.display = "none";
-    cardEl.style.display = "none";
+    if(tabBtn) tabBtn.style.display = "none";
+    if(printLabel) printLabel.style.display = "none";
+    if(panel) panel.style.display = "none";
     table.innerHTML = "";
     return;
   }
-  titleEl.style.display = "";
-  cardEl.style.display = "";
+  if(tabBtn) tabBtn.style.display = "";
+  if(printLabel) printLabel.style.display = "";
+  if(panel){ panel.style.display = ""; panel.open = true; }
 
   const colgroup = buildAlignedColgroup();
   const wStaff = PRINT_MODE ? `width:${PRINT_STAFFCOL_W}px;min-width:${PRINT_STAFFCOL_W}px;max-width:${PRINT_STAFFCOL_W}px;` : "";
@@ -1091,6 +1730,73 @@ const SUMROWS = [
 let SUMMARY_VALUES = {}; // key: "項目キー_日" -> 入力値（再描画しても消えないように保持）
 function summaryKey(id,d){ return id + "_" + d; }
 
+// 施設コード：この端末がどの施設のデータを見る・共有するかを決める識別子。
+// パソコンごとにローカルに保存され（クラウドの共有データそのものには含まれない）、
+// 同じ施設コードの端末同士だけがデータを共有する。
+let FACILITY_CODE = null; // 起動時にinitFacilityCode()で読み込まれるまではnull
+// 開発者IDの照合はIPC経由でmain.js側が行う（画面のJSに直接書かない）
+let SUMMARY_PAST_UNLOCKED = false; // セッション中のみ有効（アプリを再起動するとロックに戻る）
+
+// 日本時間（JST=UTC+9）を基準に、指定した年月日が「今日より前」かどうかを判定する
+// （パソコンのタイムゾーン設定に関わらず、必ず日本時間で判定する）
+function isPastDateJST(year, month, day){
+  const jstNow = new Date(Date.now() + 9*60*60*1000);
+  const todayY = jstNow.getUTCFullYear();
+  const todayM = jstNow.getUTCMonth() + 1;
+  const todayD = jstNow.getUTCDate();
+  if(year !== todayY) return year < todayY;
+  if(month !== todayM) return month < todayM;
+  return day < todayD;
+}
+
+// 実際に編集をブロックすべきかどうか（過去日付 かつ 施設コードで解除されていない場合のみブロック）
+function isSummaryLocked(day){
+  return isPastDateJST(CURRENT_YEAR, CURRENT_MONTH, day) && !SUMMARY_PAST_UNLOCKED;
+}
+
+function unlockPastDates(){
+  const input = document.getElementById("pastLockCodeInput");
+  if(!input) return;
+  if(input.value === FACILITY_CODE){
+    SUMMARY_PAST_UNLOCKED = true;
+    input.value = "";
+    renderSummaryTable();
+    updatePastLockBar();
+  } else {
+    alert("施設コードが違います");
+    input.value = "";
+    input.focus();
+  }
+}
+
+function relockPastDates(){
+  SUMMARY_PAST_UNLOCKED = false;
+  renderSummaryTable();
+  updatePastLockBar();
+}
+
+function updatePastLockBar(){
+  const bar = document.getElementById("pastLockBar");
+  const status = document.getElementById("pastLockStatus");
+  const codeInput = document.getElementById("pastLockCodeInput");
+  const unlockBtn = codeInput ? codeInput.nextElementSibling : null;
+  const relockBtn = document.getElementById("pastLockRelockBtn");
+  if(!bar || !status) return;
+  if(SUMMARY_PAST_UNLOCKED){
+    bar.classList.add("unlocked");
+    status.textContent = "🔓 過去の日付も編集できる状態です";
+    if(codeInput) codeInput.style.display = "none";
+    if(unlockBtn) unlockBtn.style.display = "none";
+    if(relockBtn) relockBtn.style.display = "";
+  } else {
+    bar.classList.remove("unlocked");
+    status.textContent = "🔒 過去の日付は編集ロック中（誤って上書きされるのを防止）";
+    if(codeInput) codeInput.style.display = "";
+    if(unlockBtn) unlockBtn.style.display = "";
+    if(relockBtn) relockBtn.style.display = "none";
+  }
+}
+
 function renderSummaryTable(){
   const table = document.getElementById("sumtable");
   const colgroup = buildAlignedColgroup();
@@ -1105,15 +1811,19 @@ function renderSummaryTable(){
     tbody += `<tr class="${cls}"><td class="staffcol"${cellW(true)}>${label}</td>`;
     for(let d=1; d<=DAYS; d++){
       const val = SUMMARY_VALUES[summaryKey(id,d)];
-      tbody += `<td${cellW(false)}><input class="cnt" type="number" min="0" id="${id}-${d}" value="${val!==undefined?val:0}" onchange="updateSummaryValue(this,'${id}',${d})"></td>`;
+      const locked = isSummaryLocked(d);
+      const lockAttrs = locked ? ` disabled title="過去の日付のため編集できません（施設コードを入力すると解除できます）"` : "";
+      tbody += `<td${cellW(false)} class="${locked?'past-locked':''}"><input class="cnt" type="number" min="0" id="${id}-${d}" value="${val!==undefined?val:0}" onchange="updateSummaryValue(this,'${id}',${d})"${lockAttrs}></td>`;
     }
     tbody += "</tr>";
   });
   tbody += "</tbody>";
   table.innerHTML = colgroup + thead + tbody;
+  updatePastLockBar();
 }
 
 function updateSummaryValue(el,id,d){
+  if(isSummaryLocked(d)) return; // 過去日付は施設コードで解除しない限り変更不可
   const v = parseFloat(el.value);
   SUMMARY_VALUES[summaryKey(id,d)] = isNaN(v) ? 0 : v;
   recalc();
@@ -1121,6 +1831,7 @@ function updateSummaryValue(el,id,d){
 }
 
 function setSumVal(prefix,day,val){
+  if(isSummaryLocked(day)) return; // 過去日付は自動取得データでも上書きしない（施設コードで解除中は反映する）
   const el = document.getElementById(`${prefix}-${day}`);
   if(el) el.value = val;
   SUMMARY_VALUES[summaryKey(prefix,day)] = val;
@@ -1411,20 +2122,47 @@ function computeRevenueLegacy(objs){
 }
 
 /* ===================== 集計・再計算 ===================== */
+// 労働基準法に基づく割増賃金の計算：
+// ・深夜割増：22:00〜翌5:00の勤務時間分は+25%
+// ・時間外割増：1日8時間を超えた勤務時間分は+25%（法定休日出勤の日は時間外割増の代わりに休日割増を適用）
+// ・法定休日割増：法定休日出勤としてマークされている日は、勤務時間全体に+35%
+function calcStaffDailyWage(startHour, endHour, wage, isHolidayWork){
+  const hrs = endHour - startHour;
+  if(hrs<=0 || !wage) return 0;
+  let pay = hrs * wage; // 基本給
+  // 深夜（22:00〜23:00）にかかっている時間分に+25%（このアプリの勤務時間は最大23:00までのため、日をまたぐ深夜帯は対象外）
+  const nightOverlap = Math.max(0, Math.min(endHour,23) - Math.max(startHour,22));
+  if(nightOverlap>0) pay += nightOverlap * wage * 0.25;
+  if(isHolidayWork){
+    pay += hrs * wage * 0.35; // 法定休日割増
+  } else {
+    const overtime = Math.max(0, hrs - 8);
+    if(overtime>0) pay += overtime * wage * 0.25; // 時間外割増
+  }
+  return pay;
+}
+
 function recalc(){
-  let monthRevenue=0, monthLabor=0, monthDinnerC=0, monthBreakfastC=0, monthFacility=0, monthPL=0;
+  let monthRevenue=0, monthLabor=0, monthDinnerC=0, monthBreakfastC=0, monthFacility=0, monthCommute=0, monthPL=0;
   const FACILITY_BASE = parseFloat(document.getElementById("facilityInput").value) || 0;
 
   for(let d=1; d<=DAYS; d++){
     let labor = 0;
+    let commute = 0;
     STAFF.forEach((st,si)=>{
       const timeInput = document.querySelector(`input.shifttime[data-si="${si}"][data-d="${d}"]`);
       if(!timeInput) return;
       const parsed = parseShift(timeInput.value);
       timeInput.classList.toggle("invalid", !!timeInput.value.trim() && !parsed);
       if(parsed && parsed.e > parsed.s && st.wage){
-        const hrs = (parsed.e - parsed.s) - (st.brk/60);
-        if(hrs>0) labor += hrs * st.wage;
+        const brkHrs = st.brk/60;
+        const workStart = parsed.s;
+        const workEnd = Math.max(parsed.s, parsed.e - brkHrs); // 休憩分は勤務終了側から差し引いて計算（深夜割増の重なり判定を単純化するため）
+        if(workEnd > workStart){
+          const key = cellColorKey(st.name, d);
+          labor += calcStaffDailyWage(workStart, workEnd, st.wage, !!HOLIDAY_WORK[key]);
+          commute += calcDailyCommuteAmount(st); // 出勤した日だけ交通費を計上
+        }
       }
     });
 
@@ -1437,9 +2175,10 @@ function recalc(){
     const breakfastCost = breakfastN * BREAKFAST_UNIT;
     const revenue = REVENUE[d] || 0;
     const facilityCost = (FACILITY_OVERRIDE[d]!==undefined) ? FACILITY_OVERRIDE[d] : FACILITY_BASE;
-    const pl = revenue - labor - dinnerCost - breakfastCost - facilityCost;
+    const pl = revenue - labor - dinnerCost - breakfastCost - facilityCost - commute;
 
     setText("labor",d,Math.round(labor));
+    setText("commute",d,Math.round(commute));
     setText("dn",d,dinnerN);
     setText("bn",d,breakfastN);
     setText("dc",d,Math.round(dinnerCost));
@@ -1458,17 +2197,18 @@ function recalc(){
     }
 
     monthRevenue += revenue; monthLabor += labor; monthDinnerC += dinnerCost;
-    monthBreakfastC += breakfastCost; monthFacility += facilityCost; monthPL += pl;
+    monthBreakfastC += breakfastCost; monthFacility += facilityCost; monthCommute += commute; monthPL += pl;
   }
 
   document.getElementById("cards").innerHTML = `
     <div class="card"><div class="label">月間売上（手数料控除後）</div><div class="value">¥${Math.round(monthRevenue).toLocaleString()}</div></div>
-    <div class="card"><div class="label">月間人件費</div><div class="value">¥${Math.round(monthLabor).toLocaleString()}</div></div>
+    <div class="card"><div class="label">月間人件費（交通費込み）</div><div class="value">¥${Math.round(monthLabor+monthCommute).toLocaleString()}</div></div>
     <div class="card"><div class="label">月間食材原価（夕＋朝）</div><div class="value">¥${Math.round(monthDinnerC+monthBreakfastC).toLocaleString()}</div></div>
     <div class="card"><div class="label">月間施設運転費</div><div class="value">¥${Math.round(monthFacility).toLocaleString()}</div></div>
     <div class="card ${monthPL>=0?'profit':'loss'}"><div class="label">月間収支</div><div class="value">¥${Math.round(monthPL).toLocaleString()}</div></div>
   `;
   updateAttendanceSummary();
+  renderLaborPanel();
 }
 function setText(prefix,day,val){
   const el = document.getElementById(`${prefix}-${day}`);
@@ -1483,6 +2223,9 @@ function collectState(){
     CURRENT_YEAR, CURRENT_MONTH,
     STAFF, PRESETS,
     MONTHLY_DATA,
+    EVALUATIONS,
+    EVAL_ITEMS,
+    LABOR_SETTINGS,
     facilityBase: document.getElementById("facilityInput") ? document.getElementById("facilityInput").value : "35000",
     wagesVisible
   };
@@ -1492,6 +2235,9 @@ function applyState(state){
   if(!state) return;
   if(state.STAFF) STAFF = state.STAFF;
   if(state.PRESETS) PRESETS = state.PRESETS;
+  if(state.EVALUATIONS) EVALUATIONS = state.EVALUATIONS;
+  if(state.EVAL_ITEMS && state.EVAL_ITEMS.length) EVAL_ITEMS = state.EVAL_ITEMS;
+  if(state.LABOR_SETTINGS) LABOR_SETTINGS = Object.assign({}, LABOR_SETTINGS, state.LABOR_SETTINGS);
   if(typeof state.wagesVisible === "boolean") wagesVisible = state.wagesVisible;
 
   const stateYear = state.CURRENT_YEAR || CURRENT_YEAR;
@@ -1524,7 +2270,10 @@ function applyState(state){
     document.getElementById("facilityInput").value = state.facilityBase;
   }
   renderSummaryTable();
+  renderJobSummaryTable();
   renderStaffTable();
+  renderDailyPilot();
+  if(evaluationUnlocked) renderEvaluationStaffSelect();
   recalc();
 }
 
@@ -1597,6 +2346,88 @@ async function loadFromDesktopApp(){
   }
 }
 
+/* ===================== 施設コード（初回起動時の入力・変更フロー） ===================== */
+async function initFacilityCode(){
+  if(!window.electronAPI){
+    // ブラウザで直接開いている場合は施設コードの概念自体を使わず、そのまま通常表示にする
+    initDesktopIntegration();
+    return;
+  }
+  const code = await window.electronAPI.getFacilityCode();
+  if(code){
+    FACILITY_CODE = code;
+    updateFacilityCodeDisplay();
+    initDesktopIntegration();
+  } else {
+    document.getElementById("facilityOnboardingModal").style.display = "flex";
+    document.getElementById("facilityOnboardingInput").focus();
+  }
+}
+
+function updateFacilityCodeDisplay(){
+  const headerLabel = document.getElementById("facilityCodeLabel");
+  const settingsLabel = document.getElementById("facilitySettingsLabel");
+  if(headerLabel) headerLabel.textContent = FACILITY_CODE ? `（施設コード：${FACILITY_CODE}）` : "";
+  if(settingsLabel) settingsLabel.textContent = FACILITY_CODE || "-";
+}
+
+async function submitFacilityOnboarding(){
+  const input = document.getElementById("facilityOnboardingInput");
+  const errEl = document.getElementById("facilityOnboardingError");
+  const code = input.value.trim();
+  if(!code){
+    errEl.textContent = "施設コードを入力してください";
+    return;
+  }
+  await window.electronAPI.setFacilityCode(code);
+  FACILITY_CODE = code;
+  updateFacilityCodeDisplay();
+  document.getElementById("facilityOnboardingModal").style.display = "none";
+  initDesktopIntegration();
+}
+
+function openFacilityChangeStep1Modal(){
+  document.getElementById("facilityChangeDevIdInput").value = "";
+  document.getElementById("facilityChangeStep1Error").textContent = "";
+  document.getElementById("facilityChangeStep1Modal").style.display = "flex";
+}
+
+function closeFacilityChangeStep1Modal(){
+  document.getElementById("facilityChangeStep1Modal").style.display = "none";
+}
+
+async function verifyDeveloperIdForFacilityChange(){
+  const input = document.getElementById("facilityChangeDevIdInput");
+  const errEl = document.getElementById("facilityChangeStep1Error");
+  const ok = await window.electronAPI.verifyDeveloperCode(input.value);
+  if(ok){
+    closeFacilityChangeStep1Modal();
+    document.getElementById("facilityChangeCurrentLabel").textContent = FACILITY_CODE;
+    document.getElementById("facilityChangeNewInput").value = "";
+    document.getElementById("facilityChangeStep2Modal").style.display = "flex";
+  } else {
+    errEl.textContent = "開発者IDが違います";
+    input.value = "";
+  }
+}
+
+function closeFacilityChangeStep2Modal(){
+  document.getElementById("facilityChangeStep2Modal").style.display = "none";
+}
+
+async function confirmFacilityChange(){
+  const newCode = document.getElementById("facilityChangeNewInput").value.trim();
+  if(!newCode){ alert("新しい施設コードを入力してください"); return; }
+  const ok = await askConfirm(`施設コードを「${newCode}」に変更します。これ以降、この端末は新しい施設コードのデータを表示・共有します。よろしいですか？`);
+  if(!ok) return;
+  await window.electronAPI.setFacilityCode(newCode);
+  FACILITY_CODE = newCode;
+  updateFacilityCodeDisplay();
+  closeFacilityChangeStep2Modal();
+  // 新しい施設コードのクラウドデータを読み込み直す
+  loadFromDesktopApp();
+}
+
 function initDesktopIntegration(){
   if(!window.electronAPI) return; // ブラウザで直接開いている場合は何もしない
   window.electronAPI.onUpdateStatus((msg)=>{
@@ -1623,49 +2454,703 @@ function initDesktopIntegration(){
   loadFromDesktopApp();
 }
 
+/* ===================== Daily Pilot ===================== */
+const DP_START_MIN = 5*60;   // 5:00（6時より前から稼働する日にも対応）
+const DP_END_MIN = 23*60;    // 23:00
+const DP_TOTAL_MIN = DP_END_MIN - DP_START_MIN;
+const DP_DEFAULT_COLOR = "#2F5D62";
+let DP_ID_SEQ = 1;
+function dpNewId(){ return "dp" + (DP_ID_SEQ++) + "_" + Date.now().toString(36); }
+
+function dpEnsureDay(day){
+  if(!DAILY_PILOT[day]) DAILY_PILOT[day] = { rows: [], floorplans: [ {shapes:[]}, {shapes:[]} ] };
+  if(!DAILY_PILOT[day].floorplans) DAILY_PILOT[day].floorplans = [ {shapes:[]}, {shapes:[]} ];
+  if(!DAILY_PILOT[day].floorplans[0]) DAILY_PILOT[day].floorplans[0] = {shapes:[]};
+  if(!DAILY_PILOT[day].floorplans[1]) DAILY_PILOT[day].floorplans[1] = {shapes:[]};
+  return DAILY_PILOT[day];
+}
+
+function dpMinToLabel(min){
+  const h = Math.floor(min/60), m = min%60;
+  return String(h).padStart(2,"0") + ":" + String(m).padStart(2,"0");
+}
+
+function renderDailyPilot(){
+  renderDailyPilotDayTabs();
+  renderDailyPilotBody();
+}
+
+function renderDailyPilotDayTabs(){
+  const wrap = document.getElementById("dpDayTabs");
+  if(!wrap) return;
+  if(DP_CURRENT_DAY > DAYS) DP_CURRENT_DAY = 1;
+  let html = "";
+  for(let d=1; d<=DAYS; d++){
+    html += `<button type="button" class="dp-daytab${d===DP_CURRENT_DAY?" active":""}" onclick="dpSwitchDay(${d})">${d}日（${weekdayOf(d)}）</button>`;
+  }
+  wrap.innerHTML = html;
+}
+
+function dpSwitchDay(day){
+  DP_CURRENT_DAY = day;
+  renderDailyPilotDayTabs();
+  renderDailyPilotBody();
+}
+
+function renderDailyPilotBody(){
+  const sel = document.getElementById("dpStaffSelect");
+  if(sel){
+    sel.innerHTML = STAFF.map(st=>`<option value="${st.name.replace(/"/g,"&quot;")}">${st.name}</option>`).join("");
+  }
+  renderDpRows();
+  renderDpFloorplan(0);
+  renderDpFloorplan(1);
+}
+
+/* ---------- タイムライン（スタッフ行・ゲージ） ---------- */
+function renderDpRows(){
+  const wrap = document.getElementById("dpRows");
+  if(!wrap) return;
+  const day = dpEnsureDay(DP_CURRENT_DAY);
+  if(day.rows.length===0){
+    wrap.innerHTML = `<div style="font-size:11.5px;color:var(--muted-ink,#7a8a8e);padding:4px 2px;">従業員を選んで「＋ 行を追加」を押すと、その日の時間配分を組めます。</div>`;
+    return;
+  }
+  // 目盛り（1時間ごと）：一番上の行にだけ表示する
+  let scale = `<div class="dp-scale">`;
+  for(let h=5; h<=23; h++){
+    const pct = ((h*60 - DP_START_MIN) / DP_TOTAL_MIN) * 100;
+    scale += `<span style="left:${pct}%;">${h}</span>`;
+  }
+  scale += `</div>`;
+
+  let html = "";
+  day.rows.forEach((row,idx)=>{
+    html += `<div class="dp-row" data-row="${row.id}">
+      <div class="dp-row-side">
+        <span class="dp-row-name">${row.staffName}</span>
+        <div class="dp-row-btns">
+          <button class="rmbtn" onclick="dpAddBlock('${row.id}')">＋ ブロック</button>
+          <button class="rmbtn" onclick="dpRemoveRow('${row.id}')">削除</button>
+        </div>
+      </div>
+      <div class="dp-row-main">
+        ${idx===0 ? scale : ""}
+        <div class="dp-track" id="dpTrack_${row.id}" data-row="${row.id}">`;
+    row.blocks.forEach(b=>{
+      const leftPct = ((b.startMin - DP_START_MIN) / DP_TOTAL_MIN) * 100;
+      const widthPct = ((b.endMin - b.startMin) / DP_TOTAL_MIN) * 100;
+      html += `<div class="dp-gauge" data-row="${row.id}" data-block="${b.id}" style="left:${leftPct}%;width:${widthPct}%;background:${b.color};" title="${dpMinToLabel(b.startMin)}〜${dpMinToLabel(b.endMin)}">
+        <div class="dp-gauge-handle dp-gauge-handle-l" data-role="resize-l"></div>
+        <button type="button" class="dp-gauge-edit" onclick="dpEditBlockText(this)" title="文字を入力">✎</button>
+        <input class="dp-gauge-text" data-role="text" value="${(b.text||"").replace(/"/g,"&quot;")}" onchange="dpUpdateBlockText('${row.id}','${b.id}',this.value)" onblur="this.classList.remove('editing')">
+        <input type="color" class="dp-gauge-color" value="${b.color}" onchange="dpUpdateBlockColor('${row.id}','${b.id}',this.value)">
+        <button class="dp-gauge-del" onclick="dpRemoveBlock('${row.id}','${b.id}')">×</button>
+        <div class="dp-gauge-handle dp-gauge-handle-r" data-role="resize-r"></div>
+      </div>`;
+    });
+    html += `</div></div></div>`;
+  });
+  wrap.innerHTML = html;
+
+  // ドラッグ操作をセットアップ
+  day.rows.forEach(row=>{
+    const track = document.getElementById("dpTrack_" + row.id);
+    if(track) dpSetupTrackDrag(track, row.id);
+  });
+}
+
+function dpAddRow(){
+  const sel = document.getElementById("dpStaffSelect");
+  if(!sel || !sel.value) return;
+  const day = dpEnsureDay(DP_CURRENT_DAY);
+  if(day.rows.some(r=>r.staffName===sel.value)){
+    alert("この従業員はすでにこの日の行に追加されています。");
+    return;
+  }
+  day.rows.push({
+    id: dpNewId(),
+    staffName: sel.value,
+    blocks: [{ id: dpNewId(), startMin: 9*60, endMin: 17*60, text: "", color: DP_DEFAULT_COLOR }]
+  });
+  renderDpRows();
+  scheduleAutoSync();
+}
+
+function dpRemoveRow(rowId){
+  const day = dpEnsureDay(DP_CURRENT_DAY);
+  day.rows = day.rows.filter(r=>r.id!==rowId);
+  renderDpRows();
+  scheduleAutoSync();
+}
+
+function dpAddBlock(rowId){
+  const day = dpEnsureDay(DP_CURRENT_DAY);
+  const row = day.rows.find(r=>r.id===rowId);
+  if(!row) return;
+  // 空いている1時間帯を探す（雑に9時から順に埋まっていないところを探す）
+  let start = DP_START_MIN;
+  const sorted = [...row.blocks].sort((a,b)=>a.startMin-b.startMin);
+  for(const b of sorted){
+    if(start + 60 <= b.startMin) break;
+    start = Math.max(start, b.endMin);
+  }
+  if(start + 60 > DP_END_MIN) start = DP_END_MIN - 60;
+  row.blocks.push({ id: dpNewId(), startMin: start, endMin: start+60, text: "", color: DP_DEFAULT_COLOR });
+  renderDpRows();
+  scheduleAutoSync();
+}
+
+function dpRemoveBlock(rowId, blockId){
+  const day = dpEnsureDay(DP_CURRENT_DAY);
+  const row = day.rows.find(r=>r.id===rowId);
+  if(!row) return;
+  row.blocks = row.blocks.filter(b=>b.id!==blockId);
+  renderDpRows();
+  scheduleAutoSync();
+}
+
+function dpUpdateBlockText(rowId, blockId, text){
+  const day = dpEnsureDay(DP_CURRENT_DAY);
+  const row = day.rows.find(r=>r.id===rowId);
+  const block = row && row.blocks.find(b=>b.id===blockId);
+  if(block){ block.text = text; scheduleAutoSync(); }
+}
+
+// ✎ボタンをクリックすると、確実にそのゲージの文字入力欄を編集できる状態にする
+function dpEditBlockText(btn){
+  const gaugeEl = btn.closest(".dp-gauge");
+  if(!gaugeEl) return;
+  const input = gaugeEl.querySelector('[data-role="text"]');
+  if(!input) return;
+  input.classList.add("editing");
+  input.focus();
+  input.select();
+}
+
+function dpUpdateBlockColor(rowId, blockId, color){
+  const day = dpEnsureDay(DP_CURRENT_DAY);
+  const row = day.rows.find(r=>r.id===rowId);
+  const block = row && row.blocks.find(b=>b.id===blockId);
+  if(block){
+    block.color = color;
+    const el = document.querySelector(`.dp-gauge[data-row="${rowId}"][data-block="${blockId}"]`);
+    if(el) el.style.background = color;
+    scheduleAutoSync();
+  }
+}
+
+function dpSnapMin(min){
+  // 15分単位にスナップ
+  return Math.round(min/15)*15;
+}
+
+function dpSetupTrackDrag(track, rowId){
+  let dragging = null; // {blockId, mode:'move'|'resize-l'|'resize-r', startX, origStart, origEnd, trackWidth}
+
+  // 通常はドラッグ優先（テキスト欄はクリックを素通りさせる）。ダブルクリックで文字編集モードに入る。
+  track.addEventListener("dblclick", function(e){
+    const gaugeEl = e.target.closest(".dp-gauge");
+    if(!gaugeEl) return;
+    const input = gaugeEl.querySelector('[data-role="text"]');
+    if(!input) return;
+    input.classList.add("editing");
+    input.focus();
+    input.select();
+  });
+
+  track.addEventListener("mousedown", function(e){
+    const gaugeEl = e.target.closest(".dp-gauge");
+    if(!gaugeEl) return;
+    if(e.target.tagName==="INPUT" && e.target.type==="color") return;
+    if(e.target.classList.contains("dp-gauge-del")) return;
+    if(e.target.classList.contains("dp-gauge-edit")) return;
+    const blockId = gaugeEl.dataset.block;
+    const day = dpEnsureDay(DP_CURRENT_DAY);
+    const row = day.rows.find(r=>r.id===rowId);
+    const block = row && row.blocks.find(b=>b.id===blockId);
+    if(!block) return;
+    let mode = "move";
+    if(e.target.dataset.role==="resize-l") mode = "resize-l";
+    else if(e.target.dataset.role==="resize-r") mode = "resize-r";
+    dragging = {
+      blockId, mode, startX: e.clientX,
+      origStart: block.startMin, origEnd: block.endMin,
+      trackWidth: track.getBoundingClientRect().width
+    };
+    e.preventDefault();
+  });
+  document.addEventListener("mousemove", function(e){
+    if(!dragging) return;
+    const day = dpEnsureDay(DP_CURRENT_DAY);
+    const row = day.rows.find(r=>r.id===rowId);
+    const block = row && row.blocks.find(b=>b.id===dragging.blockId);
+    if(!block) return;
+    const dx = e.clientX - dragging.startX;
+    const dMin = dpSnapMin((dx / dragging.trackWidth) * DP_TOTAL_MIN);
+    const gaugeEl = document.querySelector(`.dp-gauge[data-row="${rowId}"][data-block="${dragging.blockId}"]`);
+    if(!gaugeEl) return;
+    if(dragging.mode==="move"){
+      let ns = dragging.origStart + dMin, ne = dragging.origEnd + dMin;
+      const dur = dragging.origEnd - dragging.origStart;
+      if(ns < DP_START_MIN){ ns = DP_START_MIN; ne = ns+dur; }
+      if(ne > DP_END_MIN){ ne = DP_END_MIN; ns = ne-dur; }
+      block.startMin = ns; block.endMin = ne;
+    } else if(dragging.mode==="resize-l"){
+      let ns = Math.min(dragging.origEnd-15, Math.max(DP_START_MIN, dragging.origStart+dMin));
+      block.startMin = ns;
+    } else if(dragging.mode==="resize-r"){
+      let ne = Math.max(dragging.origStart+15, Math.min(DP_END_MIN, dragging.origEnd+dMin));
+      block.endMin = ne;
+    }
+    const leftPct = ((block.startMin - DP_START_MIN) / DP_TOTAL_MIN) * 100;
+    const widthPct = ((block.endMin - block.startMin) / DP_TOTAL_MIN) * 100;
+    gaugeEl.style.left = leftPct + "%";
+    gaugeEl.style.width = widthPct + "%";
+    gaugeEl.title = dpMinToLabel(block.startMin) + "〜" + dpMinToLabel(block.endMin);
+  });
+  document.addEventListener("mouseup", function(){
+    if(dragging){ dragging = null; scheduleAutoSync(); }
+  });
+}
+
+/* ---------- 会場図面 ---------- */
+const DP_SHAPE_DEFAULTS = {
+  rect:   { w: 90, h: 60, color: "#2F5D62" },
+  circle: { w: 60, h: 60, color: "#B98B3E" },
+  line:   { w: 100, h: 3,  color: "#8C2F2F" },
+  text:   { w: 90, h: 26, color: "#333333" },
+};
+
+function dpAddShape(fpIndex, type){
+  const day = dpEnsureDay(DP_CURRENT_DAY);
+  const fp = day.floorplans[fpIndex];
+  const def = DP_SHAPE_DEFAULTS[type];
+  const count = fp.shapes.length;
+  fp.shapes.push({
+    id: dpNewId(), type,
+    x: 16 + (count%5)*18, y: 16 + (count%5)*16,
+    w: def.w, h: def.h, color: def.color,
+    text: type==="text" ? "テキスト" : ""
+  });
+  renderDpFloorplan(fpIndex);
+  scheduleAutoSync();
+}
+
+function dpClearFloorplan(fpIndex){
+  askConfirm("会場図面の内容をすべて削除します。よろしいですか？").then(ok=>{
+    if(!ok) return;
+    const day = dpEnsureDay(DP_CURRENT_DAY);
+    day.floorplans[fpIndex].shapes = [];
+    renderDpFloorplan(fpIndex);
+    scheduleAutoSync();
+  });
+}
+
+function dpRemoveShape(fpIndex, shapeId){
+  const day = dpEnsureDay(DP_CURRENT_DAY);
+  day.floorplans[fpIndex].shapes = day.floorplans[fpIndex].shapes.filter(s=>s.id!==shapeId);
+  renderDpFloorplan(fpIndex);
+  scheduleAutoSync();
+}
+
+function dpUpdateShapeText(fpIndex, shapeId, text){
+  const day = dpEnsureDay(DP_CURRENT_DAY);
+  const shape = day.floorplans[fpIndex].shapes.find(s=>s.id===shapeId);
+  if(shape){ shape.text = text; scheduleAutoSync(); }
+}
+
+function dpUpdateShapeColor(fpIndex, shapeId, color){
+  const day = dpEnsureDay(DP_CURRENT_DAY);
+  const shape = day.floorplans[fpIndex].shapes.find(s=>s.id===shapeId);
+  if(shape){
+    shape.color = color;
+    const el = document.querySelector(`.dp-shape[data-fp="${fpIndex}"][data-shape="${shapeId}"]`);
+    if(el){
+      if(shape.type==="line") el.style.borderTopColor = color;
+      else if(shape.type==="text") { /* テキストは文字色は変えず枠のみ */ }
+      else { el.style.borderColor = color; el.style.background = color + "26"; }
+    }
+    scheduleAutoSync();
+  }
+}
+
+function renderDpFloorplan(fpIndex){
+  const canvas = document.getElementById("dpFloorplan" + fpIndex);
+  if(!canvas) return;
+  const day = dpEnsureDay(DP_CURRENT_DAY);
+  const shapes = day.floorplans[fpIndex].shapes;
+  let html = "";
+  shapes.forEach(s=>{
+    const styleColor = s.type==="line"
+      ? `border-top-color:${s.color};`
+      : s.type==="text" ? "" : `border-color:${s.color};background:${s.color}26;`;
+    html += `<div class="dp-shape ${s.type}" data-fp="${fpIndex}" data-shape="${s.id}" style="left:${s.x}px;top:${s.y}px;width:${s.w}px;height:${s.h}px;${styleColor}">`;
+    if(s.type!=="line"){
+      html += `<div class="dp-shape-text" contenteditable="true" data-role="text" onblur="dpUpdateShapeText(${fpIndex},'${s.id}',this.textContent); this.classList.remove('editing')">${(s.text||"").replace(/</g,"&lt;")}</div>`;
+    }
+    if(s.type!=="line"){
+      html += `<input type="color" class="dp-gauge-color" style="position:absolute;left:2px;top:2px;width:12px;height:12px;" value="${s.color}" onchange="dpUpdateShapeColor(${fpIndex},'${s.id}',this.value)">`;
+    }
+    html += `<button class="dp-shape-del" onclick="dpRemoveShape(${fpIndex},'${s.id}')">×</button>`;
+    html += `<div class="dp-shape-resize" data-role="resize"></div>`;
+    html += `</div>`;
+  });
+  canvas.innerHTML = html;
+  dpSetupCanvasDrag(canvas, fpIndex);
+}
+
+function dpSetupCanvasDrag(canvas, fpIndex){
+  let dragging = null; // {shapeId, mode:'move'|'resize', startX, startY, orig}
+
+  canvas.addEventListener("dblclick", function(e){
+    const shapeEl = e.target.closest(".dp-shape");
+    if(!shapeEl) return;
+    const textEl = shapeEl.querySelector('[data-role="text"]');
+    if(!textEl) return;
+    textEl.classList.add("editing");
+    textEl.focus();
+    const range = document.createRange();
+    range.selectNodeContents(textEl);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  });
+
+  canvas.addEventListener("mousedown", function(e){
+    const shapeEl = e.target.closest(".dp-shape");
+    if(!shapeEl) return;
+    if(e.target.tagName==="INPUT" || e.target.classList.contains("dp-shape-del")) return;
+    const shapeId = shapeEl.dataset.shape;
+    const day = dpEnsureDay(DP_CURRENT_DAY);
+    const shape = day.floorplans[fpIndex].shapes.find(s=>s.id===shapeId);
+    if(!shape) return;
+    const mode = e.target.dataset.role==="resize" ? "resize" : "move";
+    dragging = { shapeId, mode, startX:e.clientX, startY:e.clientY, orig:{x:shape.x,y:shape.y,w:shape.w,h:shape.h} };
+    e.preventDefault();
+  });
+  document.addEventListener("mousemove", function(e){
+    if(!dragging) return;
+    const day = dpEnsureDay(DP_CURRENT_DAY);
+    const shape = day.floorplans[fpIndex].shapes.find(s=>s.id===dragging.shapeId);
+    if(!shape) return;
+    const dx = e.clientX - dragging.startX, dy = e.clientY - dragging.startY;
+    const el = document.querySelector(`.dp-shape[data-fp="${fpIndex}"][data-shape="${dragging.shapeId}"]`);
+    if(!el) return;
+    if(dragging.mode==="move"){
+      shape.x = Math.max(0, dragging.orig.x + dx);
+      shape.y = Math.max(0, dragging.orig.y + dy);
+      el.style.left = shape.x + "px";
+      el.style.top = shape.y + "px";
+    } else {
+      shape.w = Math.max(16, dragging.orig.w + dx);
+      shape.h = Math.max(shape.type==="line" ? 3 : 16, dragging.orig.h + dy);
+      el.style.width = shape.w + "px";
+      el.style.height = shape.h + "px";
+    }
+  });
+  document.addEventListener("mouseup", function(){
+    if(dragging){ dragging = null; scheduleAutoSync(); }
+  });
+}
+
+/* ===================== 人事評価シート ===================== */
+function unlockEvaluation(){
+  const input = document.getElementById("evalPasswordInput");
+  const errEl = document.getElementById("evalPasswordError");
+  if(input.value === EVAL_PASSWORD){
+    evaluationUnlocked = true;
+    input.value = "";
+    errEl.textContent = "";
+    document.getElementById("evalLockedView").style.display = "none";
+    document.getElementById("evalUnlockedView").style.display = "";
+    document.getElementById("evalSummaryLabel").textContent = "🔓 人事評価シート（従業員別・パスワード保護）";
+    renderEvaluationStaffSelect();
+  } else {
+    errEl.textContent = "パスワードが違います";
+    input.value = "";
+    input.focus();
+  }
+}
+
+function lockEvaluation(){
+  evaluationUnlocked = false;
+  document.getElementById("evalLockedView").style.display = "";
+  document.getElementById("evalUnlockedView").style.display = "none";
+  document.getElementById("evalSummaryLabel").textContent = "🔒 人事評価シート（従業員別・パスワード保護）";
+}
+
+function renderEvaluationStaffSelect(){
+  const sel = document.getElementById("evalStaffSelect");
+  if(!sel) return;
+  sel.innerHTML = STAFF.map(st=>`<option value="${st.name.replace(/"/g,"&quot;")}">${st.name}</option>`).join("");
+  if(!EVAL_CURRENT_STAFF || !STAFF.some(st=>st.name===EVAL_CURRENT_STAFF)){
+    EVAL_CURRENT_STAFF = STAFF.length ? STAFF[0].name : null;
+  }
+  sel.value = EVAL_CURRENT_STAFF || "";
+  renderEvaluationRecordSelect();
+}
+
+function evalOnStaffChange(){
+  EVAL_CURRENT_STAFF = document.getElementById("evalStaffSelect").value;
+  EVAL_CURRENT_RECORD_ID = null;
+  renderEvaluationRecordSelect();
+}
+
+function renderEvaluationRecordSelect(){
+  const sel = document.getElementById("evalRecordSelect");
+  if(!sel) return;
+  const list = EVALUATIONS[EVAL_CURRENT_STAFF] || [];
+  if(list.length===0){
+    sel.innerHTML = `<option value="">（評価がまだありません）</option>`;
+    EVAL_CURRENT_RECORD_ID = null;
+    renderEvaluationForm();
+    return;
+  }
+  sel.innerHTML = list.map(r=>`<option value="${r.id}">${r.year}年度</option>`).join("");
+  if(!EVAL_CURRENT_RECORD_ID || !list.some(r=>r.id===EVAL_CURRENT_RECORD_ID)){
+    EVAL_CURRENT_RECORD_ID = list[list.length-1].id;
+  }
+  sel.value = EVAL_CURRENT_RECORD_ID;
+  renderEvaluationForm();
+}
+
+function evalOnRecordChange(){
+  EVAL_CURRENT_RECORD_ID = document.getElementById("evalRecordSelect").value;
+  renderEvaluationForm();
+}
+
+function evalAddRecord(){
+  if(!EVAL_CURRENT_STAFF){ alert("先に従業員を選んでください。"); return; }
+  if(!EVALUATIONS[EVAL_CURRENT_STAFF]) EVALUATIONS[EVAL_CURRENT_STAFF] = [];
+  const rec = {
+    id: dpNewId(),
+    year: CURRENT_YEAR,
+    affiliation: "",
+    joinDate: "",
+    periodPast: "",
+    periodCurrent: "",
+    ratings: { "上期":{}, "下期":{} },
+    comments: { "上期":"", "下期":"" },
+    evaluators: { "上期":"", "下期":"" },
+  };
+  EVALUATIONS[EVAL_CURRENT_STAFF].push(rec);
+  EVAL_CURRENT_RECORD_ID = rec.id;
+  renderEvaluationRecordSelect();
+  scheduleAutoSync();
+}
+
+function evalDeleteRecord(){
+  if(!EVAL_CURRENT_STAFF || !EVAL_CURRENT_RECORD_ID) return;
+  askConfirm("この評価を削除します。よろしいですか？").then(ok=>{
+    if(!ok) return;
+    EVALUATIONS[EVAL_CURRENT_STAFF] = (EVALUATIONS[EVAL_CURRENT_STAFF]||[]).filter(r=>r.id!==EVAL_CURRENT_RECORD_ID);
+    EVAL_CURRENT_RECORD_ID = null;
+    renderEvaluationRecordSelect();
+    scheduleAutoSync();
+  });
+}
+
+function evalGetCurrentRecord(){
+  const list = EVALUATIONS[EVAL_CURRENT_STAFF] || [];
+  return list.find(r=>r.id===EVAL_CURRENT_RECORD_ID) || null;
+}
+
+function evalCalcTotal(rec, half){
+  return EVAL_ITEMS.reduce((sum,item)=> sum + (EVAL_RATING_POINTS[(rec.ratings[half]||{})[item.id]] || 0), 0);
+}
+
+function renderEvaluationForm(){
+  const area = document.getElementById("evalFormArea");
+  if(!area) return;
+  const rec = evalGetCurrentRecord();
+  if(!rec){
+    area.innerHTML = `<div style="font-size:12px;color:var(--muted-ink,#7a8a8e);">「＋ 新しい評価を追加」を押すと、この従業員の評価シートを作成できます。</div>`;
+    return;
+  }
+
+  const staffObj = STAFF.find(st=>st.name===EVAL_CURRENT_STAFF);
+  const bySection = {};
+  EVAL_ITEMS.forEach(item=>{ (bySection[item.section] = bySection[item.section]||[]).push(item); });
+
+  let html = `<div class="eval-sheet" id="evalSheet">
+    <div class="eval-title">
+      人事評価シート（
+      <input type="number" id="evalYearInput" value="${rec.year}" onchange="evalUpdateField('year', this.value)">
+      年度（上期・下期）)
+    </div>
+
+    <div class="eval-box">
+      <div class="eval-box-title">【対象者・評価対象期間】</div>
+      <div class="eval-info-grid">
+        <span>所属</span><input type="text" value="${(rec.affiliation||staffObj?.cat||"").replace(/"/g,"&quot;")}" onchange="evalUpdateField('affiliation', this.value)">
+        <span>氏名</span><input type="text" value="${EVAL_CURRENT_STAFF}" readonly style="background:#F4F1E7;">
+        <span>入社年月</span><input type="text" placeholder="例：2022年4月" value="${(rec.joinDate||"").replace(/"/g,"&quot;")}" onchange="evalUpdateField('joinDate', this.value)">
+        <span></span><span></span>
+        <span>過去1年間<br>（上期・下期）</span><input type="text" placeholder="評価対象期間" value="${(rec.periodPast||"").replace(/"/g,"&quot;")}" onchange="evalUpdateField('periodPast', this.value)">
+        <span>現在</span><input type="text" placeholder="評価対象期間" value="${(rec.periodCurrent||"").replace(/"/g,"&quot;")}" onchange="evalUpdateField('periodCurrent', this.value)">
+      </div>
+    </div>
+
+    <div class="eval-box">
+      <div class="eval-box-title">【評価基準】</div>
+      <div class="eval-criteria">S：極めて優秀 → （10点）　　A：優秀 → （8点）　　B：標準 → （6点）　　C：やや不十分 → （4点）　　D：かなり不十分 → （2点）</div>
+    </div>
+
+    <div class="eval-half-head">
+      <span class="eval-item-name"></span>
+      <span class="eval-half-cols"><span>上期</span><span>下期</span></span>
+    </div>`;
+
+  ["態度評価","能力評価","成績評価"].forEach(section=>{
+    html += `<div class="eval-box">
+      <div class="eval-box-title">【${section}（着眼点・評価）】</div>`;
+    (bySection[section]||[]).forEach(item=>{
+      html += `<div class="eval-item">
+        <div class="eval-item-head">
+          <span class="eval-item-name-wrap">
+            <input type="text" class="eval-item-name-input" value="${item.name.replace(/"/g,"&quot;")}" onchange="evalUpdateItemName('${item.id}', this.value)">
+            <button type="button" class="rmbtn eval-item-del" onclick="evalRemoveItem('${item.id}')">項目を削除</button>
+          </span>
+          <span class="eval-half-cols">
+            <span class="eval-rating" data-item="${item.id}">
+              ${["S","A","B","C","D"].map(g=>`<button type="button" class="${(rec.ratings["上期"]||{})[item.id]===g?"selected":""}" onclick="evalSetRating('上期','${item.id}','${g}')">${g}</button>`).join("")}
+            </span>
+            <span class="eval-rating" data-item="${item.id}">
+              ${["S","A","B","C","D"].map(g=>`<button type="button" class="${(rec.ratings["下期"]||{})[item.id]===g?"selected":""}" onclick="evalSetRating('下期','${item.id}','${g}')">${g}</button>`).join("")}
+            </span>
+          </span>
+        </div>
+        <textarea class="eval-item-bullets-input" placeholder="着眼点（1行に1つ）" onchange="evalUpdateItemBullets('${item.id}', this.value)">${item.bullets.join("\n")}</textarea>
+      </div>`;
+    });
+    html += `<button type="button" class="rmbtn eval-item-add" onclick="evalAddItem('${section}')">＋ 項目を追加</button></div>`;
+  });
+
+  const maxScore = EVAL_ITEMS.length * 10;
+  const totalH1 = evalCalcTotal(rec, "上期");
+  const totalH2 = evalCalcTotal(rec, "下期");
+  html += `<div class="eval-total">
+      <span>【合計】合計点（${maxScore}点満点）</span>
+      <span class="eval-half-cols"><span>上期：${totalH1} 点</span><span>下期：${totalH2} 点</span></span>
+    </div>
+
+    <div class="eval-box eval-comment">
+      <div class="eval-box-title">【所見】</div>
+      <div class="eval-half-cols">
+        <div><div class="eval-half-label">上期</div><textarea onchange="evalUpdateField('comment', this.value, '上期')">${(rec.comments?.["上期"]||"")}</textarea></div>
+        <div><div class="eval-half-label">下期</div><textarea onchange="evalUpdateField('comment', this.value, '下期')">${(rec.comments?.["下期"]||"")}</textarea></div>
+      </div>
+    </div>
+
+    <div class="eval-box">
+      <div class="eval-box-title" style="margin:0 0 4px;">【評価者・印】</div>
+      <div class="eval-half-cols eval-signer">
+        <span><span class="eval-half-label">上期</span><input type="text" placeholder="評価者名" value="${(rec.evaluators?.["上期"]||"").replace(/"/g,"&quot;")}" onchange="evalUpdateField('evaluatorName', this.value, '上期')"></span>
+        <span><span class="eval-half-label">下期</span><input type="text" placeholder="評価者名" value="${(rec.evaluators?.["下期"]||"").replace(/"/g,"&quot;")}" onchange="evalUpdateField('evaluatorName', this.value, '下期')"></span>
+      </div>
+    </div>
+  </div>`;
+
+  area.innerHTML = html;
+}
+
+function evalUpdateField(field, value, half){
+  const rec = evalGetCurrentRecord();
+  if(!rec) return;
+  if(field==="comment"){ rec.comments = rec.comments || {}; rec.comments[half] = value; }
+  else if(field==="evaluatorName"){ rec.evaluators = rec.evaluators || {}; rec.evaluators[half] = value; }
+  else if(field==="year"){ rec.year = parseInt(value,10) || CURRENT_YEAR; renderEvaluationRecordSelect(); }
+  else { rec[field] = value; }
+  scheduleAutoSync();
+}
+
+function evalSetRating(half, itemId, grade){
+  const rec = evalGetCurrentRecord();
+  if(!rec) return;
+  rec.ratings = rec.ratings || {};
+  rec.ratings[half] = rec.ratings[half] || {};
+  rec.ratings[half][itemId] = (rec.ratings[half][itemId]===grade) ? undefined : grade; // 同じ評価をもう一度押すと解除
+  renderEvaluationForm();
+  scheduleAutoSync();
+}
+
+// 評価項目（態度評価・能力評価・成績評価の各項目）の追加・削除・編集
+// 全従業員・全評価シートで共通の項目一覧のため、変更すると今後作成する評価すべてに反映される
+function evalAddItem(section){
+  EVAL_ITEMS.push({
+    id: dpNewId(),
+    section,
+    name: "新しい項目",
+    bullets: [""],
+  });
+  renderEvaluationForm();
+  scheduleAutoSync();
+}
+
+function evalRemoveItem(itemId){
+  askConfirm("この評価項目を削除します。（すでに採点済みの内容も見えなくなります）よろしいですか？").then(ok=>{
+    if(!ok) return;
+    EVAL_ITEMS = EVAL_ITEMS.filter(it=>it.id!==itemId);
+    renderEvaluationForm();
+    scheduleAutoSync();
+  });
+}
+
+function evalUpdateItemName(itemId, name){
+  const item = EVAL_ITEMS.find(it=>it.id===itemId);
+  if(item){ item.name = name; scheduleAutoSync(); }
+}
+
+function evalUpdateItemBullets(itemId, text){
+  const item = EVAL_ITEMS.find(it=>it.id===itemId);
+  if(item){ item.bullets = text.split("\n").map(s=>s.trim()).filter(s=>s.length>0); scheduleAutoSync(); }
+}
+
+function printEvaluationNow(){
+  const rec = evalGetCurrentRecord();
+  if(!rec){ alert("印刷する評価がありません。先に評価を作成してください。"); return; }
+  PRINT_SELECTED_TABS = ["evaluation"];
+  const panel = document.getElementById("panelEvaluation");
+  if(panel){ panel.classList.add("print-chosen"); panel.open = true; }
+  setPageOrientation("portrait");
+  PRINT_MODE = false;
+  document.body.classList.add("printing-selected");
+  window.print();
+}
+
 /* ===================== 初期化 ===================== */
 document.addEventListener("keydown", function(e){
   // Electronアプリは既定でCtrl+P（Macの場合Cmd+P）に印刷が割り当てられていないため、明示的に対応する
   if((e.ctrlKey || e.metaKey) && (e.key === "p" || e.key === "P")){
     e.preventDefault();
-    window.print();
+    if(PRINT_SELECTED_TABS.length===0) PRINT_SELECTED_TABS = [CURRENT_TAB];
+    printSelectedTabs();
   }
 });
 window.addEventListener("beforeprint", function(){
-  // 実際の紙面（A4横）は画面の幅に関係なく必ず収まる固定値を使う
-  PRINT_MODE = true;
-  PRINT_STAFFCOL_W = A4_STAFFCOL_W;
-  PRINT_DAYCOL_W = A4_DAYCOL_W;
+  // printSelectedTabs()側で必要な設定は事前にすべて済ませているため、ここでは何もしない
+});
+window.addEventListener("afterprint", function(){
+  document.body.classList.remove("printing-selected");
+  document.querySelectorAll(".tabpanel.print-chosen").forEach(el=>el.classList.remove("print-chosen"));
+  PRINT_SELECTED_TABS = [];
+  document.querySelectorAll(".printselect-cb").forEach(cb=>{ cb.checked = false; });
+  PRINT_MODE = false;
+  PRINT_UNIT = "px";
+  setPageOrientation("landscape");
   renderSummaryTable();
   renderJobSummaryTable();
   renderStaffTable();
   recalc();
 });
-window.addEventListener("afterprint", function(){
-  const isPreviewing = document.body.classList.contains("print-preview");
-  if(isPreviewing){
-    // 印刷プレビュー画面に戻す：カード幅いっぱいに収まる動的な値へ再計算
-    const w = computePrintPreviewColWidths();
-    PRINT_STAFFCOL_W = w.staffW;
-    PRINT_DAYCOL_W = w.dayW;
-    renderSummaryTable();
-    renderJobSummaryTable();
-    renderStaffTable();
-    recalc();
-  } else {
-    PRINT_MODE = false;
-    renderSummaryTable();
-    renderJobSummaryTable();
-    renderStaffTable();
-    recalc();
-  }
-});
 updateMonthLabel();
 renderFacilityDaySelect();
 renderSummaryTable();
 renderStaffTable();
+renderDailyPilot();
 recalc();
-initDesktopIntegration();
+initFacilityCode();
 </script>
 </body>
 </html>

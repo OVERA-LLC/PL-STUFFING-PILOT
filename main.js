@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const path = require("path");
+const fs = require("fs");
 const { fork } = require("child_process");
 const { autoUpdater } = require("electron-updater");
 const { getData, saveData } = require("./src/db");
@@ -7,6 +8,43 @@ const cloud = require("./src/cloud");
 
 let mainWindow;
 let bridgeServerProcess = null;
+
+/* ===================== 施設コード（この端末のローカル設定・クラウドの共有データには含まれない） ===================== */
+const DEVELOPER_UNLOCK_CODE = "overa2026ktm";
+let currentFacilityCode = null;
+
+function facilityConfigPath() {
+  return path.join(app.getPath("userData"), "facility-config.json");
+}
+
+function loadFacilityCodeFromDisk() {
+  try {
+    const raw = fs.readFileSync(facilityConfigPath(), "utf-8");
+    const data = JSON.parse(raw);
+    return data.facilityCode || null;
+  } catch (e) {
+    return null; // 初回起動などでファイルが無い場合はnullのまま
+  }
+}
+
+function saveFacilityCodeToDisk(code) {
+  fs.writeFileSync(facilityConfigPath(), JSON.stringify({ facilityCode: code }, null, 1), "utf-8");
+}
+
+function startCloudSyncForFacility(code) {
+  cloud.unsubscribeFromChanges();
+  currentFacilityCode = code;
+  cloud.subscribeToChanges(
+    (update) => {
+      console.log("[Realtime] forwarding update to renderer, updated_at=", update.updated_at);
+      if (mainWindow) mainWindow.webContents.send("cloud:remote-update", update);
+    },
+    (status, err) => {
+      if (mainWindow) mainWindow.webContents.send("cloud:realtime-status", { status, err });
+    },
+    code
+  );
+}
 
 /* ===================== innto連携ローカルサーバーの自動起動 ===================== */
 function startBridgeServer() {
@@ -58,15 +96,13 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
   startBridgeServer();
-  cloud.subscribeToChanges(
-    (update) => {
-      console.log("[Realtime] forwarding update to renderer, updated_at=", update.updated_at);
-      if (mainWindow) mainWindow.webContents.send("cloud:remote-update", update);
-    },
-    (status, err) => {
-      if (mainWindow) mainWindow.webContents.send("cloud:realtime-status", { status, err });
-    }
-  );
+
+  currentFacilityCode = loadFacilityCodeFromDisk();
+  if (currentFacilityCode) {
+    startCloudSyncForFacility(currentFacilityCode);
+  }
+  // 施設コードがまだ無い場合は、renderer側のオンボーディング画面で入力されたあと
+  // "facility:set" 経由で startCloudSyncForFacility が呼ばれる
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -82,6 +118,21 @@ app.on("before-quit", () => {
   cloud.unsubscribeFromChanges();
 });
 
+/* ===================== 施設コード関連のIPC ===================== */
+ipcMain.handle("facility:get", async () => {
+  return currentFacilityCode;
+});
+
+ipcMain.handle("facility:set", async (event, code) => {
+  saveFacilityCodeToDisk(code);
+  startCloudSyncForFacility(code);
+  return { ok: true };
+});
+
+ipcMain.handle("facility:verifyDeveloperCode", async (event, code) => {
+  return code === DEVELOPER_UNLOCK_CODE;
+});
+
 /* ===================== データの保存・読み込み（SQLite） ===================== */
 // アプリ側（renderer/index.html）から「保存」「読み込み」ボタンが押されたときに呼ばれる
 ipcMain.handle("data:save", async (event, jsonState) => {
@@ -93,10 +144,11 @@ ipcMain.handle("data:load", async () => {
   return getData();
 });
 
-/* ===================== クラウド同期（Supabase・手動ボタン方式） ===================== */
+/* ===================== クラウド同期（Supabase・施設コードで絞り込み） ===================== */
 ipcMain.handle("cloud:push", async (event, jsonState) => {
   try {
-    await cloud.pushState(jsonState);
+    if (!currentFacilityCode) return { ok: false, error: "施設コードが未設定です" };
+    await cloud.pushState(jsonState, currentFacilityCode);
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e.message };
@@ -105,7 +157,8 @@ ipcMain.handle("cloud:push", async (event, jsonState) => {
 
 ipcMain.handle("cloud:pull", async () => {
   try {
-    const row = await cloud.pullState();
+    if (!currentFacilityCode) return { ok: false, error: "施設コードが未設定です" };
+    const row = await cloud.pullState(currentFacilityCode);
     return { ok: true, row };
   } catch (e) {
     return { ok: false, error: e.message };

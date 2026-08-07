@@ -1,7 +1,8 @@
-// Supabase（クラウドデータベース）へ、アプリの状態をまるごと1行のJSONとして
+// Supabase（クラウドデータベース）へ、施設コードごとに1行のJSONとして
 // アップロード（push）／ダウンロード（pull）する同期モジュールです。
-// pushState/pullStateは今まで通り（手動ボタン用）、
+// pushState/pullStateは今まで通り（手動ボタン・起動時取得用）、
 // subscribeToChanges/unsubscribeFromChangesはRealtime購読（自動反映用）です。
+// すべて facility_code で絞り込むことで、施設ごとにデータが混ざらないようにしています。
 
 const { createClient } = require("@supabase/supabase-js");
 const ws = require("ws");
@@ -16,40 +17,49 @@ function isConfigured() {
   );
 }
 
-async function pushState(payload) {
+async function pushState(payload, facilityCode) {
   if (!isConfigured()) {
     throw new Error(
       "クラウド同期の設定がまだ完了していません（src/cloud-config.js を確認してください）"
     );
   }
-  const res = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/app_state`, {
-    method: "POST",
-    headers: {
-      apikey: CONFIG.SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${CONFIG.SUPABASE_ANON_KEY}`,
-      "Content-Type": "application/json",
-      Prefer: "resolution=merge-duplicates,return=minimal",
-    },
-    body: JSON.stringify({
-      id: 1,
-      payload,
-      updated_at: new Date().toISOString(),
-    }),
-  });
+  if (!facilityCode) {
+    throw new Error("施設コードが設定されていません");
+  }
+  const res = await fetch(
+    `${CONFIG.SUPABASE_URL}/rest/v1/app_state?on_conflict=facility_code`,
+    {
+      method: "POST",
+      headers: {
+        apikey: CONFIG.SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${CONFIG.SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify({
+        facility_code: facilityCode,
+        payload,
+        updated_at: new Date().toISOString(),
+      }),
+    }
+  );
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`アップロードに失敗しました（${res.status}）: ${text}`);
   }
 }
 
-async function pullState() {
+async function pullState(facilityCode) {
   if (!isConfigured()) {
     throw new Error(
       "クラウド同期の設定がまだ完了していません（src/cloud-config.js を確認してください）"
     );
   }
+  if (!facilityCode) {
+    throw new Error("施設コードが設定されていません");
+  }
   const res = await fetch(
-    `${CONFIG.SUPABASE_URL}/rest/v1/app_state?id=eq.1&select=payload,updated_at`,
+    `${CONFIG.SUPABASE_URL}/rest/v1/app_state?facility_code=eq.${encodeURIComponent(facilityCode)}&select=payload,updated_at`,
     {
       headers: {
         apikey: CONFIG.SUPABASE_ANON_KEY,
@@ -81,19 +91,28 @@ function getClient() {
 
 let realtimeChannel = null;
 
-// onChange({payload, updated_at}) が、他の端末がapp_stateを更新するたびに呼ばれる
-function subscribeToChanges(onChange, onStatusChange) {
+// onChange({payload, updated_at}) が、同じ施設コードの他端末がapp_stateを更新するたびに呼ばれる
+function subscribeToChanges(onChange, onStatusChange, facilityCode) {
   const client = getClient();
   if (!client) {
     if (onStatusChange) onStatusChange("NOT_CONFIGURED", null);
     return;
   }
-  if (realtimeChannel) return; // すでに購読中なら何もしない
+  if (!facilityCode) {
+    if (onStatusChange) onStatusChange("NOT_CONFIGURED", "施設コードが未設定です");
+    return;
+  }
+  if (realtimeChannel) return; // すでに購読中なら何もしない（切り替え時は先にunsubscribeFromChangesを呼ぶこと）
   realtimeChannel = client
-    .channel("app_state_changes")
+    .channel("app_state_changes_" + facilityCode)
     .on(
       "postgres_changes",
-      { event: "*", schema: "public", table: "app_state" },
+      {
+        event: "*",
+        schema: "public",
+        table: "app_state",
+        filter: `facility_code=eq.${facilityCode}`,
+      },
       (payload) => {
         console.log("[Realtime] change received:", payload.eventType, "updated_at=", payload.new && payload.new.updated_at);
         const row = payload.new;

@@ -15,4 +15,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   onRealtimeStatus: (callback) => {
     ipcRenderer.on("cloud:realtime-status", (event, info) => callback(info));
   },
+  getFacilityCode: () => ipcRenderer.invoke("facility:get"),
+  setFacilityCode: (code) => ipcRenderer.invoke("facility:set", code),
+  verifyDeveloperCode: (code) => ipcRenderer.invoke("facility:verifyDeveloperCode", code),
 });
