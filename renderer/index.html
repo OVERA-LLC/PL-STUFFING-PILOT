@@ -751,6 +751,17 @@
         <input type="number" id="laborPensionRateInput" min="0" step="0.01" style="width:100%;margin-top:3px;">
       </label>
       <div style="font-size:11px;color:var(--muted-ink,#7a8a8e);">所得税は、従業員設定の「配偶者の有無」「扶養人数」をもとに国税庁の源泉徴収税額表（令和8年分・電算機計算特例）で自動計算されるため、ここでの設定は不要です。</div>
+      <span style="width:100%;height:1px;background:var(--line);"></span>
+      <div style="font-size:12px;font-weight:700;">会社負担分（月間人件費に含まれます）</div>
+      <label>雇用保険料率（会社負担・%）：
+        <input type="number" id="laborEmployerEmploymentRateInput" min="0" step="0.01" style="width:100%;margin-top:3px;">
+      </label>
+      <label>健康保険料率（会社負担・%）：
+        <input type="number" id="laborEmployerHealthRateInput" min="0" step="0.01" style="width:100%;margin-top:3px;">
+      </label>
+      <label>厚生年金保険料率（会社負担・%）：
+        <input type="number" id="laborEmployerPensionRateInput" min="0" step="0.01" style="width:100%;margin-top:3px;">
+      </label>
       <label>社会保険の加入対象とする週の勤務時間（時間以上）：
         <input type="number" id="laborSocialThresholdInput" min="0" step="0.5" style="width:100%;margin-top:3px;">
       </label>
@@ -930,6 +941,9 @@ let LABOR_SETTINGS = {
   employmentInsuranceRate: 0.5,     // 雇用保険料率（労働者負担分・%）令和8年度・一般の事業の値を初期値とする
   healthInsuranceRate: 5.0,         // 健康保険料率（労働者負担分・%、都道府県協会けんぽにより異なる。要設定）
   pensionRate: 9.15,                // 厚生年金保険料率（労働者負担分・%、全国一律18.3%の折半）
+  employerEmploymentInsuranceRate: 0.85, // 雇用保険料率（会社負担分・%）令和8年度・一般の事業の値を初期値とする
+  employerHealthInsuranceRate: 5.0,      // 健康保険料率（会社負担分・%、労働者負担分と同率が一般的だが要確認）
+  employerPensionRate: 9.15,             // 厚生年金保険料率（会社負担分・%、全国一律18.3%の折半）
   socialInsuranceWeeklyHours: 30,   // 週の平均勤務時間がこれ以上で社会保険加入対象とみなす（4分の3基準の簡易判定）
 };
 
@@ -1254,6 +1268,9 @@ function openLaborSettingsModal(){
   document.getElementById("laborEmploymentRateInput").value = LABOR_SETTINGS.employmentInsuranceRate;
   document.getElementById("laborHealthRateInput").value = LABOR_SETTINGS.healthInsuranceRate;
   document.getElementById("laborPensionRateInput").value = LABOR_SETTINGS.pensionRate;
+  document.getElementById("laborEmployerEmploymentRateInput").value = LABOR_SETTINGS.employerEmploymentInsuranceRate;
+  document.getElementById("laborEmployerHealthRateInput").value = LABOR_SETTINGS.employerHealthInsuranceRate;
+  document.getElementById("laborEmployerPensionRateInput").value = LABOR_SETTINGS.employerPensionRate;
   document.getElementById("laborSocialThresholdInput").value = LABOR_SETTINGS.socialInsuranceWeeklyHours;
   document.getElementById("laborSettingsModal").style.display = "flex";
 }
@@ -1267,10 +1284,13 @@ function saveLaborSettings(){
     employmentInsuranceRate: parseFloat(document.getElementById("laborEmploymentRateInput").value) || 0,
     healthInsuranceRate: parseFloat(document.getElementById("laborHealthRateInput").value) || 0,
     pensionRate: parseFloat(document.getElementById("laborPensionRateInput").value) || 0,
+    employerEmploymentInsuranceRate: parseFloat(document.getElementById("laborEmployerEmploymentRateInput").value) || 0,
+    employerHealthInsuranceRate: parseFloat(document.getElementById("laborEmployerHealthRateInput").value) || 0,
+    employerPensionRate: parseFloat(document.getElementById("laborEmployerPensionRateInput").value) || 0,
     socialInsuranceWeeklyHours: parseFloat(document.getElementById("laborSocialThresholdInput").value) || 0,
   };
   closeLaborSettingsModal();
-  renderLaborPanel();
+  recalc();
   scheduleAutoSync();
 }
 
@@ -1312,10 +1332,16 @@ function computeStaffMonthlySummary(si){
   // 所得税：国税庁の月額表（甲欄）電算機計算特例に基づく正確な計算
   const afterSocialInsurance = Math.max(0, grossWage - employmentInsurance - healthInsurance - pensionInsurance);
   const incomeTaxEstimate = calcIncomeTaxWithholding(afterSocialInsurance, !!st.hasSpouse, st.dependents||0);
+  // 会社負担分（給与とは別に会社が実際に負担する費用。正確な人件費にはこちらも含める必要がある）
+  const employerEmploymentInsurance = grossWage * (LABOR_SETTINGS.employerEmploymentInsuranceRate/100);
+  const employerHealthInsurance = isSocialInsured ? grossWage * (LABOR_SETTINGS.employerHealthInsuranceRate/100) : 0;
+  const employerPensionInsurance = isSocialInsured ? grossWage * (LABOR_SETTINGS.employerPensionRate/100) : 0;
+  const employerBurdenTotal = employerEmploymentInsurance + employerHealthInsurance + employerPensionInsurance;
   return {
     name: st.name, workDays, totalHours, avgWeeklyHours, grossWage,
     isSocialInsured, employmentInsurance, healthInsurance, pensionInsurance,
     incomeTaxEstimate, commuteTotal, paidLeaveDays, paidLeaveWage,
+    employerEmploymentInsurance, employerHealthInsurance, employerPensionInsurance, employerBurdenTotal,
   };
 }
 
@@ -1355,11 +1381,21 @@ function renderLaborPanel(){
     <th class="staffcol">氏名</th>
     <th>出勤日数</th><th>総勤務時間</th><th>週平均時間</th>
     <th>有給日数</th><th>有給賃金</th>
-    <th>社保対象</th><th>総支給額</th><th>雇用保険料</th>
-    <th>健康保険料</th><th>厚生年金</th><th>所得税(概算)</th><th>交通費</th>
+    <th>社保対象</th><th>総支給額</th>
+    <th colspan="3">従業員負担分（給与から天引き）</th>
+    <th colspan="3">会社負担分（別途会社が負担）</th>
+    <th>交通費</th>
+  </tr><tr>
+    <th class="staffcol"></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th>
+    <th>雇用保険料</th><th>健康保険料</th><th>厚生年金</th>
+    <th>雇用保険料</th><th>健康保険料</th><th>厚生年金</th>
+    <th></th>
   </tr></thead><tbody>`;
+  let sumIncomeTax = 0, sumEmployerBurden = 0;
   STAFF.forEach((st,si)=>{
     const s = computeStaffMonthlySummary(si);
+    sumIncomeTax += s.incomeTaxEstimate;
+    sumEmployerBurden += s.employerBurdenTotal;
     html += `<tr>
       <td class="staffcol">${s.name}</td>
       <td>${s.workDays}日</td>
@@ -1372,11 +1408,18 @@ function renderLaborPanel(){
       <td>¥${Math.round(s.employmentInsurance).toLocaleString()}</td>
       <td>¥${Math.round(s.healthInsurance).toLocaleString()}</td>
       <td>¥${Math.round(s.pensionInsurance).toLocaleString()}</td>
-      <td>¥${Math.round(s.incomeTaxEstimate).toLocaleString()}</td>
+      <td>¥${Math.round(s.employerEmploymentInsurance).toLocaleString()}</td>
+      <td>¥${Math.round(s.employerHealthInsurance).toLocaleString()}</td>
+      <td>¥${Math.round(s.employerPensionInsurance).toLocaleString()}</td>
       <td>¥${Math.round(s.commuteTotal).toLocaleString()}</td>
     </tr>`;
   });
-  html += "</tbody>";
+  html += `</tbody><tfoot><tr>
+    <td class="staffcol"><b>合計（参考：所得税概算合計 ¥${Math.round(sumIncomeTax).toLocaleString()}）</b></td>
+    <td colspan="9"></td>
+    <td colspan="3"><b>会社負担分の合計：¥${Math.round(sumEmployerBurden).toLocaleString()}（月間人件費に含まれています）</b></td>
+    <td></td>
+  </tr></tfoot>`;
   table.innerHTML = html;
 }
 
@@ -2370,12 +2413,20 @@ function recalc(){
     monthBreakfastC += breakfastCost; monthFacility += facilityCost; monthCommute += commute; monthPL += pl;
   }
 
+  // 会社負担分の社会保険料・雇用保険料（月単位の概念のため、日次ではなく月間人件費にまとめて加算する）
+  let monthEmployerBurden = 0;
+  STAFF.forEach((st,si)=>{
+    monthEmployerBurden += computeStaffMonthlySummary(si).employerBurdenTotal;
+  });
+  const monthLaborTotal = monthLabor + monthCommute + monthEmployerBurden;
+  const monthPLWithEmployerBurden = monthPL - monthEmployerBurden;
+
   document.getElementById("cards").innerHTML = `
     <div class="card"><div class="label">月間売上（手数料控除後）</div><div class="value">¥${Math.round(monthRevenue).toLocaleString()}</div></div>
-    <div class="card"><div class="label">月間人件費（交通費込み）</div><div class="value">¥${Math.round(monthLabor+monthCommute).toLocaleString()}</div></div>
+    <div class="card"><div class="label">月間人件費（交通費・会社負担分社保込み）</div><div class="value">¥${Math.round(monthLaborTotal).toLocaleString()}</div></div>
     <div class="card"><div class="label">月間食材原価（夕＋朝）</div><div class="value">¥${Math.round(monthDinnerC+monthBreakfastC).toLocaleString()}</div></div>
     <div class="card"><div class="label">月間施設運転費</div><div class="value">¥${Math.round(monthFacility).toLocaleString()}</div></div>
-    <div class="card ${monthPL>=0?'profit':'loss'}"><div class="label">月間収支</div><div class="value">¥${Math.round(monthPL).toLocaleString()}</div></div>
+    <div class="card ${monthPLWithEmployerBurden>=0?'profit':'loss'}"><div class="label">月間収支</div><div class="value">¥${Math.round(monthPLWithEmployerBurden).toLocaleString()}</div></div>
   `;
   updateAttendanceSummary();
   renderLaborPanel();
