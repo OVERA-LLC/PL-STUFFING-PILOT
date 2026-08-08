@@ -84,7 +84,7 @@
   .dp-track{position:relative;height:40px;background:repeating-linear-gradient(to right, #F4F1E7 0, #F4F1E7 calc(100%/18 - 1px), #E3DCC9 calc(100%/18 - 1px), #E3DCC9 calc(100%/18));border-radius:5px;}
   .dp-gauge{position:absolute;top:3px;bottom:3px;border-radius:5px;color:#fff;font-size:10.5px;display:flex;align-items:center;overflow:hidden;cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,0.25);user-select:none;}
   .dp-gauge:active{cursor:grabbing;}
-  .dp-gauge .dp-gauge-text{flex:1;padding:2px 7px;outline:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:transparent;border:none;color:#000;font-size:10.5px;pointer-events:none;}
+  .dp-gauge .dp-gauge-text{flex:1;padding:2px 7px;outline:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:transparent;border:none;color:#000;font-size:10.5px;cursor:text;}
   .dp-gauge .dp-gauge-text.editing{pointer-events:auto;background:rgba(255,255,255,0.55);}
   .dp-gauge .dp-gauge-text:focus{white-space:normal;overflow:visible;}
   .dp-gauge-handle{width:7px;align-self:stretch;cursor:ew-resize;background:rgba(255,255,255,0.35);flex:0 0 auto;}
@@ -262,7 +262,9 @@
   table{border-collapse:collapse;font-size:12px;min-width:1900px;width:100%;}
   #labortable{min-width:0;}
   #labortable th, #labortable td{white-space:normal;}
-  #menuCostCompareTable, #staffsettingstable{min-width:0;width:auto;}
+  #staffsettingstable{min-width:0;width:auto;}
+  #menuCostCompareTable{min-width:0;width:100%;table-layout:fixed;}
+  #menuCostCompareTable th, #menuCostCompareTable td{white-space:normal;word-break:break-word;font-size:11px;padding:4px 5px;}
   #sumtable, #jobsummarytable{table-layout:fixed;min-width:0;width:auto;}
   #sumtable th, #sumtable td, #jobsummarytable th, #jobsummarytable td{overflow:hidden;}
   th,td{border:1px solid var(--line);padding:4px 6px;text-align:center;white-space:nowrap;}
@@ -674,7 +676,7 @@
     </details>
 
     <details class="notes" id="menuCostSection" open>
-      <summary id="menuCostSummaryLabel"><b>🔒 食材原価率登録（季節・コース名ごとに複数登録可・パスコード保護）</b></summary>
+      <summary id="menuCostSummaryLabel"><b>🔒 食材原価率登録（季節・プラン名ごとに複数登録可・パスコード保護）</b></summary>
 
       <div id="menuCostLockedView">
         <p style="font-size:12.5px;color:var(--muted-ink,#7a8a8e);margin:0 0 10px;">この項目はパスコードで保護されています。パスコードを入力すると閲覧・編集できます。</p>
@@ -694,7 +696,7 @@
 
         <div class="tablecard" style="padding:10px 12px;margin-bottom:14px;">
           <div style="font-size:12px;font-weight:700;margin-bottom:6px;">予約状況サマリーの各項目に、夕食・朝食を含めるか設定</div>
-          <div style="font-size:11px;color:var(--muted-ink,#7a8a8e);margin-bottom:8px;">チェックした項目の人数が、使用中の食材原価率プランに基づいて月間食材費・日次損益に自動反映されます。ブックマークレットからの自動集計と実際の人数に差がある場合は、下の「月間調整人数」で手入力補正できます。</div>
+          <div style="font-size:11px;color:var(--muted-ink,#7a8a8e);margin-bottom:8px;">チェックした項目の人数が、使用中の食材原価率プランに基づいて月間食材費・日次損益に自動反映されます。項目は施設ごとに自由に削除・追加できます。</div>
           <div id="mealCategorySettings" style="display:flex;flex-direction:column;gap:4px;"></div>
           <div class="staffadd" style="margin-top:10px;">
             <span class="t-label">項目を追加：</span>
@@ -707,7 +709,7 @@
           <span class="t-label">新しいプランを追加：</span>
           <input type="number" id="newPlanYear" placeholder="年度（例：2026）" style="width:100px;">
           <input type="text" id="newPlanSeason" placeholder="季節（例：夏）" style="width:90px;">
-          <input type="text" id="newPlanCourseName" placeholder="コース名（例：特選会席）" style="width:150px;">
+          <input type="text" id="newPlanCourseName" placeholder="プラン名（例：特選会席）" style="width:150px;">
           <button class="btn" onclick="addMenuPlan()">追加</button>
         </div>
 
@@ -811,7 +813,7 @@
         <li>①　<b>日次損益</b>：売上・人件費・食材原価・施設運転費から、その日の黒字／赤字を自動計算します。人件費は深夜・時間外・法定休日の割増や、有給休暇の賃金計算も含めた労働基準法に準拠した金額です。</li>
         <li>②　<b>従業員・施設運転費の設定</b>：従業員の追加、時給・休憩・交通費・所定労働時間・扶養情報や、施設運転費の基本値・日別上書きを設定します。パスコード保護されています。</li>
         <li>③　<b>評価シート</b>：従業員ごとの人事評価を記録します。評価項目は自由に追加・編集できます。パスコード保護されています。</li>
-        <li>④　<b>食材原価率登録・比較</b>：夕食・朝食のメニュー構成（項目・品名・単位・価格）から、1人前の原価と原価率を自動計算します。季節・コース名・年度ごとに複数のプランを登録し、比較できます。パスコード保護されています。</li>
+        <li>④　<b>食材原価率登録・比較</b>：夕食・朝食のメニュー構成（項目・品名・単位・価格）から、1人前の原価と原価率を自動計算します。季節・プラン名・年度ごとに複数のプランを登録し、比較できます。パスコード保護されています。</li>
         <li>⑤　<b>労務</b>：勤務時間、社会保険料・雇用保険料（従業員負担分・会社負担分）、所得税の概算、交通費などを従業員ごとに自動計算して確認できます。パスコード保護されています。</li>
       </ul>
 
@@ -1080,11 +1082,11 @@ let FACILITY_OVERRIDE = {}; // {day: amount} 施設運転費の日別上書き
 // 予約状況サマリーの各項目（団体・昼宴会・夜宴会・日帰り・弁当）が、夕食・朝食を含むかどうかの設定。
 // ここでON にした項目の人数は、使用中の食材原価率プランの原価をもとに、月間食材費・日次損益に自動反映される。
 let MEAL_CATEGORY_SETTINGS = {
-  group:         { dinner: false, breakfast: false, adjust: 0, label: "団体人数" },
-  lunchbanquet:  { dinner: false, breakfast: false, adjust: 0, label: "昼宴会人数" },
-  dinnerbanquet: { dinner: false, breakfast: false, adjust: 0, label: "夜宴会人数" },
-  daytrip:       { dinner: false, breakfast: false, adjust: 0, label: "日帰り" },
-  bento:         { dinner: false, breakfast: false, adjust: 0, label: "弁当（外注弁当原価を使用）" },
+  group:         { dinner: false, breakfast: false, label: "団体人数" },
+  lunchbanquet:  { dinner: false, breakfast: false, label: "昼宴会人数" },
+  dinnerbanquet: { dinner: false, breakfast: false, label: "夜宴会人数" },
+  daytrip:       { dinner: false, breakfast: false, label: "日帰り" },
+  bento:         { dinner: false, breakfast: false, label: "弁当（外注弁当原価を使用）" },
 };
 
 // 労務関連の料率設定（施設ごとに1つ）。健康保険料率・所得税概算率は都道府県や個人の状況で変わるため、
@@ -1152,16 +1154,16 @@ const BREAKFAST_UNIT = 588.6;
 let wagesVisible = false; // 従業員設定エリア全体のロック状態（初期状態はロック中）
 
 // 食材原価率設定：夕食のメニュー構成（項目・品名・単位・価格）から、1人前の原価を自動計算する
-// 食材原価率登録：季節・コース名・年度ごとに複数のプランを登録できる。
+// 食材原価率登録：季節・プラン名・年度ごとに複数のプランを登録できる。
 // このうち「使用中」の1つが、実際の日次損益（夕食原価）の計算に使われる。
 let MENU_COST_PLANS = [];
 
 // innto連携ブックマークレットから届く「日別・プラン名別の人数内訳」。
-// 登録済みの食材原価率プラン（コース名）と突き合わせて、その日実際に予約されたプランの原価を自動判定するために使う。
+// 登録済みの食材原価率プラン（プラン名）と突き合わせて、その日実際に予約されたプランの原価を自動判定するために使う。
 // key: 日, value: { プラン名: 人数 }
 let DAILY_PLAN_BREAKDOWN = {};
 
-// 予約プラン名から、登録済みの食材原価率プラン（コース名）を探す（部分一致）
+// 予約プラン名から、登録済みの食材原価率プラン（プラン名）を探す（部分一致）
 function matchMenuPlanByName(planName){
   if(!planName) return null;
   return MENU_COST_PLANS.find(p=> p.courseName && (planName.includes(p.courseName) || p.courseName.includes(planName))) || null;
@@ -1284,8 +1286,7 @@ function renderMealCategorySettings(){
       <span style="width:200px;">${s.label}</span>
       <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" ${s.dinner?"checked":""} onchange="toggleMealCategory('${catKey}','dinner',this.checked)"> 夕食を含む</label>
       <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" ${s.breakfast?"checked":""} onchange="toggleMealCategory('${catKey}','breakfast',this.checked)"> 朝食を含む</label>
-      <label style="display:flex;align-items:center;gap:4px;">月間調整：<input type="number" value="${s.adjust??0}" onchange="updateMealCategoryAdjust('${catKey}', this.value)" style="width:60px;" title="ブックマークレットの自動集計と実際の人数に差がある時、ここで手入力で補正できます（月間の合計に加算されます）">人</label>
-      ${s.custom ? `<button class="rmbtn" onclick="removeCustomMealCategory('${catKey}')">削除</button>` : ""}
+      <button class="rmbtn" onclick="removeMealCategory('${catKey}')">削除</button>
     </div>`;
   });
   wrap.innerHTML = html;
@@ -1296,24 +1297,16 @@ function addCustomMealCategory(){
   const label = input.value.trim();
   if(!label){ alert("項目名を入力してください"); return; }
   const key = "custom_" + dpNewId();
-  MEAL_CATEGORY_SETTINGS[key] = { dinner:false, breakfast:false, label, adjust:0, custom:true };
+  MEAL_CATEGORY_SETTINGS[key] = { dinner:false, breakfast:false, label, custom:true };
   input.value = "";
   renderMealCategorySettings();
   recalc();
   scheduleAutoSync();
 }
 
-function removeCustomMealCategory(catKey){
+function removeMealCategory(catKey){
   delete MEAL_CATEGORY_SETTINGS[catKey];
   renderMealCategorySettings();
-  recalc();
-  scheduleAutoSync();
-}
-
-function updateMealCategoryAdjust(catKey, value){
-  if(!MEAL_CATEGORY_SETTINGS[catKey]) return;
-  const v = parseFloat(value);
-  MEAL_CATEGORY_SETTINGS[catKey].adjust = isNaN(v) ? 0 : v;
   recalc();
   scheduleAutoSync();
 }
@@ -1329,7 +1322,7 @@ function renderMenuPlanList(){
   const wrap = document.getElementById("menuPlanList");
   if(!wrap) return;
   if(MENU_COST_PLANS.length===0){
-    wrap.innerHTML = `<div style="font-size:11.5px;color:var(--muted-ink,#7a8a8e);">まだプランがありません。下の「＋ 新しいプランを追加」から、季節・コース名を登録してください。</div>`;
+    wrap.innerHTML = `<div style="font-size:11.5px;color:var(--muted-ink,#7a8a8e);">まだプランがありません。下の「＋ 新しいプランを追加」から、季節・プラン名を登録してください。</div>`;
     return;
   }
   const sorted = [...MENU_COST_PLANS].sort((a,b)=> (b.year-a.year) || String(a.season).localeCompare(String(b.season)) || String(a.courseName).localeCompare(String(b.courseName)));
@@ -1337,7 +1330,7 @@ function renderMenuPlanList(){
   sorted.forEach(plan=>{
     const selected = plan.id === MENU_COST_CURRENT_EDIT_ID;
     html += `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid ${selected?'var(--teal-deep)':'var(--line)'};border-radius:8px;background:${selected?'var(--paper-soft)':'#fff'};">
-      <span style="font-size:12px;font-weight:${selected?'700':'400'};flex:1;">${plan.year}年度　${plan.season||"（季節未設定）"}　${plan.courseName||"（コース名未設定）"}</span>
+      <span style="font-size:12px;font-weight:${selected?'700':'400'};flex:1;">${plan.year}年度　${plan.season||"（季節未設定）"}　${plan.courseName||"（プラン名未設定）"}</span>
       <span style="font-size:11px;color:var(--muted-ink,#7a8a8e);">原価率 ${planCostRatio(plan).toFixed(1)}%</span>
       ${plan.isActive ? `<span style="font-size:10.5px;color:var(--profit-ink);font-weight:700;">✓ 使用中</span>` : `<button class="rmbtn" onclick="setActiveMenuPlan('${plan.id}')">これを使用中にする</button>`}
       <button class="rmbtn" onclick="selectMenuPlan('${plan.id}')">編集</button>
@@ -1396,7 +1389,7 @@ async function unlockMenuCostSection(){
     errEl.textContent = "";
     document.getElementById("menuCostLockedView").style.display = "none";
     document.getElementById("menuCostUnlockedView").style.display = "";
-    document.getElementById("menuCostSummaryLabel").innerHTML = "<b>🔓 食材原価率登録（季節・コース名ごとに複数登録可・パスコード保護）</b>";
+    document.getElementById("menuCostSummaryLabel").innerHTML = "<b>🔓 食材原価率登録（季節・プラン名ごとに複数登録可・パスコード保護）</b>";
     renderMenuCostSection();
   } else {
     errEl.textContent = "パスコードが違います";
@@ -1409,7 +1402,7 @@ function lockMenuCostSection(){
   menuCostUnlocked = false;
   document.getElementById("menuCostLockedView").style.display = "";
   document.getElementById("menuCostUnlockedView").style.display = "none";
-  document.getElementById("menuCostSummaryLabel").innerHTML = "<b>🔒 食材原価率登録（季節・コース名ごとに複数登録可・パスコード保護）</b>";
+  document.getElementById("menuCostSummaryLabel").innerHTML = "<b>🔒 食材原価率登録（季節・プラン名ごとに複数登録可・パスコード保護）</b>";
 }
 
 function renderMenuCostSection(){
@@ -1474,28 +1467,44 @@ function renderMenuCostSection(){
   let html = "";
   plan.courses.forEach(course=>{
     const courseCost = menuCourseCost(course);
+    const collapsed = !!course.collapsed;
     html += `<div class="tablecard" style="padding:10px 12px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
         <input type="text" value="${(course.name||"").replace(/"/g,"&quot;")}" placeholder="項目名（例：先付け）" onchange="updateMenuCourseName('${course.id}', this.value)" style="font-weight:700;flex:0 0 160px;">
         <span style="font-size:11.5px;color:var(--muted-ink,#7a8a8e);">この項目の合計原価：<b>¥${Math.round(courseCost).toLocaleString()}</b></span>
         <span style="flex:1;"></span>
+        ${collapsed
+          ? `<button class="rmbtn" onclick="setMenuCourseCollapsed('${course.id}', false)">編集</button>`
+          : `<button class="rmbtn" onclick="setMenuCourseCollapsed('${course.id}', true)">確定</button>`}
         <button class="rmbtn" onclick="addMenuItem('${course.id}')">＋ 品目を追加</button>
         <button class="rmbtn" onclick="removeMenuCourse('${course.id}')">この項目を削除</button>
-      </div>
-      <table style="min-width:0;width:100%;"><thead><tr>
+      </div>`;
+    if(!collapsed){
+      html += `<table style="min-width:0;width:100%;"><thead><tr>
         <th style="text-align:left;">品名</th><th style="width:80px;">単位</th><th style="width:90px;">価格（円）</th><th style="width:40px;"></th>
       </tr></thead><tbody>`;
-    (course.items||[]).forEach(item=>{
-      html += `<tr>
-        <td><input type="text" value="${(item.name||"").replace(/"/g,"&quot;")}" placeholder="品名（例：白身魚昆布締め）" onchange="updateMenuItem('${course.id}','${item.id}','name',this.value)" style="width:100%;"></td>
-        <td><input type="text" value="${(item.unit||"").replace(/"/g,"&quot;")}" placeholder="例：尾" onchange="updateMenuItem('${course.id}','${item.id}','unit',this.value)" style="width:100%;"></td>
-        <td><input type="number" value="${item.price??0}" onchange="updateMenuItem('${course.id}','${item.id}','price',this.value)" style="width:100%;"></td>
-        <td><button class="rmbtn" onclick="removeMenuItem('${course.id}','${item.id}')">削除</button></td>
-      </tr>`;
-    });
-    html += `</tbody></table></div>`;
+      (course.items||[]).forEach(item=>{
+        html += `<tr>
+          <td><input type="text" value="${(item.name||"").replace(/"/g,"&quot;")}" placeholder="品名（例：白身魚昆布締め）" onchange="updateMenuItem('${course.id}','${item.id}','name',this.value)" style="width:100%;"></td>
+          <td><input type="text" value="${(item.unit||"").replace(/"/g,"&quot;")}" placeholder="例：尾" onchange="updateMenuItem('${course.id}','${item.id}','unit',this.value)" style="width:100%;"></td>
+          <td><input type="number" value="${item.price??0}" onchange="updateMenuItem('${course.id}','${item.id}','price',this.value)" style="width:100%;"></td>
+          <td><button class="rmbtn" onclick="removeMenuItem('${course.id}','${item.id}')">削除</button></td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
+    }
+    html += `</div>`;
   });
   wrap.innerHTML = html;
+}
+
+function setMenuCourseCollapsed(courseId, collapsed){
+  const plan = getEditingMenuPlan();
+  const c = plan && plan.courses.find(c=>c.id===courseId);
+  if(!c) return;
+  c.collapsed = collapsed;
+  renderMenuCostSection();
+  scheduleAutoSync();
 }
 
 function updateMenuCostSetting(field, value){
@@ -1598,7 +1607,7 @@ function renderMenuCostCompareTable(){
     return;
   }
   const sorted = [...MENU_COST_PLANS].sort((a,b)=> (b.year-a.year) || String(a.season).localeCompare(String(b.season)) || String(a.courseName).localeCompare(String(b.courseName)));
-  let html = `<thead><tr><th>年度</th><th>季節</th><th>コース名</th><th>夕食販売価格</th><th>夕食合計原価</th><th>夕食原価率</th><th>朝食販売価格</th><th>朝食原価率</th><th>使用中</th></tr></thead><tbody>`;
+  let html = `<thead><tr><th>年度</th><th>季節</th><th>プラン名</th><th>夕食販売価格</th><th>夕食合計原価</th><th>夕食原価率</th><th>朝食販売価格</th><th>朝食原価率</th><th>使用中</th></tr></thead><tbody>`;
   sorted.forEach(plan=>{
     const cost = planTotalCost(plan);
     const ratio = planCostRatio(plan);
@@ -3091,25 +3100,6 @@ function recalc(){
     monthBreakfastC += breakfastCost; monthFacility += facilityCost; monthCommute += commute; monthPL += pl;
   }
 
-  // 月間調整人数（ブックマークレットの自動集計と実際の人数に差がある時の手入力補正）を月間食材費に反映する
-  {
-    const activePlan = getActiveMenuPlan();
-    const perPersonDinnerCost = totalDinnerCost();
-    const bentoCost = activePlan ? (activePlan.bentoFixedCost || 0) : 0;
-    let adjustDinnerCost = 0, adjustBreakfastCost = 0;
-    Object.keys(MEAL_CATEGORY_SETTINGS).forEach(catKey=>{
-      const s = MEAL_CATEGORY_SETTINGS[catKey];
-      const adj = s.adjust || 0;
-      if(adj===0) return;
-      const unitDinnerCost = (catKey==="bento") ? bentoCost : perPersonDinnerCost;
-      if(s.dinner) adjustDinnerCost += adj * unitDinnerCost;
-      if(s.breakfast) adjustBreakfastCost += adj * BREAKFAST_UNIT;
-    });
-    monthDinnerC += adjustDinnerCost;
-    monthBreakfastC += adjustBreakfastCost;
-    monthPL -= (adjustDinnerCost + adjustBreakfastCost);
-  }
-
   // 会社負担分の社会保険料・雇用保険料（月単位の概念のため、日次ではなく月間人件費にまとめて加算する）
   let monthEmployerBurden = 0;
   STAFF.forEach((st,si)=>{
@@ -3249,6 +3239,11 @@ async function runAutoSync(){
 function applyRemoteUpdate(update){
   console.log("[Realtime] applyRemoteUpdate called:", update);
   if(!update || !update.payload) return;
+  if(TEXT_EDITING_ACTIVE){
+    // 入力中は再描画でカーソルが外れてしまうため、編集が終わるまで保留する
+    PENDING_REMOTE_UPDATE = update;
+    return;
+  }
   applyState(update.payload);
   const status = document.getElementById("cloudStatus");
   if(status){
@@ -3530,7 +3525,7 @@ function renderDpRows(){
       html += `<div class="dp-gauge" data-row="${row.id}" data-block="${b.id}" style="left:${leftPct}%;width:${widthPct}%;background:${b.color};" title="${dpMinToLabel(b.startMin)}〜${dpMinToLabel(b.endMin)}">
         <div class="dp-gauge-handle dp-gauge-handle-l" data-role="resize-l"></div>
         <button type="button" class="dp-gauge-edit" onclick="dpEditBlockText(this)" title="文字を入力">✎</button>
-        <input class="dp-gauge-text" data-role="text" value="${(b.text||"").replace(/"/g,"&quot;")}" onchange="dpUpdateBlockText('${row.id}','${b.id}',this.value)" onblur="this.classList.remove('editing')">
+        <input class="dp-gauge-text" data-role="text" value="${(b.text||"").replace(/"/g,"&quot;")}" onchange="dpUpdateBlockText('${row.id}','${b.id}',this.value)" onblur="this.classList.remove('editing'); endTextEditing();">
         <input type="color" class="dp-gauge-color" value="${b.color}" onchange="dpUpdateBlockColor('${row.id}','${b.id}',this.value)">
         <button class="dp-gauge-del" onclick="dpRemoveBlock('${row.id}','${b.id}')">×</button>
         <div class="dp-gauge-handle dp-gauge-handle-r" data-role="resize-r"></div>
@@ -3605,12 +3600,31 @@ function dpUpdateBlockText(rowId, blockId, text){
 }
 
 // ✎ボタンをクリックすると、確実にそのゲージの文字入力欄を編集できる状態にする
+// テキスト入力中（Daily Pilotのゲージなど）に、自動同期で受信したリモート更新の再描画が
+// カーソル・フォーカスを奪ってしまわないようにするための仕組み。
+// 編集中はリモート更新の反映を保留し、編集が終わった時点でまとめて反映する。
+let TEXT_EDITING_ACTIVE = false;
+let PENDING_REMOTE_UPDATE = null;
+
+function beginTextEditing(){
+  TEXT_EDITING_ACTIVE = true;
+}
+function endTextEditing(){
+  TEXT_EDITING_ACTIVE = false;
+  if(PENDING_REMOTE_UPDATE){
+    const update = PENDING_REMOTE_UPDATE;
+    PENDING_REMOTE_UPDATE = null;
+    applyRemoteUpdate(update);
+  }
+}
+
 function dpEditBlockText(btn){
   const gaugeEl = btn.closest(".dp-gauge");
   if(!gaugeEl) return;
   const input = gaugeEl.querySelector('[data-role="text"]');
   if(!input) return;
   input.classList.add("editing");
+  beginTextEditing();
   input.focus();
   input.select();
 }
@@ -3633,18 +3647,7 @@ function dpSnapMin(min){
 }
 
 function dpSetupTrackDrag(track, rowId){
-  let dragging = null; // {blockId, mode:'move'|'resize-l'|'resize-r', startX, origStart, origEnd, trackWidth}
-
-  // 通常はドラッグ優先（テキスト欄はクリックを素通りさせる）。ダブルクリックで文字編集モードに入る。
-  track.addEventListener("dblclick", function(e){
-    const gaugeEl = e.target.closest(".dp-gauge");
-    if(!gaugeEl) return;
-    const input = gaugeEl.querySelector('[data-role="text"]');
-    if(!input) return;
-    input.classList.add("editing");
-    input.focus();
-    input.select();
-  });
+  let dragging = null; // {blockId, mode:'move'|'resize-l'|'resize-r', startX, origStart, origEnd, trackWidth, isTextClick, moved}
 
   track.addEventListener("mousedown", function(e){
     const gaugeEl = e.target.closest(".dp-gauge");
@@ -3652,6 +3655,7 @@ function dpSetupTrackDrag(track, rowId){
     if(e.target.tagName==="INPUT" && e.target.type==="color") return;
     if(e.target.classList.contains("dp-gauge-del")) return;
     if(e.target.classList.contains("dp-gauge-edit")) return;
+    if(e.target.classList.contains("editing")) return; // すでに編集中のテキスト欄は素通り（カーソル操作の邪魔をしない）
     const blockId = gaugeEl.dataset.block;
     const day = dpEnsureDay(DP_CURRENT_DAY);
     const row = day.rows.find(r=>r.id===rowId);
@@ -3660,20 +3664,23 @@ function dpSetupTrackDrag(track, rowId){
     let mode = "move";
     if(e.target.dataset.role==="resize-l") mode = "resize-l";
     else if(e.target.dataset.role==="resize-r") mode = "resize-r";
+    const isTextClick = e.target.dataset.role === "text";
     dragging = {
       blockId, mode, startX: e.clientX,
       origStart: block.startMin, origEnd: block.endMin,
-      trackWidth: track.getBoundingClientRect().width
+      trackWidth: track.getBoundingClientRect().width,
+      isTextClick, moved: false,
     };
-    e.preventDefault();
+    if(!isTextClick) e.preventDefault(); // テキスト欄の場合はブラウザ標準のフォーカス・カーソル配置動作をそのまま活かす
   });
   document.addEventListener("mousemove", function(e){
     if(!dragging) return;
+    const dx = e.clientX - dragging.startX;
+    if(Math.abs(dx) > 3) dragging.moved = true; // 3px以上動いたら「クリック」ではなく「ドラッグ」とみなす
     const day = dpEnsureDay(DP_CURRENT_DAY);
     const row = day.rows.find(r=>r.id===rowId);
     const block = row && row.blocks.find(b=>b.id===dragging.blockId);
     if(!block) return;
-    const dx = e.clientX - dragging.startX;
     const dMin = dpSnapMin((dx / dragging.trackWidth) * DP_TOTAL_MIN);
     const gaugeEl = document.querySelector(`.dp-gauge[data-row="${rowId}"][data-block="${dragging.blockId}"]`);
     if(!gaugeEl) return;
@@ -3697,7 +3704,21 @@ function dpSetupTrackDrag(track, rowId){
     gaugeEl.title = dpMinToLabel(block.startMin) + "〜" + dpMinToLabel(block.endMin);
   });
   document.addEventListener("mouseup", function(){
-    if(dragging){ dragging = null; scheduleAutoSync(); }
+    if(dragging){
+      // テキスト欄をクリックしただけ（ドラッグしていない）場合は、そのまま編集モードに入る（シングルクリックで反応）
+      if(dragging.isTextClick && !dragging.moved){
+        const gaugeEl = document.querySelector(`.dp-gauge[data-row="${rowId}"][data-block="${dragging.blockId}"]`);
+        const input = gaugeEl && gaugeEl.querySelector('[data-role="text"]');
+        if(input){
+          input.classList.add("editing");
+          beginTextEditing();
+          input.focus();
+          input.select();
+        }
+      }
+      dragging = null;
+      scheduleAutoSync();
+    }
   });
 }
 
