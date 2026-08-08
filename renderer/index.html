@@ -1626,14 +1626,26 @@ function renderMenuCostSection(){
   const dinnerCourses = plan.courses.filter(c=>(c.mealType||"dinner")==="dinner");
   const breakfastCourses = plan.courses.filter(c=>c.mealType==="breakfast");
 
-  let html = `<div style="font-size:12px;font-weight:700;color:var(--teal-deep);margin-bottom:2px;">🌙 夕食の項目</div>`;
+  const planOptionsHtml = buildExistingPlanOptionsHtml();
+
+  let html = `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px;">
+    <div style="font-size:12px;font-weight:700;color:var(--teal-deep);">🌙 夕食の項目</div>
+    <span style="font-size:11px;color:var(--muted-ink,#7a8a8e);">既存プラン選択：</span>
+    <select id="copyFromPlanSelectDinner" style="max-width:220px;">${planOptionsHtml}</select>
+    <button class="rmbtn" onclick="copyAllCoursesFromPlan('dinner')">この項目をすべて追加</button>
+  </div>`;
   if(dinnerCourses.length===0){
     html += `<div style="font-size:11px;color:var(--muted-ink,#7a8a8e);margin-bottom:8px;">まだ夕食の項目がありません。</div>`;
   } else {
     dinnerCourses.forEach(course=>{ html += renderCourseCard(course); });
   }
 
-  html += `<div style="font-size:12px;font-weight:700;color:var(--teal-deep);margin:12px 0 2px;">☀ 朝食の項目</div>`;
+  html += `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 2px;">
+    <div style="font-size:12px;font-weight:700;color:var(--teal-deep);">☀ 朝食の項目</div>
+    <span style="font-size:11px;color:var(--muted-ink,#7a8a8e);">既存プラン選択：</span>
+    <select id="copyFromPlanSelectBreakfast" style="max-width:220px;">${planOptionsHtml}</select>
+    <button class="rmbtn" onclick="copyAllCoursesFromPlan('breakfast')">この項目をすべて追加</button>
+  </div>`;
   if(breakfastCourses.length===0){
     html += `<div style="font-size:11px;color:var(--muted-ink,#7a8a8e);">まだ朝食の項目がありません（未登録の間は、朝食原価に全国共通の目安値：¥${Math.round(BREAKFAST_UNIT).toLocaleString()}が使われます）。</div>`;
   } else {
@@ -1641,6 +1653,43 @@ function renderMenuCostSection(){
   }
 
   wrap.innerHTML = html;
+}
+
+// 夕食用・朝食用どちらの「既存プラン選択」でも共通で使う、全プランの選択肢一覧
+function buildExistingPlanOptionsHtml(){
+  let html = `<option value="">（プランを選択）</option>`;
+  const sorted = [...MENU_COST_PLANS].sort((a,b)=> (b.year-a.year) || String(a.season).localeCompare(String(b.season)) || String(a.courseName).localeCompare(String(b.courseName)));
+  sorted.forEach(p=>{
+    html += `<option value="${p.id}">${p.year}年度 ${p.season||""} ${p.courseName||"(名称未設定)"}</option>`;
+  });
+  return html;
+}
+
+// 選んだプランの、夕食（または朝食）の項目をすべて、今編集中のプランへコピーする
+function copyAllCoursesFromPlan(mealType){
+  const selectId = mealType==="breakfast" ? "copyFromPlanSelectBreakfast" : "copyFromPlanSelectDinner";
+  const sel = document.getElementById(selectId);
+  if(!sel || !sel.value) return;
+  const sourcePlan = MENU_COST_PLANS.find(p=>p.id===sel.value);
+  const plan = getEditingMenuPlan();
+  if(!sourcePlan || !plan) return;
+  const sourceCourses = (sourcePlan.courses||[]).filter(c=>(c.mealType||"dinner")===mealType);
+  if(sourceCourses.length===0){
+    alert("選んだプランには、その食事の項目が登録されていません。");
+    return;
+  }
+  sourceCourses.forEach(c=>{
+    plan.courses.push({
+      id: dpNewId(),
+      name: c.name,
+      mealType: c.mealType || "dinner",
+      items: (c.items||[]).map(it=>({ id: dpNewId(), name: it.name, unit: it.unit, price: it.price })),
+    });
+  });
+  sel.value = "";
+  renderMenuCostSection();
+  recalc();
+  scheduleAutoSync();
 }
 
 function setMenuCourseCollapsed(courseId, collapsed){
