@@ -715,13 +715,13 @@
         <div id="menuPlanEditForm" style="display:none;">
           <div class="staffadd" style="margin-bottom:12px;">
             <span class="t-label">夕食販売価格（円）：</span>
-            <input type="number" id="dinnerSellingPriceInput" onchange="updateMenuCostSetting('dinnerSellingPrice', this.value)" style="width:90px;">
+            <input type="number" step="any" id="dinnerSellingPriceInput" onfocus="beginTextEditing()" onchange="updateMenuCostSetting('dinnerSellingPrice', this.value)" onblur="endTextEditing()" style="width:90px;">
             <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
             <span class="t-label">朝食販売価格（円）：</span>
-            <input type="number" id="breakfastSellingPriceInput" onchange="updateMenuCostSetting('breakfastSellingPrice', this.value)" style="width:90px;">
+            <input type="number" step="any" id="breakfastSellingPriceInput" onfocus="beginTextEditing()" onchange="updateMenuCostSetting('breakfastSellingPrice', this.value)" onblur="endTextEditing()" style="width:90px;">
             <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
             <span class="t-label">外注弁当など固定原価（円）：</span>
-            <input type="number" id="bentoFixedCostInput" onchange="updateMenuCostSetting('bentoFixedCost', this.value)" style="width:90px;">
+            <input type="number" step="any" id="bentoFixedCostInput" onfocus="beginTextEditing()" onchange="updateMenuCostSetting('bentoFixedCost', this.value)" onblur="endTextEditing()" style="width:90px;">
             <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
             <button class="btn" onclick="addMenuCourse()">＋ 項目（コース）を追加</button>
           </div>
@@ -1443,7 +1443,7 @@ function renderMenuCostSection(){
           <option value="percent" ${c.mode==="percent"?"selected":""}>％（割合）</option>
           <option value="yen" ${c.mode==="yen"?"selected":""}>円（固定額）</option>
         </select>
-        <input type="number" value="${c.value??0}" onchange="updateChildPricingValue('${cat}', this.value)" style="width:90px;">
+        <input type="number" step="any" value="${c.value??0}" onfocus="beginTextEditing()" onchange="updateChildPricingValue('${cat}', this.value)" onblur="endTextEditing()" style="width:90px;">
         <span style="font-size:11px;color:var(--muted-ink,#7a8a8e);">${c.mode==="percent"?"%":"円"}　→　実際の金額：¥${Math.round(calcChildPrice(cat)).toLocaleString()}</span>
       </div>`;
     });
@@ -1469,7 +1469,7 @@ function renderMenuCostSection(){
     const collapsed = !!course.collapsed;
     html += `<div class="tablecard" style="padding:10px 12px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
-        <input type="text" value="${(course.name||"").replace(/"/g,"&quot;")}" placeholder="項目名（例：先付け）" onchange="updateMenuCourseName('${course.id}', this.value)" style="font-weight:700;flex:0 0 160px;">
+        <input type="text" value="${(course.name||"").replace(/"/g,"&quot;")}" placeholder="項目名（例：先付け）" onfocus="beginTextEditing()" onchange="updateMenuCourseName('${course.id}', this.value)" onblur="endTextEditing()" style="font-weight:700;flex:0 0 160px;">
         <span style="font-size:11.5px;color:var(--muted-ink,#7a8a8e);">この項目の合計原価：<b>¥${Math.round(courseCost).toLocaleString()}</b></span>
         <span style="flex:1;"></span>
         ${collapsed
@@ -1484,9 +1484,9 @@ function renderMenuCostSection(){
       </tr></thead><tbody>`;
       (course.items||[]).forEach(item=>{
         html += `<tr>
-          <td><input type="text" value="${(item.name||"").replace(/"/g,"&quot;")}" placeholder="品名（例：白身魚昆布締め）" onchange="updateMenuItem('${course.id}','${item.id}','name',this.value)" style="width:100%;"></td>
-          <td><input type="text" value="${(item.unit||"").replace(/"/g,"&quot;")}" placeholder="例：尾" onchange="updateMenuItem('${course.id}','${item.id}','unit',this.value)" style="width:100%;"></td>
-          <td><input type="number" value="${item.price??0}" onchange="updateMenuItem('${course.id}','${item.id}','price',this.value)" style="width:100%;"></td>
+          <td><input type="text" value="${(item.name||"").replace(/"/g,"&quot;")}" placeholder="品名（例：白身魚昆布締め）" onfocus="beginTextEditing()" onchange="updateMenuItem('${course.id}','${item.id}','name',this.value)" onblur="endTextEditing()" style="width:100%;"></td>
+          <td><input type="text" value="${(item.unit||"").replace(/"/g,"&quot;")}" placeholder="例：尾" onfocus="beginTextEditing()" onchange="updateMenuItem('${course.id}','${item.id}','unit',this.value)" onblur="endTextEditing()" style="width:100%;"></td>
+          <td><input type="number" step="any" value="${item.price??0}" onfocus="beginTextEditing()" onchange="updateMenuItem('${course.id}','${item.id}','price',this.value)" onblur="endTextEditing()" style="width:100%;"></td>
           <td><button class="rmbtn" onclick="removeMenuItem('${course.id}','${item.id}')">削除</button></td>
         </tr>`;
       });
@@ -4216,6 +4216,18 @@ document.addEventListener("keydown", function(e){
     e.preventDefault();
     if(PRINT_SELECTED_TABS.length===0) PRINT_SELECTED_TABS = [CURRENT_TAB];
     showPrintPreview();
+    return;
+  }
+  // ボタンをクリックした後など、フォーカスが文字入力欄以外（本文やボタン）にある状態でスペースキーを押すと、
+  // ブラウザの既定動作でページが下にスクロールしてしまうため、それを防ぐ。
+  // 文字入力欄・テキストエリア・プルダウン・編集可能領域にフォーカスがある時は、スペース入力として通常通り機能させる。
+  if(e.code === "Space" || e.key === " "){
+    const active = document.activeElement;
+    const tag = active ? active.tagName : "";
+    const isTextField = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (active && active.isContentEditable);
+    if(!isTextField){
+      e.preventDefault();
+    }
   }
 });
 window.addEventListener("beforeprint", function(){
