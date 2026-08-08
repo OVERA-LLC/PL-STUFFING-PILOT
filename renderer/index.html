@@ -3215,6 +3215,8 @@ function scheduleAutoSync(){
 
 async function runAutoSync(){
   if(!window.electronAPI) return;
+  autoSyncTimer = null; // このタイミングまでの変更はこれから送信するので、「未送信の変更あり」の印を下ろす
+  const pushStartedAt = new Date().toISOString();
   const state = collectState();
   try{ await window.electronAPI.saveData(state); }catch(e){}
   const status = document.getElementById("cloudStatus");
@@ -3224,6 +3226,11 @@ async function runAutoSync(){
       if(result.ok){
         status.textContent = "自動共有しました（" + new Date().toLocaleTimeString("ja-JP") + "）";
         status.classList.add("ok");
+        // 送信成功＝この端末の内容が「今のところの最新」になったので、基準時刻を更新する。
+        // これより古いリモート更新は、この後届いても無視できるようになる。
+        if(!LOCAL_STATE_TIMESTAMP || new Date(pushStartedAt) > new Date(LOCAL_STATE_TIMESTAMP)){
+          LOCAL_STATE_TIMESTAMP = pushStartedAt;
+        }
       } else {
         status.textContent = "自動共有に失敗しました: " + result.error;
         status.classList.remove("ok");
@@ -3232,18 +3239,32 @@ async function runAutoSync(){
   }catch(e){
     if(status){ status.textContent = "自動共有に失敗しました"; status.classList.remove("ok"); }
   }
+  // 送信が完了した時点で、保留していたリモート更新があれば、ここで初めて安全に反映を試みる
+  // （ちょうどこの間にまた入力が始まっていたら、それはそれで新しいautoSyncTimerが立っているはずなので、まだ反映しない）
+  if(PENDING_REMOTE_UPDATE && !TEXT_EDITING_ACTIVE && !autoSyncTimer){
+    const update = PENDING_REMOTE_UPDATE;
+    PENDING_REMOTE_UPDATE = null;
+    applyRemoteUpdate(update);
+  }
 }
 
 // 他の端末からの更新をリアルタイムで受け取った時の処理
 function applyRemoteUpdate(update){
   console.log("[Realtime] applyRemoteUpdate called:", update);
   if(!update || !update.payload) return;
-  if(TEXT_EDITING_ACTIVE){
-    // 入力中は再描画でカーソルが外れてしまうため、編集が終わるまで保留する
+  if(TEXT_EDITING_ACTIVE || autoSyncTimer){
+    // 入力中、または他にまだクラウドへ送信していない変更が残っている間は、再描画で内容が消えてしまうため、
+    // 送信が完了する（またはこのセッションの編集が終わる）まで保留する
     PENDING_REMOTE_UPDATE = update;
     return;
   }
+  // 自分が最後に確定させた状態より古い更新であれば、せっかく確定させた最新の内容を古いデータで
+  // 上書きしてしまわないよう、無視する（保留が解消された直後などに古い更新が残っているケースを防ぐ）
+  if(LOCAL_STATE_TIMESTAMP && update.updated_at && new Date(update.updated_at) <= new Date(LOCAL_STATE_TIMESTAMP)){
+    return;
+  }
   applyState(update.payload);
+  LOCAL_STATE_TIMESTAMP = update.updated_at || new Date().toISOString();
   const status = document.getElementById("cloudStatus");
   if(status){
     status.textContent = "他の端末の更新を反映しました（" + new Date(update.updated_at).toLocaleTimeString("ja-JP") + "）";
@@ -3606,6 +3627,9 @@ function dpUpdateBlockText(rowId, blockId, text){
 // たった今入力した内容を上書きしてしまうため、その場合は保留分を破棄する
 // （この端末の最新の変更は、次回の自動同期で正しくクラウドへ送られ、他端末にも伝わる）。
 let TEXT_EDITING_ACTIVE = false;
+// この端末が最後に確定させた状態の時刻（自分の変更を送信した時刻、または実際に反映したリモート更新の時刻のうち新しい方）。
+// これより古いリモート更新は、送信待ちが解消された後であっても反映せず無視する（せっかく送った最新の内容を、古いデータで上書きしないため）。
+let LOCAL_STATE_TIMESTAMP = null;
 let TEXT_EDITED_DURING_SESSION = false;
 let PENDING_REMOTE_UPDATE = null;
 
@@ -3618,14 +3642,20 @@ function markTextEdited(){
 }
 function endTextEditing(){
   TEXT_EDITING_ACTIVE = false;
+  const hadLocalEdit = TEXT_EDITED_DURING_SESSION;
+  TEXT_EDITED_DURING_SESSION = false;
   if(PENDING_REMOTE_UPDATE){
-    const update = PENDING_REMOTE_UPDATE;
-    PENDING_REMOTE_UPDATE = null;
-    if(!TEXT_EDITED_DURING_SESSION){
+    if(hadLocalEdit || autoSyncTimer){
+      // このセッションで編集していた、またはまだクラウドへ送信していない他の変更が残っている場合、
+      // 保留していた更新は古い可能性が高いため、ここでは反映せず破棄する。
+      // 未送信の変更は次のrunAutoSync()で正しく送信され、その後で改めて保留分の要否が判定される。
+      PENDING_REMOTE_UPDATE = null;
+    } else {
+      const update = PENDING_REMOTE_UPDATE;
+      PENDING_REMOTE_UPDATE = null;
       applyRemoteUpdate(update);
     }
   }
-  TEXT_EDITED_DURING_SESSION = false;
 }
 
 // アプリ全体の入力欄（現在・今後追加されるものも含めて）を自動的に保護する仕組み。
