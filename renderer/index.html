@@ -73,8 +73,8 @@
   .dp-daytab.active{background:var(--teal-deep);color:#fff;border-color:var(--teal-deep);font-weight:700;}
   .dp-timeline-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
   .dp-timeline-title{font-weight:700;color:var(--teal-deep);font-size:13px;margin-right:6px;}
-  .dp-rows{display:flex;flex-direction:column;gap:10px;margin-bottom:18px;}
-  .dp-row{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;gap:10px;align-items:flex-start;}
+  .dp-rows{display:flex;flex-direction:column;gap:1px;margin-bottom:18px;}
+  .dp-row{background:#fff;border:1px solid var(--line);border-radius:8px;padding:4px 10px;display:flex;gap:10px;align-items:flex-start;}
   .dp-row-side{flex:0 0 130px;width:130px;}
   .dp-row-name{font-weight:700;font-size:12.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;}
   .dp-row-btns{display:flex;gap:4px;flex-wrap:wrap;}
@@ -84,11 +84,11 @@
   .dp-track{position:relative;height:40px;background:repeating-linear-gradient(to right, #F4F1E7 0, #F4F1E7 calc(100%/18 - 1px), #E3DCC9 calc(100%/18 - 1px), #E3DCC9 calc(100%/18));border-radius:5px;}
   .dp-gauge{position:absolute;top:3px;bottom:3px;border-radius:5px;color:#fff;font-size:10.5px;display:flex;align-items:center;overflow:hidden;cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,0.25);user-select:none;}
   .dp-gauge:active{cursor:grabbing;}
-  .dp-gauge .dp-gauge-text{flex:1;padding:0 5px;outline:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:transparent;border:none;color:#fff;font-size:10.5px;pointer-events:none;}
-  .dp-gauge .dp-gauge-text.editing{pointer-events:auto;background:rgba(0,0,0,0.2);}
+  .dp-gauge .dp-gauge-text{flex:1;padding:2px 7px;outline:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:transparent;border:none;color:#000;font-size:10.5px;pointer-events:none;}
+  .dp-gauge .dp-gauge-text.editing{pointer-events:auto;background:rgba(255,255,255,0.55);}
   .dp-gauge .dp-gauge-text:focus{white-space:normal;overflow:visible;}
   .dp-gauge-handle{width:7px;align-self:stretch;cursor:ew-resize;background:rgba(255,255,255,0.35);flex:0 0 auto;}
-  .dp-gauge-color{width:14px;height:14px;border:none;padding:0;flex:0 0 auto;margin-left:2px;cursor:pointer;background:transparent;}
+  .dp-gauge-color{width:16px;height:16px;border:none;padding:0;flex:0 0 auto;margin-left:2px;cursor:pointer;background:transparent;}
   .dp-gauge-edit{flex:0 0 auto;background:rgba(255,255,255,0.3);color:#fff;border:none;width:16px;height:16px;line-height:16px;font-size:10px;border-radius:4px;margin-right:2px;cursor:pointer;padding:0;}
   .dp-gauge-del{flex:0 0 auto;background:rgba(0,0,0,0.25);color:#fff;border:none;width:14px;height:14px;line-height:14px;font-size:10px;border-radius:50%;margin:0 3px;cursor:pointer;}
   .dp-floor-head{font-weight:700;color:var(--teal-deep);font-size:13px;margin:4px 0 8px;}
@@ -97,16 +97,20 @@
   .dp-floorplan-title{font-size:12px;font-weight:700;margin-bottom:4px;}
   .dp-floorplan-toolbar{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap;}
   .dp-floorplan-canvas{position:relative;width:100%;height:320px;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .dp-floorplan-sizepanel{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--muted-ink,#7a8a8e);margin-top:5px;min-height:20px;}
+  .dp-floorplan-sizepanel input{width:60px;padding:2px 4px;font-size:11px;}
+  .dp-shape.selected{outline:2px solid var(--teal-deep);outline-offset:1px;}
   .dp-shape{position:absolute;cursor:grab;box-sizing:border-box;}
   .dp-shape:active{cursor:grabbing;}
   .dp-shape.rect{border:2px solid #2F5D62;background:rgba(47,93,98,0.15);}
   .dp-shape.circle{border:2px solid #B98B3E;background:rgba(185,139,62,0.18);border-radius:50%;}
-  .dp-shape.line{border-top:3px solid #8C2F2F;background:transparent;height:3px !important;}
+  .dp-shape.line{border-top:3px solid #8C2F2F;background:transparent;}
   .dp-shape.text{border:1px dashed #999;background:rgba(255,255,255,0.7);font-size:11px;padding:2px 4px;}
   .dp-shape-text{width:100%;height:100%;outline:none;font-size:11px;text-align:center;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none;}
   .dp-shape-text.editing{pointer-events:auto;background:rgba(255,255,255,0.6);}
   .dp-shape-resize{position:absolute;right:-4px;bottom:-4px;width:10px;height:10px;background:#333;border-radius:2px;cursor:nwse-resize;}
   .dp-shape-del{position:absolute;top:-8px;right:-8px;width:16px;height:16px;line-height:16px;border-radius:50%;background:#8C2F2F;color:#fff;font-size:10px;border:none;cursor:pointer;text-align:center;padding:0;}
+  .dp-shape.line .dp-shape-del{top:-9px;right:auto;left:-9px;}
 
   /* ===================== 人事評価シート ===================== */
   .eval-controls{
@@ -195,7 +199,8 @@
   body.printing-selected .dailypilot.print-chosen .dp-floorplan-toolbar{ display:none; }
   body.printing-selected .dailypilot.print-chosen .dp-shape-del,
   body.printing-selected .dailypilot.print-chosen .dp-shape-resize{ display:none; }
-  body.printing-selected .dailypilot.print-chosen .dp-floorplan-canvas{ height:230px; }
+  body.printing-selected .dailypilot.print-chosen .dp-floorplan-canvas{ height:460px; }
+  body.printing-selected .dailypilot.print-chosen .dp-floorplan-sizepanel{ display:none; }
   .notes b{color:var(--teal-deep);}
   .notes ul{margin:6px 0 0;padding-left:1.2em;}
   .notes ul.notes-numbered{list-style:none;padding-left:0;}
@@ -203,7 +208,12 @@
   .notes ul.notes-sub{list-style:none;padding-left:1.6em;margin-top:4px;}
   .notes ul.notes-sub > li{color:#7a5c1e;margin-bottom:3px;}
 
-  .toolbar,.printcontrols{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+  .toolbar,.printcontrols{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:20px;}
+  #printPreviewBar{
+    position:fixed;top:14px;right:14px;z-index:300;background:#fff;border:1px solid var(--line);border-radius:10px;
+    padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,0.25);display:flex;gap:10px;align-items:center;font-size:12px;
+  }
+  @media print{ #printPreviewBar{ display:none !important; } }
 
   /* ===================== タブ ===================== */
   .tabpanel{border:1px solid var(--line);border-top:none;border-radius:0 0 10px 10px;padding:16px 18px;margin-bottom:20px;background:#fff;}
@@ -212,6 +222,11 @@
   .tabpanel > summary::before{content:"▼ ";font-size:11px;}
   .tabpanel:not([open]) > summary::before{content:"▶ ";}
   .tabpanel:not([open]) > summary{margin-bottom:0;border-bottom:none;border-radius:0 0 10px 10px;}
+
+  /* 人事評価シート・労務は、機能面（印刷など）は他のtabpanelと同じままにしつつ、
+     見た目（左の帯・▼/▶の色）だけ従業員設定・食材原価率登録（.notes）と揃える */
+  #panelEvaluation, #panelLabor{ border-left:4px solid var(--gold); }
+  #panelEvaluation > summary::before, #panelLabor > summary::before{ color:var(--gold); }
   .printselect{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--paper-soft);border:1px solid var(--line);border-radius:8px;padding:8px 14px;margin:10px 0 16px;font-size:12px;}
   .printselect label{display:flex;align-items:center;gap:4px;cursor:pointer;}
   .tool{background:var(--paper-soft);border:1px solid var(--line);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;flex:1 1 300px;}
@@ -247,6 +262,7 @@
   table{border-collapse:collapse;font-size:12px;min-width:1900px;width:100%;}
   #labortable{min-width:0;}
   #labortable th, #labortable td{white-space:normal;}
+  #menuCostCompareTable, #staffsettingstable{min-width:0;width:auto;}
   #sumtable, #jobsummarytable{table-layout:fixed;min-width:0;width:auto;}
   #sumtable th, #sumtable td, #jobsummarytable th, #jobsummarytable td{overflow:hidden;}
   th,td{border:1px solid var(--line);padding:4px 6px;text-align:center;white-space:nowrap;}
@@ -333,7 +349,7 @@
   body.printing-selected .toolbar,
   body.printing-selected .staffadd,
   body.printing-selected .notes,
-  body.printing-selected .printselect,
+  body.printing-selected .printcontrols,
   body.printing-selected .past-lock-bar,
   body.printing-selected header{display:none;}
   body.printing-selected .wrap{max-width:none;}
@@ -363,7 +379,7 @@
 
   /* 背景色などを含めてそのままカラー印刷されるようにする */
   @media print{
-    *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important; }
+    html, body, *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important; }
   }
 
   @media print{
@@ -416,10 +432,13 @@
       <div class="sidebar-group-label">損益・評価</div>
       <a href="#panelDailyPL" class="sidebar-link" data-panel="panelDailyPL" onclick="sidebarNavigate(event,'panelDailyPL')">💰 日次損益</a>
       <a href="#panelEvaluation" class="sidebar-link" data-panel="panelEvaluation" onclick="sidebarNavigate(event,'panelEvaluation')">🔒 評価シート</a>
+      <a href="#menuCostCompareSection" class="sidebar-link" data-panel="menuCostCompareSection" onclick="sidebarNavigate(event,'menuCostCompareSection')">📊 食材原価率比較</a>
       <a href="#panelLabor" class="sidebar-link" data-panel="panelLabor" onclick="sidebarNavigate(event,'panelLabor')">🧾 労務</a>
 
       <div class="sidebar-group-label">設定</div>
       <a href="#staffAddSection" class="sidebar-link" data-panel="staffAddSection" onclick="sidebarNavigate(event,'staffAddSection')">⚙ 従業員・施設運転費</a>
+      <a href="#menuCostSection" class="sidebar-link" data-panel="menuCostSection" onclick="sidebarNavigate(event,'menuCostSection')">🍽 食材原価率登録</a>
+      <a href="#manualSection" class="sidebar-link" data-panel="manualSection" onclick="sidebarNavigate(event,'manualSection')">📖 操作マニュアル</a>
     </nav>
   </aside>
 
@@ -432,29 +451,6 @@
       <p><span id="monthLabel">2026年8月</span>　勤務時間を入力すると、その日の黒字／赤字が自動で判定されます</p>
     </div>
   </header>
-
-  <details class="notes">
-    <summary><b>この試作版の前提条件</b></summary>
-    <ul class="notes-numbered">
-      <li>①　勤務時間はプルダウンではなく、1マスに「9-17」「6-14」「5.5-13.5」のように直接入力する方式です（開始-終了をハイフンでつなげてください。「9:00-17:00」のような書き方にも対応）。入力形式が読み取れない場合はマスが赤く表示されます。空欄・「休」などは休みとして扱われます。</li>
-      <li>②　初期状態はすべて0／空欄です。売上・夕食朝食人数・シフトは、CSV読み込みまたは手入力で反映してください。</li>
-      <li>③　売上＝「②売上CSVを読み込む」で日別集計済みの売上CSV（日付・合計(税込)の列があるもの）を読み込むと、B列「合計(税込)」の値がそのまま日別売上に反映されます。旧形式（入金明細CSV・1予約1行）を読み込んだ場合は、これまで通り「回収金額＋事前入金＋ポイント利用」の日付ベース合計（チェックアウト日を1日前倒し、OTA4社は15%手数料控除）で自動計算されます。</li>
-      <li>④　夕食原価＝1,700円/名（8,000円×21.25%）、朝食原価＝588.6円/名。夕食人数＝予約状況サマリーの「１泊２食人数」、朝食人数＝「無料朝食人数」とそのまま連動しています（大人＋子供A・Bのみ集計、子供C・Dは対象外）。</li>
-      <li>⑤　施設運転費＝35,000円/日（電気代20,000＋灯油代15,000＝Main_DBの基本値）が初期値です。「施設運転費 基本値」欄で全日一括変更、または「日別に上書き」で特定の日だけ金額を変えられます（上書きした日は金額の横に★が付きます）。</li>
-      <li>⑥　従業員の時給・休憩は「時給・休憩を非表示にする」ボタンでシフト表上の表示を隠せます（計算には引き続き使われます）。非表示から再び表示する時だけパスワードが必要です。</li>
-      <li>⑦　デスクトップアプリ版では、入力してから数秒後に自動的にパソコンへの保存とクラウドへの共有が行われます。また、他の端末が更新すると、リアルタイムで自動的に画面へ反映されます。手動のボタン操作は不要です。</li>
-      <li>⑧　下の「予約状況サマリー」は「①innto予約CSVを読み込む」、または「③ innto連携で最新データを取得」（ローカルサーバー経由でinntoのブックマークレット実行結果を自動取得）から集計できます。団体人数・連泊人数などCSVだけでは判定しきれない項目も含むため、<b>全セル手入力で上書き可能</b>です。
-        <ul class="notes-sub">
-          <li>※　台帳予約／団体を含む「CI人数」＝宿泊者数（子供A・B・C・D含む）です。</li>
-          <li>※　予約者名に「○○会社」「○○組」などの法人・団体を思わせる文字列が含まれていると、innto側で自動的に「団体」として扱われます。実際は団体・宴会ではない場合、正しい条件になるよう<b>【手動】での修正が必須</b>です。</li>
-        </ul>
-      </li>
-      <li>⑨　シフト表の各セル下部の項目名（初期表示「仕事」）をクリックすると、項目名の手入力＋好きな色の指定でそのマスを塗り分けられます。「よく使う項目」に一度使った組み合わせが自動で追加され、次回からワンクリックで選べます。各項目の「×」で個別削除、「リセット」で初期8項目に戻せます。実際にセルに色を設定すると「従業員シフト表・日次損益」の見出し横に使用中の色の凡例が表示されます（未使用時は非表示）。予約状況サマリーとシフト表の間には「仕事内容 日別集計」（項目ごとの日別人数）が自動で表示されます（未使用時は非表示。有給・休・希休・振休・欠勤はここには含まれず、シフト表右端の勤怠集計列でカウントされます）。印刷プレビューではこの色分けボタン・凡例・日別集計は非表示になります。</li>
-      <li>⑩　「表示する月」欄で月を選ぶと、予約状況サマリー・仕事内容日別集計・シフト表すべての日付/曜日が選んだ月に切り替わります（CSV読み込みによる自動判定と併用できます）。</li>
-      <li>⑪　シフト表の右端に「合計日数・出勤日数・有給・休日合計・休・希休・振休・欠勤」を追加しました。合計日数（月の日数）・出勤日数（時間が入力されている日数）は自動計算。有給・休・希休・振休・欠勤は、セルの「仕事内容」項目タグと連動しており、そのマスに「有給」「休」「希休」「振休」「欠勤」という項目名を設定すると自動でカウントされます（「よく使う項目」にこの5つも初期登録済みです）。休日合計は休＋希休＋振休＋欠勤の自動合計です。印刷プレビュー・印刷ではこの8列は非表示になります。</li>
-      <li>⑫　横向きで印刷する項目（予約状況サマリー・仕事内容日別集計・シフト表・日次損益）は、選んだ項目どうしで列幅の比率を完全に揃えつつ、月の日数（28〜31日）に関わらず紙面の横幅いっぱいに広がるよう自動調整されます。</li>
-    </ul>
-  </details>
 
   <div class="toolbar">
     <div class="tool">
@@ -474,49 +470,6 @@
     </div>
   </div>
 
-  <details class="notes" id="staffAddSection" open>
-    <summary id="staffSettingsSummaryLabel"><b>🔒 従業員・時給・交通費・施設運転費の設定（パスコード保護）</b></summary>
-
-    <div id="staffSettingsLockedView">
-      <p style="font-size:12.5px;color:var(--muted-ink,#7a8a8e);margin:0 0 10px;">この項目はパスコードで保護されています。パスコードを入力すると閲覧・編集できます。</p>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <input type="password" id="staffSettingsPasscodeInput" placeholder="パスコード" style="max-width:200px;" onkeydown="if(event.key==='Enter') submitWagePassword();">
-        <button class="btn" onclick="submitWagePassword()">ロック解除</button>
-      </div>
-      <div id="wagePasswordError" style="color:var(--loss-ink);font-size:11px;margin-top:6px;min-height:14px;"></div>
-    </div>
-
-    <div id="staffSettingsUnlockedView" style="display:none;">
-      <div class="staffadd">
-        <span class="t-label">従業員追加：</span>
-        <input type="text" id="newCat" placeholder="区分（例：仲居）">
-        <input type="text" id="newName" placeholder="氏名">
-        <input type="number" id="newWage" placeholder="時給">
-        <input type="number" id="newBrk" placeholder="休憩(分)">
-        <button class="btn" onclick="addStaff()">追加</button>
-        <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
-        <span class="t-label">施設運転費 基本値（円/日）：</span>
-        <input type="number" id="facilityInput" value="35000" onchange="recalc(); scheduleAutoSync();" style="width:90px;">
-        <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
-        <span class="t-label">日別に上書き：</span>
-        <select id="facilityDaySelect"></select>
-        <input type="number" id="facilityDayAmount" placeholder="金額" style="width:90px;">
-        <button class="btn" onclick="applyFacilityOverride()">この日に適用</button>
-        <button class="btn" style="background:#8C2F2F;" onclick="clearFacilityOverride()">この日の上書きを解除</button>
-        <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
-        <span class="t-label">施設コード：<b id="facilitySettingsLabel">-</b></span>
-        <button class="rmbtn" onclick="openFacilityChangeStep1Modal()">施設コードを変更</button>
-        <button class="rmbtn" onclick="lockStaffSettings()">🔒 ロックする</button>
-      </div>
-
-      <div class="tablecard" style="margin-top:12px;">
-        <div class="scroll">
-          <table id="staffsettingstable"></table>
-        </div>
-      </div>
-    </div>
-  </details>
-
   <div class="printcontrols">
     <span class="t-label">表示する月：</span>
     <input type="month" id="monthSelector" onchange="setMonthManually()">
@@ -524,16 +477,32 @@
     <span id="cloudStatus" class="filestatus"></span>
     <span id="updateStatus" class="filestatus"></span>
     <span id="realtimeStatus" class="filestatus"></span>
+    <span style="flex:1;"></span>
+    <button class="btn" onclick="openPrintModal()">🖨 印刷する</button>
   </div>
 
-  <div class="printselect" id="printSelectBar">
-    <button class="btn" onclick="printSelectedTabs()">🖨 印刷する</button>
-    <span class="t-label">印刷する項目を選択（最大2つ）：</span>
-    <label><input type="checkbox" class="printselect-cb" data-tab="summary" onchange="togglePrintSelect(this)"> 予約状況サマリー</label>
-    <label id="printSelectJobSummaryLabel" style="display:none;"><input type="checkbox" class="printselect-cb" data-tab="jobsummary" onchange="togglePrintSelect(this)"> 仕事内容日別集計</label>
-    <label><input type="checkbox" class="printselect-cb" data-tab="dailypilot" onchange="togglePrintSelect(this)"> Daily Pilot</label>
-    <label><input type="checkbox" class="printselect-cb" data-tab="staff" onchange="togglePrintSelect(this)"> シフト表</label>
-    <label><input type="checkbox" class="printselect-cb" data-tab="dailypl" onchange="togglePrintSelect(this)"> 日次損益</label>
+  <div id="printSelectModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+      <h3>印刷する項目を選択</h3>
+      <p style="font-size:11px;color:var(--muted-ink,#7a8a8e);margin:0 0 10px;">最大2つまで選べます。選ぶとプレビュー画面に切り替わります。</p>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;">
+        <label><input type="checkbox" class="printselect-cb" data-tab="summary" onchange="togglePrintSelect(this)"> 予約状況サマリー</label>
+        <label id="printSelectJobSummaryLabel" style="display:none;"><input type="checkbox" class="printselect-cb" data-tab="jobsummary" onchange="togglePrintSelect(this)"> 仕事内容日別集計</label>
+        <label><input type="checkbox" class="printselect-cb" data-tab="dailypilot" onchange="togglePrintSelect(this)"> Daily Pilot</label>
+        <label><input type="checkbox" class="printselect-cb" data-tab="staff" onchange="togglePrintSelect(this)"> シフト表</label>
+        <label><input type="checkbox" class="printselect-cb" data-tab="dailypl" onchange="togglePrintSelect(this)"> 日次損益</label>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn" style="flex:1;" onclick="showPrintPreview()">プレビューを表示</button>
+        <button class="rmbtn" style="flex:1;" onclick="closePrintSelectModal()">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="printPreviewBar" style="display:none;">
+    <span>🖨 印刷プレビュー中</span>
+    <button class="btn" onclick="executePrintFromPreview()">この内容で印刷する</button>
+    <button class="rmbtn" onclick="closePrintPreview()">✕ 閉じる</button>
   </div>
 
   <div id="printzone">
@@ -590,6 +559,7 @@
               <button class="rmbtn" onclick="dpClearFloorplan(0)">全消去</button>
             </div>
             <div class="dp-floorplan-canvas" id="dpFloorplan0"></div>
+            <div class="dp-floorplan-sizepanel" id="dpSizePanel0"></div>
           </div>
           <div class="dp-floorplan-wrap">
             <div class="dp-floorplan-title">会場図面 ②</div>
@@ -601,6 +571,7 @@
               <button class="rmbtn" onclick="dpClearFloorplan(1)">全消去</button>
             </div>
             <div class="dp-floorplan-canvas" id="dpFloorplan1"></div>
+            <div class="dp-floorplan-sizepanel" id="dpSizePanel1"></div>
           </div>
         </div>
       </div>
@@ -632,13 +603,56 @@
       </div>
     </details>
 
+    <details class="notes" id="staffAddSection" open>
+      <summary id="staffSettingsSummaryLabel"><b>🔒 従業員・時給・交通費・施設運転費の設定（パスコード保護）</b></summary>
+
+      <div id="staffSettingsLockedView">
+        <p style="font-size:12.5px;color:var(--muted-ink,#7a8a8e);margin:0 0 10px;">この項目はパスコードで保護されています。パスコードを入力すると閲覧・編集できます。</p>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input type="password" id="staffSettingsPasscodeInput" placeholder="パスコード" style="max-width:200px;" onkeydown="if(event.key==='Enter') submitWagePassword();">
+          <button class="btn" onclick="submitWagePassword()">ロック解除</button>
+        </div>
+        <div id="wagePasswordError" style="color:var(--loss-ink);font-size:11px;margin-top:6px;min-height:14px;"></div>
+      </div>
+
+      <div id="staffSettingsUnlockedView" style="display:none;">
+        <div class="staffadd">
+          <span class="t-label">従業員追加：</span>
+          <input type="text" id="newCat" placeholder="区分（例：仲居）">
+          <input type="text" id="newName" placeholder="氏名">
+          <input type="number" id="newWage" placeholder="時給">
+          <input type="number" id="newBrk" placeholder="休憩(分)">
+          <button class="btn" onclick="addStaff()">追加</button>
+          <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
+          <span class="t-label">施設運転費 基本値（円/日）：</span>
+          <input type="number" id="facilityInput" value="35000" onchange="recalc(); scheduleAutoSync();" style="width:90px;">
+          <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
+          <span class="t-label">日別に上書き：</span>
+          <select id="facilityDaySelect"></select>
+          <input type="number" id="facilityDayAmount" placeholder="金額" style="width:90px;">
+          <button class="btn" onclick="applyFacilityOverride()">この日に適用</button>
+          <button class="btn" style="background:#8C2F2F;" onclick="clearFacilityOverride()">この日の上書きを解除</button>
+          <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
+          <span class="t-label">施設コード：<b id="facilitySettingsLabel">-</b></span>
+          <button class="rmbtn" onclick="openFacilityChangeStep1Modal()">施設コードを変更</button>
+          <button class="rmbtn" onclick="lockStaffSettings()">🔒 ロックする</button>
+        </div>
+
+        <div class="tablecard" style="margin-top:12px;">
+          <div class="scroll">
+            <table id="staffsettingstable"></table>
+          </div>
+        </div>
+      </div>
+    </details>
+
     <details class="tabpanel" data-tab="evaluation" id="panelEvaluation" open>
-      <summary id="evalSummaryLabel">🔒 人事評価シート（従業員別・パスワード保護）</summary>
+      <summary id="evalSummaryLabel">🔒 人事評価シート（従業員別・パスコード保護）</summary>
 
       <div id="evalLockedView">
-        <p style="font-size:12.5px;color:var(--muted-ink,#7a8a8e);margin:0 0 10px;">この項目はパスワードで保護されています。パスワードを入力すると閲覧・編集できます。</p>
+        <p style="font-size:12.5px;color:var(--muted-ink,#7a8a8e);margin:0 0 10px;">この項目はパスコードで保護されています。パスコードを入力すると閲覧・編集できます。</p>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <input type="password" id="evalPasswordInput" placeholder="パスワード" style="max-width:200px;" onkeydown="if(event.key==='Enter') unlockEvaluation();">
+          <input type="password" id="evalPasswordInput" placeholder="パスコード" style="max-width:200px;" onkeydown="if(event.key==='Enter') unlockEvaluation();">
           <button class="btn" onclick="unlockEvaluation()">ロック解除</button>
         </div>
         <div id="evalPasswordError" style="color:var(--loss-ink);font-size:11px;margin-top:6px;min-height:14px;"></div>
@@ -656,6 +670,83 @@
           <button class="rmbtn" onclick="lockEvaluation()">🔒 ロックする</button>
         </div>
         <div id="evalFormArea"></div>
+      </div>
+    </details>
+
+    <details class="notes" id="menuCostSection" open>
+      <summary id="menuCostSummaryLabel"><b>🔒 食材原価率登録（季節・コース名ごとに複数登録可・パスコード保護）</b></summary>
+
+      <div id="menuCostLockedView">
+        <p style="font-size:12.5px;color:var(--muted-ink,#7a8a8e);margin:0 0 10px;">この項目はパスコードで保護されています。パスコードを入力すると閲覧・編集できます。</p>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input type="password" id="menuCostPasscodeInput" placeholder="パスコード" style="max-width:200px;" onkeydown="if(event.key==='Enter') unlockMenuCostSection();">
+          <button class="btn" onclick="unlockMenuCostSection()">ロック解除</button>
+        </div>
+        <div id="menuCostPasscodeError" style="color:var(--loss-ink);font-size:11px;margin-top:6px;min-height:14px;"></div>
+      </div>
+
+      <div id="menuCostUnlockedView" style="display:none;">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+          <button class="rmbtn" onclick="lockMenuCostSection()">🔒 ロックする</button>
+        </div>
+
+        <div id="menuPlanList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
+
+        <div class="tablecard" style="padding:10px 12px;margin-bottom:14px;">
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px;">予約状況サマリーの各項目に、夕食・朝食を含めるか設定</div>
+          <div style="font-size:11px;color:var(--muted-ink,#7a8a8e);margin-bottom:8px;">チェックした項目の人数が、使用中の食材原価率プランに基づいて月間食材費・日次損益に自動反映されます。ブックマークレットからの自動集計と実際の人数に差がある場合は、下の「月間調整人数」で手入力補正できます。</div>
+          <div id="mealCategorySettings" style="display:flex;flex-direction:column;gap:4px;"></div>
+          <div class="staffadd" style="margin-top:10px;">
+            <span class="t-label">項目を追加：</span>
+            <input type="text" id="newCategoryLabelInput" placeholder="項目名（例：貸切風呂利用）" style="width:180px;">
+            <button class="btn" onclick="addCustomMealCategory()">＋ 追加</button>
+          </div>
+        </div>
+
+        <div class="staffadd" style="margin-bottom:14px;">
+          <span class="t-label">新しいプランを追加：</span>
+          <input type="number" id="newPlanYear" placeholder="年度（例：2026）" style="width:100px;">
+          <input type="text" id="newPlanSeason" placeholder="季節（例：夏）" style="width:90px;">
+          <input type="text" id="newPlanCourseName" placeholder="コース名（例：特選会席）" style="width:150px;">
+          <button class="btn" onclick="addMenuPlan()">追加</button>
+        </div>
+
+        <div id="menuPlanEditForm" style="display:none;">
+          <div class="staffadd" style="margin-bottom:12px;">
+            <span class="t-label">夕食販売価格（円）：</span>
+            <input type="number" id="dinnerSellingPriceInput" onchange="updateMenuCostSetting('dinnerSellingPrice', this.value)" style="width:90px;">
+            <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
+            <span class="t-label">朝食販売価格（円）：</span>
+            <input type="number" id="breakfastSellingPriceInput" onchange="updateMenuCostSetting('breakfastSellingPrice', this.value)" style="width:90px;">
+            <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
+            <span class="t-label">外注弁当など固定原価（円）：</span>
+            <input type="number" id="bentoFixedCostInput" onchange="updateMenuCostSetting('bentoFixedCost', this.value)" style="width:90px;">
+            <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
+            <button class="btn" onclick="addMenuCourse()">＋ 項目（コース）を追加</button>
+          </div>
+
+          <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer;margin-bottom:8px;">
+            <input type="checkbox" id="childPricingEnabledCheckbox" onchange="toggleChildPricingEnabled(this.checked)">
+            子供料金を追加設定する（子供A・B・C・D）
+          </label>
+
+          <div id="childPricingFields" style="display:none;margin-bottom:12px;">
+            <div id="childPricingRows" style="display:flex;flex-direction:column;gap:6px;"></div>
+          </div>
+
+          <div id="menuCostSummary" class="past-lock-bar unlocked"></div>
+
+          <div id="menuCostCourses" style="display:flex;flex-direction:column;gap:10px;"></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="notes" id="menuCostCompareSection" open>
+      <summary><b>食材原価率比較（年度・季節・コース別）</b></summary>
+      <div class="tablecard">
+        <div class="scroll">
+          <table id="menuCostCompareTable"></table>
+        </div>
       </div>
     </details>
 
@@ -683,6 +774,57 @@
           </div>
         </div>
       </div>
+    </details>
+
+    <details class="notes" id="manualSection" open>
+      <summary><b>操作マニュアル</b></summary>
+
+      <div style="background:var(--paper-soft);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-bottom:12px;">
+        <b>PL STUFFING PILOTでできること</b><br>
+        シフト管理・予約状況・売上損益・人事評価・労務・食材原価を、<b>この1本にまとめて管理</b>できるアプリです。日々の入力から、毎日の黒字／赤字、給与計算、原価率まで自動で計算され、複数の端末でリアルタイムに共有されます。
+      </div>
+
+      <p>このアプリの基本的な考え方と、各機能の使い方をまとめています。すべての施設で共通の内容です。</p>
+
+      <b>■ 基本的な仕組み</b>
+      <ul class="notes-numbered">
+        <li>①　日々の予約状況・シフト・損益をまとめて管理するアプリです。データは月ごとに分かれており、上部の「表示する月」欄で切り替えられます。</li>
+        <li>②　入力した内容は、数秒後に自動的に保存・共有されます。手動でのボタン操作は不要です。同じ施設の他の端末にも、リアルタイムで自動的に反映されます。</li>
+        <li>③　左のサイドバーから、見たいセクションへすぐに移動できます。「1つずつ表示」に切り替えると、選んだセクションだけを大きく表示できます。</li>
+      </ul>
+
+      <b>■ 予約・実績</b>
+      <ul class="notes-numbered">
+        <li>①　<b>月間サマリー</b>：その月の売上・人件費・食材原価・収支をひと目で確認できます。</li>
+        <li>②　<b>予約状況サマリー</b>：部屋数・人数・食事の有無などを日ごとに管理します。外部システムと連携している場合は自動で反映されますが、全セル手入力での修正も可能です。今日より前の日付は誤った上書きを防ぐため編集がロックされており、パスコードを入力すると一時的に解除できます。</li>
+        <li>③　<b>仕事内容日別集計</b>：シフト表で色分けした「仕事内容」タグを、項目ごとに日別集計して自動表示します（未使用時は表示されません）。</li>
+      </ul>
+
+      <b>■ 人員配置</b>
+      <ul class="notes-numbered">
+        <li>①　<b>Daily Pilot</b>：日ごとの時間帯別の人員配置と、会場の図面（レイアウト）を作成できます。図形はドラッグで移動・端をドラッグでサイズ変更ができます。</li>
+        <li>②　<b>シフト表</b>：従業員ごとの勤務時間を「9-17」のように直接入力します（開始-終了をハイフンでつなげる形式）。各マス下部の項目名をクリックすると、色分けタグを設定できます。</li>
+      </ul>
+
+      <b>■ 損益・評価</b>
+      <ul class="notes-numbered">
+        <li>①　<b>日次損益</b>：売上・人件費・食材原価・施設運転費から、その日の黒字／赤字を自動計算します。人件費は深夜・時間外・法定休日の割増や、有給休暇の賃金計算も含めた労働基準法に準拠した金額です。</li>
+        <li>②　<b>従業員・施設運転費の設定</b>：従業員の追加、時給・休憩・交通費・所定労働時間・扶養情報や、施設運転費の基本値・日別上書きを設定します。パスコード保護されています。</li>
+        <li>③　<b>評価シート</b>：従業員ごとの人事評価を記録します。評価項目は自由に追加・編集できます。パスコード保護されています。</li>
+        <li>④　<b>食材原価率登録・比較</b>：夕食・朝食のメニュー構成（項目・品名・単位・価格）から、1人前の原価と原価率を自動計算します。季節・コース名・年度ごとに複数のプランを登録し、比較できます。パスコード保護されています。</li>
+        <li>⑤　<b>労務</b>：勤務時間、社会保険料・雇用保険料（従業員負担分・会社負担分）、所得税の概算、交通費などを従業員ごとに自動計算して確認できます。パスコード保護されています。</li>
+      </ul>
+
+      <b>■ 印刷</b>
+      <ul class="notes-numbered">
+        <li>①　画面右上の「印刷する」ボタンから、印刷したい項目を最大2つまで選ぶと、印刷される内容がそのまま画面に表示されます（印刷プレビュー）。内容を確認してから「この内容で印刷する」を押してください。</li>
+      </ul>
+
+      <b>■ パスコードについて</b>
+      <ul class="notes-numbered">
+        <li>①　鍵マーク🔒が付いている項目は、パスコードを入力するまで内容が見られない仕組みになっています。パスコードが分からない場合は、施設内の管理担当者にご確認ください。</li>
+        <li>②　施設コードの変更など、一部の操作にはさらに別の認証が必要です。詳しくは開発元にお問い合わせください。</li>
+      </ul>
     </details>
   </div>
 
@@ -935,6 +1077,16 @@ function cellW(isStaffCol){
 
 let FACILITY_OVERRIDE = {}; // {day: amount} 施設運転費の日別上書き
 
+// 予約状況サマリーの各項目（団体・昼宴会・夜宴会・日帰り・弁当）が、夕食・朝食を含むかどうかの設定。
+// ここでON にした項目の人数は、使用中の食材原価率プランの原価をもとに、月間食材費・日次損益に自動反映される。
+let MEAL_CATEGORY_SETTINGS = {
+  group:         { dinner: false, breakfast: false, adjust: 0, label: "団体人数" },
+  lunchbanquet:  { dinner: false, breakfast: false, adjust: 0, label: "昼宴会人数" },
+  dinnerbanquet: { dinner: false, breakfast: false, adjust: 0, label: "夜宴会人数" },
+  daytrip:       { dinner: false, breakfast: false, adjust: 0, label: "日帰り" },
+  bento:         { dinner: false, breakfast: false, adjust: 0, label: "弁当（外注弁当原価を使用）" },
+};
+
 // 労務関連の料率設定（施設ごとに1つ）。健康保険料率・所得税概算率は都道府県や個人の状況で変わるため、
 // 必ず施設側で正しい数字に設定してから使用すること（社労士・税理士に確認推奨）。
 let LABOR_SETTINGS = {
@@ -996,9 +1148,478 @@ function detectAndApplyMonth(dateList){
 
 let REVENUE = {};
 
-const DINNER_UNIT = 1700;
 const BREAKFAST_UNIT = 588.6;
 let wagesVisible = false; // 従業員設定エリア全体のロック状態（初期状態はロック中）
+
+// 食材原価率設定：夕食のメニュー構成（項目・品名・単位・価格）から、1人前の原価を自動計算する
+// 食材原価率登録：季節・コース名・年度ごとに複数のプランを登録できる。
+// このうち「使用中」の1つが、実際の日次損益（夕食原価）の計算に使われる。
+let MENU_COST_PLANS = [];
+
+// innto連携ブックマークレットから届く「日別・プラン名別の人数内訳」。
+// 登録済みの食材原価率プラン（コース名）と突き合わせて、その日実際に予約されたプランの原価を自動判定するために使う。
+// key: 日, value: { プラン名: 人数 }
+let DAILY_PLAN_BREAKDOWN = {};
+
+// 予約プラン名から、登録済みの食材原価率プラン（コース名）を探す（部分一致）
+function matchMenuPlanByName(planName){
+  if(!planName) return null;
+  return MENU_COST_PLANS.find(p=> p.courseName && (planName.includes(p.courseName) || p.courseName.includes(planName))) || null;
+}
+
+// プラン名から「夕食が付くプランかどうか」を推定する（bookmarklet側の判定条件と合わせている）
+function isDinnerPlanNameHeuristic(planName){
+  if(!planName) return false;
+  return planName.includes("一泊二食") || planName.includes("朝夕食付") || planName.includes("プランインクル");
+}
+
+// その日のプラン別内訳から、実際に予約されたプランに基づく夕食原価・人数を計算する。
+// 登録済みプランに一致すればその原価を、一致しない場合は夕食が付くプランと推定できる時だけ「使用中プラン」の原価を使う。
+// 内訳データが無い日はnullを返し、呼び出し側で従来通りの計算（1泊2食人数×使用中プラン原価）にフォールバックする。
+function calcPlanBreakdownDinnerCost(day){
+  const breakdown = DAILY_PLAN_BREAKDOWN[day];
+  if(!breakdown) return null;
+  const fallbackCost = totalDinnerCost();
+  let cost = 0, count = 0;
+  Object.keys(breakdown).forEach(planName=>{
+    const pax = breakdown[planName] || 0;
+    if(pax<=0) return;
+    const registered = matchMenuPlanByName(planName);
+    if(registered){
+      cost += pax * planTotalCost(registered);
+      count += pax;
+    } else if(isDinnerPlanNameHeuristic(planName)){
+      cost += pax * fallbackCost;
+      count += pax;
+    }
+    // それ以外（素泊まりプランなど、夕食が付かないと判断されるもの）は夕食原価に含めない
+  });
+  return { cost, count };
+}
+
+let MENU_COST_CURRENT_EDIT_ID = null; // 今、内容を編集中のプランID
+
+function newMenuCostPlan(year, season, courseName){
+  return {
+    id: dpNewId(),
+    year: year || CURRENT_YEAR,
+    season: season || "",
+    courseName: courseName || "",
+    isActive: MENU_COST_PLANS.length === 0, // 最初の1件は自動的に使用中にする
+    dinnerSellingPrice: 8000,
+    breakfastSellingPrice: 1500,
+    childPricingEnabled: false,
+    childPricing: {
+      A: { mode: "percent", value: 100 },
+      B: { mode: "percent", value: 100 },
+      C: { mode: "percent", value: 100 },
+      D: { mode: "percent", value: 100 },
+    },
+    bentoFixedCost: 0,
+    courses: [],
+  };
+}
+
+function getActiveMenuPlan(){
+  return MENU_COST_PLANS.find(p=>p.isActive) || MENU_COST_PLANS[0] || null;
+}
+
+function getEditingMenuPlan(){
+  return MENU_COST_PLANS.find(p=>p.id===MENU_COST_CURRENT_EDIT_ID) || null;
+}
+
+// 1つの項目（コース）の合計原価＝その中の品目の価格の合計
+function menuCourseCost(course){
+  return (course.items||[]).reduce((sum,it)=> sum + (parseFloat(it.price)||0), 0);
+}
+
+// 1つのプランの、夕食1人前の合計原価＝全項目の合計原価の合計
+function planTotalCost(plan){
+  if(!plan) return 0;
+  return (plan.courses||[]).reduce((sum,c)=> sum + menuCourseCost(c), 0);
+}
+
+// 1つのプランの原価率（%）＝合計原価 ÷ 夕食販売価格 × 100
+function planCostRatio(plan){
+  if(!plan) return 0;
+  const price = plan.dinnerSellingPrice || 0;
+  if(price<=0) return 0;
+  return (planTotalCost(plan) / price) * 100;
+}
+
+// 朝食の原価率（%）＝朝食原価（固定） ÷ 朝食販売価格 × 100
+function planBreakfastCostRatio(plan){
+  if(!plan) return 0;
+  const price = plan.breakfastSellingPrice || 0;
+  if(price<=0) return 0;
+  return (BREAKFAST_UNIT / price) * 100;
+}
+
+// 実際の日次損益計算に使う、現在「使用中」のプランの合計原価・原価率
+function totalDinnerCost(){
+  return planTotalCost(getActiveMenuPlan());
+}
+function dinnerCostRatio(){
+  return planCostRatio(getActiveMenuPlan());
+}
+
+// 子供料金（子供A・B・C・D）の実際の金額を計算する（使用中プラン基準）。％なら大人料金に対する割合、円ならそのまま固定額。
+function calcChildPrice(category){
+  const plan = getActiveMenuPlan();
+  if(!plan) return 0;
+  const c = plan.childPricing && plan.childPricing[category];
+  if(!c) return 0;
+  if(c.mode === "yen") return c.value || 0;
+  return (plan.dinnerSellingPrice||0) * ((c.value||0)/100);
+}
+
+/* ===================== 食材原価率設定（夕食メニュー構成） ===================== */
+function renderMealCategorySettings(){
+  const wrap = document.getElementById("mealCategorySettings");
+  if(!wrap) return;
+  let html = "";
+  Object.keys(MEAL_CATEGORY_SETTINGS).forEach(catKey=>{
+    const s = MEAL_CATEGORY_SETTINGS[catKey];
+    html += `<div style="display:flex;align-items:center;gap:14px;font-size:12px;flex-wrap:wrap;">
+      <span style="width:200px;">${s.label}</span>
+      <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" ${s.dinner?"checked":""} onchange="toggleMealCategory('${catKey}','dinner',this.checked)"> 夕食を含む</label>
+      <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" ${s.breakfast?"checked":""} onchange="toggleMealCategory('${catKey}','breakfast',this.checked)"> 朝食を含む</label>
+      <label style="display:flex;align-items:center;gap:4px;">月間調整：<input type="number" value="${s.adjust??0}" onchange="updateMealCategoryAdjust('${catKey}', this.value)" style="width:60px;" title="ブックマークレットの自動集計と実際の人数に差がある時、ここで手入力で補正できます（月間の合計に加算されます）">人</label>
+      ${s.custom ? `<button class="rmbtn" onclick="removeCustomMealCategory('${catKey}')">削除</button>` : ""}
+    </div>`;
+  });
+  wrap.innerHTML = html;
+}
+
+function addCustomMealCategory(){
+  const input = document.getElementById("newCategoryLabelInput");
+  const label = input.value.trim();
+  if(!label){ alert("項目名を入力してください"); return; }
+  const key = "custom_" + dpNewId();
+  MEAL_CATEGORY_SETTINGS[key] = { dinner:false, breakfast:false, label, adjust:0, custom:true };
+  input.value = "";
+  renderMealCategorySettings();
+  recalc();
+  scheduleAutoSync();
+}
+
+function removeCustomMealCategory(catKey){
+  delete MEAL_CATEGORY_SETTINGS[catKey];
+  renderMealCategorySettings();
+  recalc();
+  scheduleAutoSync();
+}
+
+function updateMealCategoryAdjust(catKey, value){
+  if(!MEAL_CATEGORY_SETTINGS[catKey]) return;
+  const v = parseFloat(value);
+  MEAL_CATEGORY_SETTINGS[catKey].adjust = isNaN(v) ? 0 : v;
+  recalc();
+  scheduleAutoSync();
+}
+
+function toggleMealCategory(catKey, mealType, checked){
+  if(!MEAL_CATEGORY_SETTINGS[catKey]) return;
+  MEAL_CATEGORY_SETTINGS[catKey][mealType] = checked;
+  recalc();
+  scheduleAutoSync();
+}
+
+function renderMenuPlanList(){
+  const wrap = document.getElementById("menuPlanList");
+  if(!wrap) return;
+  if(MENU_COST_PLANS.length===0){
+    wrap.innerHTML = `<div style="font-size:11.5px;color:var(--muted-ink,#7a8a8e);">まだプランがありません。下の「＋ 新しいプランを追加」から、季節・コース名を登録してください。</div>`;
+    return;
+  }
+  const sorted = [...MENU_COST_PLANS].sort((a,b)=> (b.year-a.year) || String(a.season).localeCompare(String(b.season)) || String(a.courseName).localeCompare(String(b.courseName)));
+  let html = "";
+  sorted.forEach(plan=>{
+    const selected = plan.id === MENU_COST_CURRENT_EDIT_ID;
+    html += `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid ${selected?'var(--teal-deep)':'var(--line)'};border-radius:8px;background:${selected?'var(--paper-soft)':'#fff'};">
+      <span style="font-size:12px;font-weight:${selected?'700':'400'};flex:1;">${plan.year}年度　${plan.season||"（季節未設定）"}　${plan.courseName||"（コース名未設定）"}</span>
+      <span style="font-size:11px;color:var(--muted-ink,#7a8a8e);">原価率 ${planCostRatio(plan).toFixed(1)}%</span>
+      ${plan.isActive ? `<span style="font-size:10.5px;color:var(--profit-ink);font-weight:700;">✓ 使用中</span>` : `<button class="rmbtn" onclick="setActiveMenuPlan('${plan.id}')">これを使用中にする</button>`}
+      <button class="rmbtn" onclick="selectMenuPlan('${plan.id}')">編集</button>
+      <button class="rmbtn" onclick="removeMenuPlan('${plan.id}')">削除</button>
+    </div>`;
+  });
+  wrap.innerHTML = html;
+}
+
+function addMenuPlan(){
+  const year = parseInt(document.getElementById("newPlanYear").value,10) || CURRENT_YEAR;
+  const season = document.getElementById("newPlanSeason").value.trim();
+  const courseName = document.getElementById("newPlanCourseName").value.trim();
+  const plan = newMenuCostPlan(year, season, courseName);
+  MENU_COST_PLANS.push(plan);
+  MENU_COST_CURRENT_EDIT_ID = plan.id;
+  document.getElementById("newPlanYear").value = "";
+  document.getElementById("newPlanSeason").value = "";
+  document.getElementById("newPlanCourseName").value = "";
+  renderMenuCostSection();
+  recalc();
+  scheduleAutoSync();
+}
+
+function removeMenuPlan(planId){
+  const wasActive = MENU_COST_PLANS.find(p=>p.id===planId && p.isActive);
+  MENU_COST_PLANS = MENU_COST_PLANS.filter(p=>p.id!==planId);
+  if(wasActive && MENU_COST_PLANS.length>0) MENU_COST_PLANS[0].isActive = true;
+  if(MENU_COST_CURRENT_EDIT_ID===planId) MENU_COST_CURRENT_EDIT_ID = MENU_COST_PLANS.length>0 ? MENU_COST_PLANS[0].id : null;
+  renderMenuCostSection();
+  recalc();
+  scheduleAutoSync();
+}
+
+function setActiveMenuPlan(planId){
+  MENU_COST_PLANS.forEach(p=>{ p.isActive = (p.id===planId); });
+  renderMenuCostSection();
+  recalc();
+  scheduleAutoSync();
+}
+
+function selectMenuPlan(planId){
+  MENU_COST_CURRENT_EDIT_ID = planId;
+  renderMenuCostSection();
+}
+
+let menuCostUnlocked = false;
+
+async function unlockMenuCostSection(){
+  const input = document.getElementById("menuCostPasscodeInput");
+  const errEl = document.getElementById("menuCostPasscodeError");
+  const code = input.value;
+  if(await checkUnlockCode(code)){
+    menuCostUnlocked = true;
+    input.value = "";
+    errEl.textContent = "";
+    document.getElementById("menuCostLockedView").style.display = "none";
+    document.getElementById("menuCostUnlockedView").style.display = "";
+    document.getElementById("menuCostSummaryLabel").innerHTML = "<b>🔓 食材原価率登録（季節・コース名ごとに複数登録可・パスコード保護）</b>";
+    renderMenuCostSection();
+  } else {
+    errEl.textContent = "パスコードが違います";
+    input.value = "";
+    input.focus();
+  }
+}
+
+function lockMenuCostSection(){
+  menuCostUnlocked = false;
+  document.getElementById("menuCostLockedView").style.display = "";
+  document.getElementById("menuCostUnlockedView").style.display = "none";
+  document.getElementById("menuCostSummaryLabel").innerHTML = "<b>🔒 食材原価率登録（季節・コース名ごとに複数登録可・パスコード保護）</b>";
+}
+
+function renderMenuCostSection(){
+  renderMenuCostCompareTable(); // 比較表はロック中でも見えて良い（登録内容そのものではなく結果の一覧のため）
+  if(!menuCostUnlocked) return;
+  if(!MENU_COST_CURRENT_EDIT_ID && MENU_COST_PLANS.length>0) MENU_COST_CURRENT_EDIT_ID = getActiveMenuPlan().id;
+  renderMenuPlanList();
+  renderMealCategorySettings();
+
+  const editForm = document.getElementById("menuPlanEditForm");
+  const plan = getEditingMenuPlan();
+  if(!editForm) return;
+  if(!plan){
+    editForm.style.display = "none";
+    return;
+  }
+  editForm.style.display = "";
+
+  const priceEl = document.getElementById("dinnerSellingPriceInput");
+  const breakfastPriceEl = document.getElementById("breakfastSellingPriceInput");
+  const bentoEl = document.getElementById("bentoFixedCostInput");
+  if(priceEl) priceEl.value = plan.dinnerSellingPrice ?? 0;
+  if(breakfastPriceEl) breakfastPriceEl.value = plan.breakfastSellingPrice ?? 0;
+  if(bentoEl) bentoEl.value = plan.bentoFixedCost ?? 0;
+
+  const enabledCb = document.getElementById("childPricingEnabledCheckbox");
+  const fieldsWrap = document.getElementById("childPricingFields");
+  if(enabledCb) enabledCb.checked = !!plan.childPricingEnabled;
+  if(fieldsWrap) fieldsWrap.style.display = plan.childPricingEnabled ? "" : "none";
+
+  const rowsWrap = document.getElementById("childPricingRows");
+  if(rowsWrap){
+    let rowsHtml = "";
+    ["A","B","C","D"].forEach(cat=>{
+      const c = plan.childPricing[cat];
+      rowsHtml += `<div style="display:flex;align-items:center;gap:8px;">
+        <span class="t-label" style="width:60px;">子供${cat}：</span>
+        <select onchange="updateChildPricingMode('${cat}', this.value)" style="width:90px;">
+          <option value="percent" ${c.mode==="percent"?"selected":""}>％（割合）</option>
+          <option value="yen" ${c.mode==="yen"?"selected":""}>円（固定額）</option>
+        </select>
+        <input type="number" value="${c.value??0}" onchange="updateChildPricingValue('${cat}', this.value)" style="width:90px;">
+        <span style="font-size:11px;color:var(--muted-ink,#7a8a8e);">${c.mode==="percent"?"%":"円"}　→　実際の金額：¥${Math.round(calcChildPrice(cat)).toLocaleString()}</span>
+      </div>`;
+    });
+    rowsWrap.innerHTML = rowsHtml;
+  }
+
+  const total = planTotalCost(plan);
+  const ratio = planCostRatio(plan);
+  const summaryEl = document.getElementById("menuCostSummary");
+  if(summaryEl){
+    summaryEl.textContent = `編集中：${plan.year}年度 ${plan.season||""} ${plan.courseName||""}　／　メニュー構成からの夕食1人前合計原価：¥${Math.round(total).toLocaleString()}／販売価格：¥${(plan.dinnerSellingPrice||0).toLocaleString()}／原価率：${ratio.toFixed(1)}%　／　外注弁当など固定原価：¥${(plan.bentoFixedCost||0).toLocaleString()}`;
+  }
+
+  const wrap = document.getElementById("menuCostCourses");
+  if(!wrap) return;
+  if(plan.courses.length===0){
+    wrap.innerHTML = `<div style="font-size:11.5px;color:var(--muted-ink,#7a8a8e);">「＋ 項目（コース）を追加」を押すと、先付け・前菜・椀物…といったメニュー構成を登録できます。</div>`;
+    return;
+  }
+  let html = "";
+  plan.courses.forEach(course=>{
+    const courseCost = menuCourseCost(course);
+    html += `<div class="tablecard" style="padding:10px 12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+        <input type="text" value="${(course.name||"").replace(/"/g,"&quot;")}" placeholder="項目名（例：先付け）" onchange="updateMenuCourseName('${course.id}', this.value)" style="font-weight:700;flex:0 0 160px;">
+        <span style="font-size:11.5px;color:var(--muted-ink,#7a8a8e);">この項目の合計原価：<b>¥${Math.round(courseCost).toLocaleString()}</b></span>
+        <span style="flex:1;"></span>
+        <button class="rmbtn" onclick="addMenuItem('${course.id}')">＋ 品目を追加</button>
+        <button class="rmbtn" onclick="removeMenuCourse('${course.id}')">この項目を削除</button>
+      </div>
+      <table style="min-width:0;width:100%;"><thead><tr>
+        <th style="text-align:left;">品名</th><th style="width:80px;">単位</th><th style="width:90px;">価格（円）</th><th style="width:40px;"></th>
+      </tr></thead><tbody>`;
+    (course.items||[]).forEach(item=>{
+      html += `<tr>
+        <td><input type="text" value="${(item.name||"").replace(/"/g,"&quot;")}" placeholder="品名（例：白身魚昆布締め）" onchange="updateMenuItem('${course.id}','${item.id}','name',this.value)" style="width:100%;"></td>
+        <td><input type="text" value="${(item.unit||"").replace(/"/g,"&quot;")}" placeholder="例：尾" onchange="updateMenuItem('${course.id}','${item.id}','unit',this.value)" style="width:100%;"></td>
+        <td><input type="number" value="${item.price??0}" onchange="updateMenuItem('${course.id}','${item.id}','price',this.value)" style="width:100%;"></td>
+        <td><button class="rmbtn" onclick="removeMenuItem('${course.id}','${item.id}')">削除</button></td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+  });
+  wrap.innerHTML = html;
+}
+
+function updateMenuCostSetting(field, value){
+  const plan = getEditingMenuPlan();
+  if(!plan) return;
+  const v = parseFloat(value);
+  plan[field] = isNaN(v) ? 0 : v;
+  renderMenuCostSection();
+  recalc();
+  scheduleAutoSync();
+}
+
+function toggleChildPricingEnabled(checked){
+  const plan = getEditingMenuPlan();
+  if(!plan) return;
+  plan.childPricingEnabled = checked;
+  renderMenuCostSection();
+  recalc();
+  scheduleAutoSync();
+}
+
+function updateChildPricingMode(category, mode){
+  const plan = getEditingMenuPlan();
+  if(!plan) return;
+  plan.childPricing[category].mode = mode;
+  renderMenuCostSection();
+  recalc();
+  scheduleAutoSync();
+}
+
+function updateChildPricingValue(category, value){
+  const plan = getEditingMenuPlan();
+  if(!plan) return;
+  const v = parseFloat(value);
+  plan.childPricing[category].value = isNaN(v) ? 0 : v;
+  renderMenuCostSection();
+  recalc();
+  scheduleAutoSync();
+}
+
+function addMenuCourse(){
+  const plan = getEditingMenuPlan();
+  if(!plan) return;
+  plan.courses.push({ id: dpNewId(), name: "新しい項目", items: [] });
+  renderMenuCostSection();
+  scheduleAutoSync();
+}
+
+function removeMenuCourse(courseId){
+  const plan = getEditingMenuPlan();
+  if(!plan) return;
+  plan.courses = plan.courses.filter(c=>c.id!==courseId);
+  renderMenuCostSection();
+  recalc();
+  scheduleAutoSync();
+}
+
+function updateMenuCourseName(courseId, name){
+  const plan = getEditingMenuPlan();
+  const c = plan && plan.courses.find(c=>c.id===courseId);
+  if(c){ c.name = name; scheduleAutoSync(); }
+}
+
+function addMenuItem(courseId){
+  const plan = getEditingMenuPlan();
+  const c = plan && plan.courses.find(c=>c.id===courseId);
+  if(!c) return;
+  c.items.push({ id: dpNewId(), name: "", unit: "", price: 0 });
+  renderMenuCostSection();
+  scheduleAutoSync();
+}
+
+function removeMenuItem(courseId, itemId){
+  const plan = getEditingMenuPlan();
+  const c = plan && plan.courses.find(c=>c.id===courseId);
+  if(!c) return;
+  c.items = c.items.filter(it=>it.id!==itemId);
+  renderMenuCostSection();
+  recalc();
+  scheduleAutoSync();
+}
+
+function updateMenuItem(courseId, itemId, field, value){
+  const plan = getEditingMenuPlan();
+  const c = plan && plan.courses.find(c=>c.id===courseId);
+  const it = c && c.items.find(it=>it.id===itemId);
+  if(!it) return;
+  it[field] = field==="price" ? (parseFloat(value)||0) : value;
+  renderMenuCostSection();
+  recalc();
+  scheduleAutoSync();
+}
+
+/* ===================== 食材原価率比較 ===================== */
+function renderMenuCostCompareTable(){
+  const table = document.getElementById("menuCostCompareTable");
+  if(!table) return;
+  if(MENU_COST_PLANS.length===0){
+    table.innerHTML = `<tr><td style="border:none;font-size:11.5px;color:var(--muted-ink,#7a8a8e);padding:8px 0;">「食材原価率登録」でプランを登録すると、ここに一覧が表示されます。</td></tr>`;
+    return;
+  }
+  const sorted = [...MENU_COST_PLANS].sort((a,b)=> (b.year-a.year) || String(a.season).localeCompare(String(b.season)) || String(a.courseName).localeCompare(String(b.courseName)));
+  let html = `<thead><tr><th>年度</th><th>季節</th><th>コース名</th><th>夕食販売価格</th><th>夕食合計原価</th><th>夕食原価率</th><th>朝食販売価格</th><th>朝食原価率</th><th>使用中</th></tr></thead><tbody>`;
+  sorted.forEach(plan=>{
+    const cost = planTotalCost(plan);
+    const ratio = planCostRatio(plan);
+    const bRatio = planBreakfastCostRatio(plan);
+    html += `<tr>
+      <td>${plan.year}年度</td>
+      <td>${plan.season||"-"}</td>
+      <td>${plan.courseName||"-"}</td>
+      <td>¥${(plan.dinnerSellingPrice||0).toLocaleString()}</td>
+      <td>¥${Math.round(cost).toLocaleString()}</td>
+      <td>${ratio.toFixed(1)}%</td>
+      <td>¥${(plan.breakfastSellingPrice||0).toLocaleString()}</td>
+      <td>${bRatio.toFixed(1)}%</td>
+      <td>${plan.isActive ? "✓ 使用中" : ""}</td>
+    </tr>`;
+  });
+  html += "</tbody>";
+  table.innerHTML = html;
+}
+
+
 
 // 仕事内容カラー（初期プリセット。ここから自由に項目名・色を追加/変更できます）
 // 勤怠集計（休/希休/振休/欠勤/有給）は「項目」タグと連動して自動カウントされる
@@ -1025,10 +1646,9 @@ let HOLIDAY_WORK = {}; // key: "氏名_日" -> true（法定休日出勤とし�
 let JOB_SUMMARY_OVERRIDE = {}; // key: "項目名_日" -> 仕事内容日別集計の手入力上書き
 let DAILY_PILOT = {}; // key: 日 -> {rows:[{id,staffName,blocks:[{id,startMin,endMin,text,color}]}], floorplans:[{shapes:[...]}, {shapes:[...]}]}
 let EVALUATIONS = {}; // key: 氏名 -> [ {id, year, half, affiliation, joinDate, periodPast, periodCurrent, ratings:{itemId:'S'|'A'|'B'|'C'|'D'}, comment, evaluatorName} ]
-let evaluationUnlocked = false; // パスワード解除状態（アプリ再起動・ロック操作でリセット）
+let evaluationUnlocked = false; // パスコード解除状態（アプリ再起動・ロック操作でリセット）
 let EVAL_CURRENT_STAFF = null;
 let EVAL_CURRENT_RECORD_ID = null;
-const EVAL_PASSWORD = "29biki8";
 const EVAL_RATING_POINTS = { S:10, A:8, B:6, C:4, D:2 };
 let EVAL_ITEMS = [
   { id:"rule", section:"態度評価", name:"1．規律性", bullets:["就業規則や規則・規程を遵守し、職場の秩序の維持に努めていたか","上司の指示・命令によく従って対応したか"] },
@@ -1348,10 +1968,10 @@ function computeStaffMonthlySummary(si){
 /* ===================== 労務パネルのロック ===================== */
 let laborUnlocked = false;
 
-function unlockLaborPanel(){
+async function unlockLaborPanel(){
   const input = document.getElementById("laborPasscodeInput");
   const errEl = document.getElementById("laborPasscodeError");
-  if(input.value === FACILITY_CODE){
+  if(await checkUnlockCode(input.value)){
     laborUnlocked = true;
     input.value = "";
     errEl.textContent = "";
@@ -1507,10 +2127,10 @@ function lockStaffSettings(){
   document.getElementById("staffSettingsSummaryLabel").innerHTML = "<b>🔒 従業員・時給・交通費・施設運転費の設定（パスコード保護）</b>";
 }
 
-function submitWagePassword(){
+async function submitWagePassword(){
   const input = document.getElementById("staffSettingsPasscodeInput");
   const errEl = document.getElementById("wagePasswordError");
-  if(input.value === FACILITY_CODE){
+  if(await checkUnlockCode(input.value)){
     input.value = "";
     errEl.textContent = "";
     wagesVisible = true;
@@ -1618,12 +2238,7 @@ function computeLandscapePrintWidths(){
   return {staffW: staffPct, dayW: dayPct};
 }
 
-function printSelectedTabs(){
-  if(PRINT_SELECTED_TABS.length===0){
-    alert("印刷したいタブに1〜2個チェックを入れてください。");
-    return;
-  }
-
+function applyPrintStyling(){
   // Daily Pilotの印刷用タイトル（日付）をセット
   if(PRINT_SELECTED_TABS.includes("dailypilot")){
     const head = document.getElementById("dpTimelineHead");
@@ -1659,7 +2274,50 @@ function printSelectedTabs(){
   recalc();
 
   document.body.classList.add("printing-selected");
+}
+
+function cleanupPrintStyling(){
+  document.body.classList.remove("printing-selected");
+  document.querySelectorAll(".tabpanel.print-chosen").forEach(el=>el.classList.remove("print-chosen"));
+  PRINT_SELECTED_TABS = [];
+  document.querySelectorAll(".printselect-cb").forEach(cb=>{ cb.checked = false; });
+  PRINT_MODE = false;
+  setPageOrientation("landscape");
+  renderSummaryTable();
+  renderJobSummaryTable();
+  renderStaffTable();
+  recalc();
+}
+
+/* ---- 印刷：選択モーダル→プレビュー→実際の印刷、という一連の流れ ---- */
+function openPrintModal(){
+  PRINT_SELECTED_TABS = [];
+  document.querySelectorAll(".printselect-cb").forEach(cb=>cb.checked=false);
+  document.getElementById("printSelectModal").style.display = "flex";
+}
+
+function closePrintSelectModal(){
+  document.getElementById("printSelectModal").style.display = "none";
+}
+
+function showPrintPreview(){
+  if(PRINT_SELECTED_TABS.length===0){
+    alert("印刷したい項目を1〜2個選んでください。");
+    return;
+  }
+  closePrintSelectModal();
+  applyPrintStyling();
+  document.getElementById("printPreviewBar").style.display = "flex";
+  window.scrollTo(0,0);
+}
+
+function executePrintFromPreview(){
   window.print();
+}
+
+function closePrintPreview(){
+  cleanupPrintStyling();
+  document.getElementById("printPreviewBar").style.display = "none";
 }
 
 /* ===================== 仕事内容カラー ===================== */
@@ -2100,6 +2758,7 @@ async function fetchFromInntoBridge(){
     const res = await fetch("http://localhost:8791/latest?type=monthly");
     const data = await res.json();
     if(!data.ok) throw new Error(data.error || "取得に失敗しました");
+    if(data.planBreakdown) DAILY_PLAN_BREAKDOWN = data.planBreakdown;
     const objs = rowsToObjects_inntoBridge(data.rows);
     computeInntoSummary(objs);
     const receivedDate = new Date(data.receivedAt).toLocaleString("ja-JP");
@@ -2379,13 +3038,32 @@ function recalc(){
       }
     });
 
-    // 夕食人数＝予約状況サマリーの「１泊２食人数」、朝食人数＝「無料朝食人数」とそのまま連動
+    // 夕食人数＝「１泊２食人数」＋ 夕食を含む設定にした項目（団体・昼宴会・夜宴会・日帰り・弁当）の人数
+    // 朝食人数＝「無料朝食人数」＋ 朝食を含む設定にした項目の人数
     const twomeal = SUMMARY_VALUES[summaryKey("twomealguests", d)] || 0;
     const freeb = SUMMARY_VALUES[summaryKey("freebreak", d)] || 0;
-    const dinnerN = twomeal;
-    const breakfastN = freeb;
-    const dinnerCost = dinnerN * DINNER_UNIT;
-    const breakfastCost = breakfastN * BREAKFAST_UNIT;
+    const activePlan = getActiveMenuPlan();
+    const perPersonDinnerCost = totalDinnerCost();
+    const bentoCost = activePlan ? (activePlan.bentoFixedCost || 0) : 0;
+
+    // innto連携でプラン名の内訳が届いている日は、実際に予約されたプランごとの原価で計算する（より正確）。
+    // 内訳が無い日（手入力の月など）は、従来通り「1泊2食人数×使用中プランの原価」で計算する。
+    const breakdownResult = calcPlanBreakdownDinnerCost(d);
+    let dinnerN = breakdownResult ? breakdownResult.count : twomeal;
+    let dinnerCost = breakdownResult ? breakdownResult.cost : (twomeal * perPersonDinnerCost);
+    let breakfastN = freeb;
+    let breakfastCost = freeb * BREAKFAST_UNIT;
+
+    ["group","lunchbanquet","dinnerbanquet","daytrip","bento"].forEach(catKey=>{
+      const cnt = SUMMARY_VALUES[summaryKey(catKey, d)] || 0;
+      if(cnt<=0) return;
+      const setting = MEAL_CATEGORY_SETTINGS[catKey];
+      if(!setting) return;
+      const unitDinnerCost = (catKey==="bento") ? bentoCost : perPersonDinnerCost; // 弁当は外注弁当固定原価を使用
+      if(setting.dinner){ dinnerN += cnt; dinnerCost += cnt * unitDinnerCost; }
+      if(setting.breakfast){ breakfastN += cnt; breakfastCost += cnt * BREAKFAST_UNIT; }
+    });
+
     const revenue = REVENUE[d] || 0;
     const facilityCost = (FACILITY_OVERRIDE[d]!==undefined) ? FACILITY_OVERRIDE[d] : FACILITY_BASE;
     const pl = revenue - labor - dinnerCost - breakfastCost - facilityCost - commute;
@@ -2411,6 +3089,25 @@ function recalc(){
 
     monthRevenue += revenue; monthLabor += labor; monthDinnerC += dinnerCost;
     monthBreakfastC += breakfastCost; monthFacility += facilityCost; monthCommute += commute; monthPL += pl;
+  }
+
+  // 月間調整人数（ブックマークレットの自動集計と実際の人数に差がある時の手入力補正）を月間食材費に反映する
+  {
+    const activePlan = getActiveMenuPlan();
+    const perPersonDinnerCost = totalDinnerCost();
+    const bentoCost = activePlan ? (activePlan.bentoFixedCost || 0) : 0;
+    let adjustDinnerCost = 0, adjustBreakfastCost = 0;
+    Object.keys(MEAL_CATEGORY_SETTINGS).forEach(catKey=>{
+      const s = MEAL_CATEGORY_SETTINGS[catKey];
+      const adj = s.adjust || 0;
+      if(adj===0) return;
+      const unitDinnerCost = (catKey==="bento") ? bentoCost : perPersonDinnerCost;
+      if(s.dinner) adjustDinnerCost += adj * unitDinnerCost;
+      if(s.breakfast) adjustBreakfastCost += adj * BREAKFAST_UNIT;
+    });
+    monthDinnerC += adjustDinnerCost;
+    monthBreakfastC += adjustBreakfastCost;
+    monthPL -= (adjustDinnerCost + adjustBreakfastCost);
   }
 
   // 会社負担分の社会保険料・雇用保険料（月単位の概念のため、日次ではなく月間人件費にまとめて加算する）
@@ -2447,6 +3144,9 @@ function collectState(){
     EVALUATIONS,
     EVAL_ITEMS,
     LABOR_SETTINGS,
+    MENU_COST_PLANS,
+    MEAL_CATEGORY_SETTINGS,
+    DAILY_PLAN_BREAKDOWN,
     facilityBase: document.getElementById("facilityInput") ? document.getElementById("facilityInput").value : "35000",
     wagesVisible
   };
@@ -2459,6 +3159,21 @@ function applyState(state){
   if(state.EVALUATIONS) EVALUATIONS = state.EVALUATIONS;
   if(state.EVAL_ITEMS && state.EVAL_ITEMS.length) EVAL_ITEMS = state.EVAL_ITEMS;
   if(state.LABOR_SETTINGS) LABOR_SETTINGS = Object.assign({}, LABOR_SETTINGS, state.LABOR_SETTINGS);
+  if(state.MENU_COST_PLANS && state.MENU_COST_PLANS.length){
+    MENU_COST_PLANS = state.MENU_COST_PLANS;
+  } else if(state.MENU_COST_SETTINGS){
+    // 旧バージョン（プラン管理前）のデータからの移行：1件だけのプランとして取り込む
+    const old = state.MENU_COST_SETTINGS;
+    MENU_COST_PLANS = [Object.assign(newMenuCostPlan(CURRENT_YEAR, "", "既存の設定"), old, {id: dpNewId(), isActive: true})];
+  }
+  if(MENU_COST_CURRENT_EDIT_ID===null && MENU_COST_PLANS.length>0) MENU_COST_CURRENT_EDIT_ID = getActiveMenuPlan().id;
+  if(state.MEAL_CATEGORY_SETTINGS){
+    Object.keys(state.MEAL_CATEGORY_SETTINGS).forEach(k=>{
+      if(MEAL_CATEGORY_SETTINGS[k]) Object.assign(MEAL_CATEGORY_SETTINGS[k], state.MEAL_CATEGORY_SETTINGS[k]);
+      else MEAL_CATEGORY_SETTINGS[k] = state.MEAL_CATEGORY_SETTINGS[k]; // カスタム項目（保存時に追加されたもの）を復元
+    });
+  }
+  if(state.DAILY_PLAN_BREAKDOWN) DAILY_PLAN_BREAKDOWN = state.DAILY_PLAN_BREAKDOWN;
   if(typeof state.wagesVisible === "boolean") wagesVisible = state.wagesVisible;
 
   const stateYear = state.CURRENT_YEAR || CURRENT_YEAR;
@@ -2496,6 +3211,7 @@ function applyState(state){
   renderDailyPilot();
   if(evaluationUnlocked) renderEvaluationStaffSelect();
   if(wagesVisible) renderStaffSettingsTable();
+  renderMenuCostSection();
   recalc();
 }
 
@@ -2572,7 +3288,7 @@ async function loadFromDesktopApp(){
 /* ===================== サイドバー：ナビゲーション・表示モード ===================== */
 let VIEW_MODE = "all"; // "all"（全部表示）| "one"（1つずつ表示）
 let SIDEBAR_ACTIVE_PANEL = "panelSummary";
-const SIDEBAR_PANEL_IDS = ["panelSummary","panelJobSummary","panelDailyPilot","panelStaff","panelDailyPL","panelEvaluation","panelLabor","staffAddSection","cardsSection"];
+const SIDEBAR_PANEL_IDS = ["panelSummary","panelJobSummary","panelDailyPilot","panelStaff","panelDailyPL","panelEvaluation","panelLabor","staffAddSection","menuCostSection","menuCostCompareSection","manualSection","cardsSection"];
 
 function sidebarNavigate(evt, panelId){
   if(evt) evt.preventDefault();
@@ -2607,6 +3323,16 @@ function applyViewMode(){
   });
 }
 
+
+// パスコードロックの共通判定：施設コード、または開発者IDのどちらを入力しても解除できる
+async function checkUnlockCode(code){
+  if(!code) return false;
+  if(code === FACILITY_CODE) return true;
+  if(window.electronAPI && window.electronAPI.verifyDeveloperCode){
+    try { return await window.electronAPI.verifyDeveloperCode(code); } catch(e){ return false; }
+  }
+  return false;
+}
 
 async function initFacilityCode(){
   if(!window.electronAPI){
@@ -2719,7 +3445,7 @@ function initDesktopIntegration(){
 const DP_START_MIN = 5*60;   // 5:00（6時より前から稼働する日にも対応）
 const DP_END_MIN = 23*60;    // 23:00
 const DP_TOTAL_MIN = DP_END_MIN - DP_START_MIN;
-const DP_DEFAULT_COLOR = "#2F5D62";
+const DP_DEFAULT_COLOR = "#9C9C9C";
 let DP_ID_SEQ = 1;
 function dpNewId(){ return "dp" + (DP_ID_SEQ++) + "_" + Date.now().toString(36); }
 
@@ -2977,23 +3703,56 @@ function dpSetupTrackDrag(track, rowId){
 
 /* ---------- 会場図面 ---------- */
 const DP_SHAPE_DEFAULTS = {
-  rect:   { w: 90, h: 60, color: "#2F5D62" },
-  circle: { w: 60, h: 60, color: "#B98B3E" },
-  line:   { w: 100, h: 3,  color: "#8C2F2F" },
-  text:   { w: 90, h: 26, color: "#333333" },
+  rect:   { w: 20, h: 19, color: "#2F5D62" },  // w/hは基準キャンバス(440x320px相当)に対する%
+  circle: { w: 14, h: 19, color: "#B98B3E" },
+  line:   { w: 23, h: 1,  color: "#8C2F2F" },
+  text:   { w: 20, h: 8,  color: "#333333" },
 };
+const DP_CANVAS_REF_W = 440; // 新規図形の初期位置を計算する際の基準幅（実際の描画幅は都度取得する）
+const DP_CANVAS_REF_H = 320;
+
+// 直前に指定した図形のサイズ（px、基準キャンバスに対する値）を種類ごとに記憶しておき、
+// 次に同じ種類の図形を追加した時、同じサイズで連続して配置できるようにする
+let DP_LAST_SHAPE_SIZE = {}; // { rect: {w,h}, circle: {...}, line: {...}, text: {...} }
+
+// 今どの図形が選択されているか（幅・高さのpx入力パネルに反映するため）
+let DP_SELECTED_SHAPE = {}; // { 0: shapeId, 1: shapeId }
+
+// キャンバスの実際の表示サイズを取得する（取得できない場合は基準サイズにフォールバック）
+function dpGetCanvasSize(fpIndex){
+  const canvas = document.getElementById("dpFloorplan" + fpIndex);
+  if(canvas){
+    const rect = canvas.getBoundingClientRect();
+    if(rect.width > 0 && rect.height > 0) return { w: rect.width, h: rect.height };
+  }
+  return { w: DP_CANVAS_REF_W, h: DP_CANVAS_REF_H };
+}
+
+// 旧バージョン（ピクセル固定）で保存された図形を、％座標に一度だけ変換する（今のキャンバスサイズを基準にする）
+function dpMigrateShapeToPercent(shape, canvasSize){
+  if(shape.xPct !== undefined) return; // すでに％形式なら何もしない
+  shape.xPct = ((shape.x||0) / canvasSize.w) * 100;
+  shape.yPct = ((shape.y||0) / canvasSize.h) * 100;
+  shape.wPct = ((shape.w||20) / canvasSize.w) * 100;
+  shape.hPct = ((shape.h||20) / canvasSize.h) * 100;
+}
 
 function dpAddShape(fpIndex, type){
   const day = dpEnsureDay(DP_CURRENT_DAY);
   const fp = day.floorplans[fpIndex];
   const def = DP_SHAPE_DEFAULTS[type];
+  const remembered = DP_LAST_SHAPE_SIZE[type]; // 直前にこの種類の図形で指定したサイズがあれば、それを使う
   const count = fp.shapes.length;
-  fp.shapes.push({
+  const newShape = {
     id: dpNewId(), type,
-    x: 16 + (count%5)*18, y: 16 + (count%5)*16,
-    w: def.w, h: def.h, color: def.color,
+    xPct: 4 + (count%5)*4, yPct: 5 + (count%5)*5,
+    wPct: remembered ? remembered.wPct : def.w,
+    hPct: remembered ? remembered.hPct : def.h,
+    color: def.color,
     text: type==="text" ? "テキスト" : ""
-  });
+  };
+  fp.shapes.push(newShape);
+  DP_SELECTED_SHAPE[fpIndex] = newShape.id; // 追加した図形をそのまま選択状態にする（続けてサイズ調整しやすいように）
   renderDpFloorplan(fpIndex);
   scheduleAutoSync();
 }
@@ -3041,12 +3800,15 @@ function renderDpFloorplan(fpIndex){
   if(!canvas) return;
   const day = dpEnsureDay(DP_CURRENT_DAY);
   const shapes = day.floorplans[fpIndex].shapes;
+  const canvasSize = dpGetCanvasSize(fpIndex);
   let html = "";
   shapes.forEach(s=>{
+    dpMigrateShapeToPercent(s, canvasSize); // 旧データ（px固定）が残っていれば、ここで％に変換する
     const styleColor = s.type==="line"
       ? `border-top-color:${s.color};`
       : s.type==="text" ? "" : `border-color:${s.color};background:${s.color}26;`;
-    html += `<div class="dp-shape ${s.type}" data-fp="${fpIndex}" data-shape="${s.id}" style="left:${s.x}px;top:${s.y}px;width:${s.w}px;height:${s.h}px;${styleColor}">`;
+    const selectedClass = (DP_SELECTED_SHAPE[fpIndex]===s.id) ? " selected" : "";
+    html += `<div class="dp-shape ${s.type}${selectedClass}" data-fp="${fpIndex}" data-shape="${s.id}" style="left:${s.xPct}%;top:${s.yPct}%;width:${s.wPct}%;height:${s.hPct}%;${styleColor}">`;
     if(s.type!=="line"){
       html += `<div class="dp-shape-text" contenteditable="true" data-role="text" onblur="dpUpdateShapeText(${fpIndex},'${s.id}',this.textContent); this.classList.remove('editing')">${(s.text||"").replace(/</g,"&lt;")}</div>`;
     }
@@ -3059,10 +3821,50 @@ function renderDpFloorplan(fpIndex){
   });
   canvas.innerHTML = html;
   dpSetupCanvasDrag(canvas, fpIndex);
+  renderDpSizePanel(fpIndex);
 }
 
+// 選択中の図形の幅・高さをpx単位で表示・入力できるパネル
+function renderDpSizePanel(fpIndex){
+  const panel = document.getElementById("dpSizePanel" + fpIndex);
+  if(!panel) return;
+  const day = dpEnsureDay(DP_CURRENT_DAY);
+  const shapeId = DP_SELECTED_SHAPE[fpIndex];
+  const shape = shapeId ? day.floorplans[fpIndex].shapes.find(s=>s.id===shapeId) : null;
+  if(!shape){
+    panel.innerHTML = `<span>図形をクリックすると、ここで幅・高さをpx指定できます</span>`;
+    return;
+  }
+  const canvasSize = dpGetCanvasSize(fpIndex);
+  const wPx = Math.round((shape.wPct/100) * canvasSize.w);
+  const hPx = Math.round((shape.hPct/100) * canvasSize.h);
+  panel.innerHTML = `
+    <span>選択中の図形：幅</span>
+    <input type="number" min="4" value="${wPx}" onchange="dpUpdateShapeSizePx(${fpIndex},'w',this.value)">
+    <span>px　高さ</span>
+    <input type="number" min="2" value="${hPx}" onchange="dpUpdateShapeSizePx(${fpIndex},'h',this.value)">
+    <span>px（次に追加する同じ種類の図形もこのサイズになります）</span>
+  `;
+}
+
+// px入力から図形のサイズを更新し、同じ種類の次の図形にも引き継がれるよう記憶する
+function dpUpdateShapeSizePx(fpIndex, field, pxValue){
+  const day = dpEnsureDay(DP_CURRENT_DAY);
+  const shapeId = DP_SELECTED_SHAPE[fpIndex];
+  const shape = shapeId ? day.floorplans[fpIndex].shapes.find(s=>s.id===shapeId) : null;
+  if(!shape) return;
+  const px = Math.max(field==="w" ? 4 : 2, parseFloat(pxValue) || 0);
+  const canvasSize = dpGetCanvasSize(fpIndex);
+  if(field==="w") shape.wPct = (px / canvasSize.w) * 100;
+  else shape.hPct = (px / canvasSize.h) * 100;
+  DP_LAST_SHAPE_SIZE[shape.type] = { wPct: shape.wPct, hPct: shape.hPct };
+  renderDpFloorplan(fpIndex);
+  scheduleAutoSync();
+}
+
+
 function dpSetupCanvasDrag(canvas, fpIndex){
-  let dragging = null; // {shapeId, mode:'move'|'resize', startX, startY, orig}
+  let dragging = null; // {shapeId, mode:'move'|'resize', startX, startY, canvasW, canvasH, orig}
 
   canvas.addEventListener("dblclick", function(e){
     const shapeEl = e.target.closest(".dp-shape");
@@ -3086,8 +3888,20 @@ function dpSetupCanvasDrag(canvas, fpIndex){
     const day = dpEnsureDay(DP_CURRENT_DAY);
     const shape = day.floorplans[fpIndex].shapes.find(s=>s.id===shapeId);
     if(!shape) return;
+    if(DP_SELECTED_SHAPE[fpIndex] !== shapeId){
+      DP_SELECTED_SHAPE[fpIndex] = shapeId;
+      shapeEl.classList.add("selected");
+      const prevSelected = canvas.querySelector(".dp-shape.selected:not([data-shape='"+shapeId+"'])");
+      if(prevSelected) prevSelected.classList.remove("selected");
+      renderDpSizePanel(fpIndex);
+    }
     const mode = e.target.dataset.role==="resize" ? "resize" : "move";
-    dragging = { shapeId, mode, startX:e.clientX, startY:e.clientY, orig:{x:shape.x,y:shape.y,w:shape.w,h:shape.h} };
+    const rect = canvas.getBoundingClientRect();
+    dragging = {
+      shapeId, mode, startX:e.clientX, startY:e.clientY,
+      canvasW: rect.width || DP_CANVAS_REF_W, canvasH: rect.height || DP_CANVAS_REF_H,
+      orig:{xPct:shape.xPct, yPct:shape.yPct, wPct:shape.wPct, hPct:shape.hPct}
+    };
     e.preventDefault();
   });
   document.addEventListener("mousemove", function(e){
@@ -3095,40 +3909,51 @@ function dpSetupCanvasDrag(canvas, fpIndex){
     const day = dpEnsureDay(DP_CURRENT_DAY);
     const shape = day.floorplans[fpIndex].shapes.find(s=>s.id===dragging.shapeId);
     if(!shape) return;
-    const dx = e.clientX - dragging.startX, dy = e.clientY - dragging.startY;
+    const dxPct = ((e.clientX - dragging.startX) / dragging.canvasW) * 100;
+    const dyPct = ((e.clientY - dragging.startY) / dragging.canvasH) * 100;
     const el = document.querySelector(`.dp-shape[data-fp="${fpIndex}"][data-shape="${dragging.shapeId}"]`);
     if(!el) return;
     if(dragging.mode==="move"){
-      shape.x = Math.max(0, dragging.orig.x + dx);
-      shape.y = Math.max(0, dragging.orig.y + dy);
-      el.style.left = shape.x + "px";
-      el.style.top = shape.y + "px";
+      shape.xPct = Math.max(0, dragging.orig.xPct + dxPct);
+      shape.yPct = Math.max(0, dragging.orig.yPct + dyPct);
+      el.style.left = shape.xPct + "%";
+      el.style.top = shape.yPct + "%";
     } else {
-      shape.w = Math.max(16, dragging.orig.w + dx);
-      shape.h = Math.max(shape.type==="line" ? 3 : 16, dragging.orig.h + dy);
-      el.style.width = shape.w + "px";
-      el.style.height = shape.h + "px";
+      const minW = 4, minH = shape.type==="line" ? 0.5 : 4;
+      shape.wPct = Math.max(minW, dragging.orig.wPct + dxPct);
+      shape.hPct = Math.max(minH, dragging.orig.hPct + dyPct);
+      el.style.width = shape.wPct + "%";
+      el.style.height = shape.hPct + "%";
     }
   });
   document.addEventListener("mouseup", function(){
-    if(dragging){ dragging = null; scheduleAutoSync(); }
+    if(dragging){
+      if(dragging.mode==="resize"){
+        const day = dpEnsureDay(DP_CURRENT_DAY);
+        const shape = day.floorplans[fpIndex].shapes.find(s=>s.id===dragging.shapeId);
+        if(shape) DP_LAST_SHAPE_SIZE[shape.type] = { wPct: shape.wPct, hPct: shape.hPct };
+      }
+      dragging = null;
+      renderDpSizePanel(fpIndex);
+      scheduleAutoSync();
+    }
   });
 }
 
 /* ===================== 人事評価シート ===================== */
-function unlockEvaluation(){
+async function unlockEvaluation(){
   const input = document.getElementById("evalPasswordInput");
   const errEl = document.getElementById("evalPasswordError");
-  if(input.value === EVAL_PASSWORD){
+  if(await checkUnlockCode(input.value)){
     evaluationUnlocked = true;
     input.value = "";
     errEl.textContent = "";
     document.getElementById("evalLockedView").style.display = "none";
     document.getElementById("evalUnlockedView").style.display = "";
-    document.getElementById("evalSummaryLabel").textContent = "🔓 人事評価シート（従業員別・パスワード保護）";
+    document.getElementById("evalSummaryLabel").textContent = "🔓 人事評価シート（従業員別・パスコード保護）";
     renderEvaluationStaffSelect();
   } else {
-    errEl.textContent = "パスワードが違います";
+    errEl.textContent = "パスコードが違います";
     input.value = "";
     input.focus();
   }
@@ -3138,7 +3963,7 @@ function lockEvaluation(){
   evaluationUnlocked = false;
   document.getElementById("evalLockedView").style.display = "";
   document.getElementById("evalUnlockedView").style.display = "none";
-  document.getElementById("evalSummaryLabel").textContent = "🔒 人事評価シート（従業員別・パスワード保護）";
+  document.getElementById("evalSummaryLabel").textContent = "🔒 人事評価シート（従業員別・パスコード保護）";
 }
 
 function renderEvaluationStaffSelect(){
@@ -3386,30 +4211,24 @@ document.addEventListener("keydown", function(e){
   if((e.ctrlKey || e.metaKey) && (e.key === "p" || e.key === "P")){
     e.preventDefault();
     if(PRINT_SELECTED_TABS.length===0) PRINT_SELECTED_TABS = [CURRENT_TAB];
-    printSelectedTabs();
+    showPrintPreview();
   }
 });
 window.addEventListener("beforeprint", function(){
-  // printSelectedTabs()側で必要な設定は事前にすべて済ませているため、ここでは何もしない
+  // applyPrintStyling()側で必要な設定は事前にすべて済ませているため、ここでは何もしない
 });
 window.addEventListener("afterprint", function(){
-  document.body.classList.remove("printing-selected");
-  document.querySelectorAll(".tabpanel.print-chosen").forEach(el=>el.classList.remove("print-chosen"));
-  PRINT_SELECTED_TABS = [];
-  document.querySelectorAll(".printselect-cb").forEach(cb=>{ cb.checked = false; });
-  PRINT_MODE = false;
+  cleanupPrintStyling();
   PRINT_UNIT = "px";
-  setPageOrientation("landscape");
-  renderSummaryTable();
-  renderJobSummaryTable();
-  renderStaffTable();
-  recalc();
+  const bar = document.getElementById("printPreviewBar");
+  if(bar) bar.style.display = "none";
 });
 updateMonthLabel();
 renderFacilityDaySelect();
 renderSummaryTable();
 renderStaffTable();
 renderDailyPilot();
+renderMenuCostSection();
 recalc();
 document.querySelector('.sidebar-link[data-panel="panelSummary"]').classList.add("active");
 initFacilityCode();

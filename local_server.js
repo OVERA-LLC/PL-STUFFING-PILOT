@@ -40,6 +40,7 @@ function saveIngestPayload(payload) {
     receivedAt: new Date().toISOString(),
     source: payload.source || null,
     rows: payload.rows || null,
+    planBreakdown: payload.planBreakdown || null, // 日別・プラン名別の人数内訳（食材原価率プランとの自動照合に使用）
     meta: payload.meta || null,
   };
   fs.writeFileSync(dataFilePath(type), JSON.stringify(record, null, 1), "utf-8");
