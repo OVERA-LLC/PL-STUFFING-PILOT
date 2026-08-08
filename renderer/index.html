@@ -88,6 +88,10 @@
   .dp-gauge .dp-gauge-text:focus{white-space:normal;overflow:visible;background:rgba(255,255,255,0.55);}
   .dp-gauge-handle{width:7px;align-self:stretch;cursor:ew-resize;background:rgba(255,255,255,0.35);flex:0 0 auto;}
   .dp-gauge-color{width:16px;height:16px;border:none;padding:0;flex:0 0 auto;margin-left:2px;cursor:pointer;background:transparent;}
+  /* 食材原価率登録の円入力欄：上下の増減ボタン（スピンボタン）を非表示にする */
+  input.price-input::-webkit-outer-spin-button,
+  input.price-input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  input.price-input{ -moz-appearance:textfield; }
   .dp-gauge-edit{flex:0 0 auto;background:rgba(255,255,255,0.3);color:#fff;border:none;width:16px;height:16px;line-height:16px;font-size:10px;border-radius:4px;margin-right:2px;cursor:pointer;padding:0;}
   .dp-gauge-del{flex:0 0 auto;background:rgba(0,0,0,0.25);color:#fff;border:none;width:14px;height:14px;line-height:14px;font-size:10px;border-radius:50%;margin:0 3px;cursor:pointer;}
   .dp-floor-head{font-weight:700;color:var(--teal-deep);font-size:13px;margin:4px 0 8px;}
@@ -264,6 +268,8 @@
   #staffsettingstable{min-width:0;width:auto;}
   #menuCostCompareTable{min-width:0;width:100%;table-layout:fixed;}
   #menuCostCompareTable th, #menuCostCompareTable td{white-space:normal;word-break:break-word;font-size:11px;padding:4px 5px;}
+  .menu-item-table th, .menu-item-table td{padding:1px 5px;}
+  .menu-item-table input{padding:1px 4px;}
   #sumtable, #jobsummarytable{table-layout:fixed;min-width:0;width:auto;}
   #sumtable th, #sumtable td, #jobsummarytable th, #jobsummarytable td{overflow:hidden;}
   th,td{border:1px solid var(--line);padding:4px 6px;text-align:center;white-space:nowrap;}
@@ -709,21 +715,31 @@
           <input type="number" id="newPlanYear" placeholder="年度（例：2026）" style="width:100px;">
           <input type="text" id="newPlanSeason" placeholder="季節（例：夏）" style="width:90px;">
           <input type="text" id="newPlanCourseName" placeholder="プラン名（例：特選会席）" style="width:150px;">
+          <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
+          <span class="t-label">内容をコピー：</span>
+          <select id="copyFromPlanSelect" style="max-width:220px;"></select>
           <button class="btn" onclick="addMenuPlan()">追加</button>
         </div>
 
         <div id="menuPlanEditForm" style="display:none;">
           <div class="staffadd" style="margin-bottom:12px;">
             <span class="t-label">夕食販売価格（円）：</span>
-            <input type="number" step="any" id="dinnerSellingPriceInput" onfocus="beginTextEditing()" onchange="updateMenuCostSetting('dinnerSellingPrice', this.value)" onblur="endTextEditing()" style="width:90px;">
+            <input type="number" step="any" class="price-input" placeholder="0" id="dinnerSellingPriceInput" onfocus="beginTextEditing()" onchange="updateMenuCostSetting('dinnerSellingPrice', this.value)" onblur="endTextEditing()" style="width:90px;">
             <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
             <span class="t-label">朝食販売価格（円）：</span>
-            <input type="number" step="any" id="breakfastSellingPriceInput" onfocus="beginTextEditing()" onchange="updateMenuCostSetting('breakfastSellingPrice', this.value)" onblur="endTextEditing()" style="width:90px;">
+            <input type="number" step="any" class="price-input" placeholder="0" id="breakfastSellingPriceInput" onfocus="beginTextEditing()" onchange="updateMenuCostSetting('breakfastSellingPrice', this.value)" onblur="endTextEditing()" style="width:90px;">
             <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
             <span class="t-label">外注弁当など固定原価（円）：</span>
-            <input type="number" step="any" id="bentoFixedCostInput" onfocus="beginTextEditing()" onchange="updateMenuCostSetting('bentoFixedCost', this.value)" onblur="endTextEditing()" style="width:90px;">
+            <input type="number" step="any" class="price-input" placeholder="0" id="bentoFixedCostInput" onfocus="beginTextEditing()" onchange="updateMenuCostSetting('bentoFixedCost', this.value)" onblur="endTextEditing()" style="width:90px;">
+          </div>
+
+          <div class="staffadd" style="margin-bottom:12px;">
+            <button class="btn" onclick="addMenuCourse('dinner')">＋ 夕食の項目を追加</button>
+            <button class="btn" onclick="addMenuCourse('breakfast')">＋ 朝食の項目を追加</button>
             <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
-            <button class="btn" onclick="addMenuCourse()">＋ 項目（コース）を追加</button>
+            <span class="t-label">他のプランの項目をコピー：</span>
+            <select id="copyFromCourseSelect" style="max-width:220px;"></select>
+            <button class="rmbtn" onclick="addMenuCourseFromExisting()">この項目を追加</button>
           </div>
 
           <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer;margin-bottom:8px;">
@@ -1221,8 +1237,16 @@ function newMenuCostPlan(year, season, courseName){
   };
 }
 
+// 「使用中」のプラン一覧を返す（複数選択可）。1つも選ばれていなければ、最初のプランを暫定的に使う。
+function getActiveMenuPlans(){
+  const actives = MENU_COST_PLANS.filter(p=>p.isActive);
+  if(actives.length>0) return actives;
+  return MENU_COST_PLANS[0] ? [MENU_COST_PLANS[0]] : [];
+}
+
+// 単一のプランが必要な場面（編集対象の初期選択など）向けに、使用中プランの1つ目を返す
 function getActiveMenuPlan(){
-  return MENU_COST_PLANS.find(p=>p.isActive) || MENU_COST_PLANS[0] || null;
+  return getActiveMenuPlans()[0] || null;
 }
 
 function getEditingMenuPlan(){
@@ -1234,10 +1258,25 @@ function menuCourseCost(course){
   return (course.items||[]).reduce((sum,it)=> sum + (parseFloat(it.price)||0), 0);
 }
 
-// 1つのプランの、夕食1人前の合計原価＝全項目の合計原価の合計
+// 1つのプランの、夕食1人前の合計原価＝夕食の項目（コース）だけの合計原価の合計
 function planTotalCost(plan){
   if(!plan) return 0;
-  return (plan.courses||[]).reduce((sum,c)=> sum + menuCourseCost(c), 0);
+  return (plan.courses||[]).filter(c=>(c.mealType||"dinner")==="dinner").reduce((sum,c)=> sum + menuCourseCost(c), 0);
+}
+
+// 1つのプランの、朝食1人前の合計原価＝朝食の項目（コース）だけの合計原価の合計。
+// 朝食の項目を1つも登録していないプランはnullを返す（呼び出し側で固定値にフォールバックする）
+function planBreakfastTotalCost(plan){
+  if(!plan) return null;
+  const breakfastCourses = (plan.courses||[]).filter(c=>c.mealType==="breakfast");
+  if(breakfastCourses.length===0) return null;
+  return breakfastCourses.reduce((sum,c)=> sum + menuCourseCost(c), 0);
+}
+
+// 実際に使う朝食原価：プランに朝食の項目が登録されていればその合計、無ければ全国共通の目安値(588.6円)
+function planBreakfastCostForCalc(plan){
+  const bc = planBreakfastTotalCost(plan);
+  return bc !== null ? bc : BREAKFAST_UNIT;
 }
 
 // 1つのプランの原価率（%）＝合計原価 ÷ 夕食販売価格 × 100
@@ -1248,23 +1287,42 @@ function planCostRatio(plan){
   return (planTotalCost(plan) / price) * 100;
 }
 
-// 朝食の原価率（%）＝朝食原価（固定） ÷ 朝食販売価格 × 100
+// 朝食の原価率（%）＝朝食原価（プランに項目登録があればその合計、無ければ固定値） ÷ 朝食販売価格 × 100
 function planBreakfastCostRatio(plan){
   if(!plan) return 0;
   const price = plan.breakfastSellingPrice || 0;
   if(price<=0) return 0;
-  return (BREAKFAST_UNIT / price) * 100;
+  return (planBreakfastCostForCalc(plan) / price) * 100;
 }
 
-// 実際の日次損益計算に使う、現在「使用中」のプランの合計原価・原価率
+// 実際の日次損益計算に使う原価・原価率。使用中プランが複数ある場合は、その平均値を使う
+// （inntoから届く日別・プラン名別の内訳は、プラン名が一致すればそちらを優先して使う。これは常に有効）。
 function totalDinnerCost(){
-  return planTotalCost(getActiveMenuPlan());
+  const actives = getActiveMenuPlans();
+  if(actives.length===0) return 0;
+  return actives.reduce((s,p)=>s+planTotalCost(p),0) / actives.length;
 }
 function dinnerCostRatio(){
-  return planCostRatio(getActiveMenuPlan());
+  const actives = getActiveMenuPlans();
+  if(actives.length===0) return 0;
+  return actives.reduce((s,p)=>s+planCostRatio(p),0) / actives.length;
 }
 
-// 子供料金（子供A・B・C・D）の実際の金額を計算する（使用中プラン基準）。％なら大人料金に対する割合、円ならそのまま固定額。
+// 実際の朝食原価（使用中プランの平均。プランに朝食項目が無ければ固定値を使う）
+function totalBreakfastCost(){
+  const actives = getActiveMenuPlans();
+  if(actives.length===0) return BREAKFAST_UNIT;
+  return actives.reduce((s,p)=>s+planBreakfastCostForCalc(p),0) / actives.length;
+}
+
+// 使用中プランの、外注弁当など固定原価の平均値
+function activeBentoFixedCost(){
+  const actives = getActiveMenuPlans();
+  if(actives.length===0) return 0;
+  return actives.reduce((s,p)=>s+(p.bentoFixedCost||0),0) / actives.length;
+}
+
+// 子供料金（子供A・B・C・D）の実際の金額を計算する（使用中プランの1つ目を基準にする）。％なら大人料金に対する割合、円ならそのまま固定額。
 function calcChildPrice(category){
   const plan = getActiveMenuPlan();
   if(!plan) return 0;
@@ -1331,7 +1389,7 @@ function renderMenuPlanList(){
     html += `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid ${selected?'var(--teal-deep)':'var(--line)'};border-radius:8px;background:${selected?'var(--paper-soft)':'#fff'};">
       <span style="font-size:12px;font-weight:${selected?'700':'400'};flex:1;">${plan.year}年度　${plan.season||"（季節未設定）"}　${plan.courseName||"（プラン名未設定）"}</span>
       <span style="font-size:11px;color:var(--muted-ink,#7a8a8e);">原価率 ${planCostRatio(plan).toFixed(1)}%</span>
-      ${plan.isActive ? `<span style="font-size:10.5px;color:var(--profit-ink);font-weight:700;">✓ 使用中</span>` : `<button class="rmbtn" onclick="setActiveMenuPlan('${plan.id}')">これを使用中にする</button>`}
+      ${plan.isActive ? `<button class="rmbtn" style="color:var(--profit-ink);font-weight:700;" onclick="setActiveMenuPlan('${plan.id}')">✓ 使用中（クリックで解除）</button>` : `<button class="rmbtn" onclick="setActiveMenuPlan('${plan.id}')">使用中にする</button>`}
       <button class="rmbtn" onclick="selectMenuPlan('${plan.id}')">編集</button>
       <button class="rmbtn" onclick="removeMenuPlan('${plan.id}')">削除</button>
     </div>`;
@@ -1344,14 +1402,66 @@ function addMenuPlan(){
   const season = document.getElementById("newPlanSeason").value.trim();
   const courseName = document.getElementById("newPlanCourseName").value.trim();
   const plan = newMenuCostPlan(year, season, courseName);
+
+  const copyFromSelect = document.getElementById("copyFromPlanSelect");
+  const sourceId = copyFromSelect ? copyFromSelect.value : "";
+  if(sourceId){
+    const source = MENU_COST_PLANS.find(p=>p.id===sourceId);
+    if(source){
+      // 品物の内容（項目・品目・価格・子供料金・弁当固定原価）をコピーする。
+      // 年度・季節・プラン名・使用中フラグは新規のものをそのまま使う。
+      plan.dinnerSellingPrice = source.dinnerSellingPrice;
+      plan.breakfastSellingPrice = source.breakfastSellingPrice;
+      plan.bentoFixedCost = source.bentoFixedCost;
+      plan.childPricingEnabled = source.childPricingEnabled;
+      plan.childPricing = JSON.parse(JSON.stringify(source.childPricing));
+      plan.courses = (source.courses||[]).map(c=>({
+        id: dpNewId(),
+        name: c.name,
+        items: (c.items||[]).map(it=>({ id: dpNewId(), name: it.name, unit: it.unit, price: it.price })),
+      }));
+    }
+  }
+
   MENU_COST_PLANS.push(plan);
   MENU_COST_CURRENT_EDIT_ID = plan.id;
   document.getElementById("newPlanYear").value = "";
   document.getElementById("newPlanSeason").value = "";
   document.getElementById("newPlanCourseName").value = "";
+  if(copyFromSelect) copyFromSelect.value = "";
   renderMenuCostSection();
   recalc();
   scheduleAutoSync();
+}
+
+function renderCopyFromPlanSelect(){
+  const sel = document.getElementById("copyFromPlanSelect");
+  if(!sel) return;
+  const current = sel.value;
+  let html = `<option value="">（新規作成・空の状態から）</option>`;
+  const sorted = [...MENU_COST_PLANS].sort((a,b)=> (b.year-a.year) || String(a.season).localeCompare(String(b.season)) || String(a.courseName).localeCompare(String(b.courseName)));
+  sorted.forEach(p=>{
+    html += `<option value="${p.id}">${p.year}年度 ${p.season||""} ${p.courseName||"(名称未設定)"}</option>`;
+  });
+  sel.innerHTML = html;
+  if(sorted.some(p=>p.id===current)) sel.value = current;
+}
+
+// 全プランに登録されている項目（コース）を一覧表示し、今編集中のプランへコピーできるようにする
+function renderCopyFromCourseSelect(){
+  const sel = document.getElementById("copyFromCourseSelect");
+  if(!sel) return;
+  const editing = getEditingMenuPlan();
+  let html = `<option value="">（コピーする項目を選択）</option>`;
+  const sorted = [...MENU_COST_PLANS].sort((a,b)=> (b.year-a.year) || String(a.season).localeCompare(String(b.season)) || String(a.courseName).localeCompare(String(b.courseName)));
+  sorted.forEach(p=>{
+    (p.courses||[]).forEach(c=>{
+      if(editing && p.id===editing.id && c.id===MENU_COST_CURRENT_EDIT_ID) return; // 実質意味は無いが将来の誤コピー防止
+      const mealLabel = c.mealType==="breakfast" ? "朝食" : "夕食";
+      html += `<option value="${p.id}::${c.id}">[${mealLabel}] ${p.year}年度 ${p.season||""} ${p.courseName||"(名称未設定)"} － ${c.name||"(項目名未設定)"}</option>`;
+    });
+  });
+  sel.innerHTML = html;
 }
 
 function removeMenuPlan(planId){
@@ -1365,7 +1475,9 @@ function removeMenuPlan(planId){
 }
 
 function setActiveMenuPlan(planId){
-  MENU_COST_PLANS.forEach(p=>{ p.isActive = (p.id===planId); });
+  const plan = MENU_COST_PLANS.find(p=>p.id===planId);
+  if(!plan) return;
+  plan.isActive = !plan.isActive; // 複数のプランを同時に「使用中」にできるよう、個別にON/OFFを切り替える
   renderMenuCostSection();
   recalc();
   scheduleAutoSync();
@@ -1409,6 +1521,8 @@ function renderMenuCostSection(){
   if(!menuCostUnlocked) return;
   if(!MENU_COST_CURRENT_EDIT_ID && MENU_COST_PLANS.length>0) MENU_COST_CURRENT_EDIT_ID = getActiveMenuPlan().id;
   renderMenuPlanList();
+  renderCopyFromPlanSelect();
+  renderCopyFromCourseSelect();
   renderMealCategorySettings();
 
   const editForm = document.getElementById("menuPlanEditForm");
@@ -1423,9 +1537,9 @@ function renderMenuCostSection(){
   const priceEl = document.getElementById("dinnerSellingPriceInput");
   const breakfastPriceEl = document.getElementById("breakfastSellingPriceInput");
   const bentoEl = document.getElementById("bentoFixedCostInput");
-  if(priceEl) priceEl.value = plan.dinnerSellingPrice ?? 0;
-  if(breakfastPriceEl) breakfastPriceEl.value = plan.breakfastSellingPrice ?? 0;
-  if(bentoEl) bentoEl.value = plan.bentoFixedCost ?? 0;
+  if(priceEl) priceEl.value = plan.dinnerSellingPrice || '';
+  if(breakfastPriceEl) breakfastPriceEl.value = plan.breakfastSellingPrice || '';
+  if(bentoEl) bentoEl.value = plan.bentoFixedCost || '';
 
   const enabledCb = document.getElementById("childPricingEnabledCheckbox");
   const fieldsWrap = document.getElementById("childPricingFields");
@@ -1443,7 +1557,7 @@ function renderMenuCostSection(){
           <option value="percent" ${c.mode==="percent"?"selected":""}>％（割合）</option>
           <option value="yen" ${c.mode==="yen"?"selected":""}>円（固定額）</option>
         </select>
-        <input type="number" step="any" value="${c.value??0}" onfocus="beginTextEditing()" onchange="updateChildPricingValue('${cat}', this.value)" onblur="endTextEditing()" style="width:90px;">
+        <input type="number" step="any" class="price-input" placeholder="0" value="${c.value || ''}" onfocus="beginTextEditing()" onchange="updateChildPricingValue('${cat}', this.value)" onblur="endTextEditing()" style="width:90px;">
         <span style="font-size:11px;color:var(--muted-ink,#7a8a8e);">${c.mode==="percent"?"%":"円"}　→　実際の金額：¥${Math.round(calcChildPrice(cat)).toLocaleString()}</span>
       </div>`;
     });
@@ -1452,22 +1566,25 @@ function renderMenuCostSection(){
 
   const total = planTotalCost(plan);
   const ratio = planCostRatio(plan);
+  const breakfastRatio = planBreakfastCostRatio(plan);
+  const breakfastCostForCalc = planBreakfastCostForCalc(plan);
+  const breakfastSourceLabel = planBreakfastTotalCost(plan) !== null ? "" : "（未登録のため目安値）";
   const summaryEl = document.getElementById("menuCostSummary");
   if(summaryEl){
-    summaryEl.textContent = `編集中：${plan.year}年度 ${plan.season||""} ${plan.courseName||""}　／　メニュー構成からの夕食1人前合計原価：¥${Math.round(total).toLocaleString()}／販売価格：¥${(plan.dinnerSellingPrice||0).toLocaleString()}／原価率：${ratio.toFixed(1)}%　／　外注弁当など固定原価：¥${(plan.bentoFixedCost||0).toLocaleString()}`;
+    summaryEl.textContent = `編集中：${plan.year}年度 ${plan.season||""} ${plan.courseName||""}　／　夕食1人前合計原価：¥${Math.round(total).toLocaleString()}／販売価格：¥${(plan.dinnerSellingPrice||0).toLocaleString()}／夕食原価率：${ratio.toFixed(1)}%　／　朝食原価：¥${Math.round(breakfastCostForCalc).toLocaleString()}${breakfastSourceLabel}／朝食販売価格：¥${(plan.breakfastSellingPrice||0).toLocaleString()}／朝食原価率：${breakfastRatio.toFixed(1)}%　／　外注弁当など固定原価：¥${(plan.bentoFixedCost||0).toLocaleString()}`;
   }
 
   const wrap = document.getElementById("menuCostCourses");
   if(!wrap) return;
   if(plan.courses.length===0){
-    wrap.innerHTML = `<div style="font-size:11.5px;color:var(--muted-ink,#7a8a8e);">「＋ 項目（コース）を追加」を押すと、先付け・前菜・椀物…といったメニュー構成を登録できます。</div>`;
+    wrap.innerHTML = `<div style="font-size:11.5px;color:var(--muted-ink,#7a8a8e);">「＋ 夕食の項目を追加」「＋ 朝食の項目を追加」を押すと、先付け・前菜・椀物…といったメニュー構成を登録できます。</div>`;
     return;
   }
-  let html = "";
-  plan.courses.forEach(course=>{
+
+  function renderCourseCard(course){
     const courseCost = menuCourseCost(course);
     const collapsed = !!course.collapsed;
-    html += `<div class="tablecard" style="padding:10px 12px;">
+    let html = `<div class="tablecard" style="padding:10px 12px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
         <input type="text" value="${(course.name||"").replace(/"/g,"&quot;")}" placeholder="項目名（例：先付け）" onfocus="beginTextEditing()" onchange="updateMenuCourseName('${course.id}', this.value)" onblur="endTextEditing()" style="font-weight:700;flex:0 0 160px;">
         <span style="font-size:11.5px;color:var(--muted-ink,#7a8a8e);">この項目の合計原価：<b>¥${Math.round(courseCost).toLocaleString()}</b></span>
@@ -1479,21 +1596,40 @@ function renderMenuCostSection(){
         <button class="rmbtn" onclick="removeMenuCourse('${course.id}')">この項目を削除</button>
       </div>`;
     if(!collapsed){
-      html += `<table style="min-width:0;width:100%;"><thead><tr>
+      html += `<table class="menu-item-table" style="min-width:0;width:100%;"><thead><tr>
         <th style="text-align:left;">品名</th><th style="width:80px;">単位</th><th style="width:90px;">価格（円）</th><th style="width:40px;"></th>
       </tr></thead><tbody>`;
       (course.items||[]).forEach(item=>{
         html += `<tr>
           <td><input type="text" value="${(item.name||"").replace(/"/g,"&quot;")}" placeholder="品名（例：白身魚昆布締め）" onfocus="beginTextEditing()" onchange="updateMenuItem('${course.id}','${item.id}','name',this.value)" onblur="endTextEditing()" style="width:100%;"></td>
           <td><input type="text" value="${(item.unit||"").replace(/"/g,"&quot;")}" placeholder="例：尾" onfocus="beginTextEditing()" onchange="updateMenuItem('${course.id}','${item.id}','unit',this.value)" onblur="endTextEditing()" style="width:100%;"></td>
-          <td><input type="number" step="any" value="${item.price??0}" onfocus="beginTextEditing()" onchange="updateMenuItem('${course.id}','${item.id}','price',this.value)" onblur="endTextEditing()" style="width:100%;"></td>
+          <td><input type="number" step="any" class="price-input" placeholder="0" value="${item.price || ''}" onfocus="beginTextEditing()" onchange="updateMenuItem('${course.id}','${item.id}','price',this.value)" onblur="endTextEditing()" style="width:100%;"></td>
           <td><button class="rmbtn" onclick="removeMenuItem('${course.id}','${item.id}')">削除</button></td>
         </tr>`;
       });
       html += `</tbody></table>`;
     }
     html += `</div>`;
-  });
+    return html;
+  }
+
+  const dinnerCourses = plan.courses.filter(c=>(c.mealType||"dinner")==="dinner");
+  const breakfastCourses = plan.courses.filter(c=>c.mealType==="breakfast");
+
+  let html = `<div style="font-size:12px;font-weight:700;color:var(--teal-deep);margin-bottom:2px;">🌙 夕食の項目</div>`;
+  if(dinnerCourses.length===0){
+    html += `<div style="font-size:11px;color:var(--muted-ink,#7a8a8e);margin-bottom:8px;">まだ夕食の項目がありません。</div>`;
+  } else {
+    dinnerCourses.forEach(course=>{ html += renderCourseCard(course); });
+  }
+
+  html += `<div style="font-size:12px;font-weight:700;color:var(--teal-deep);margin:12px 0 2px;">☀ 朝食の項目</div>`;
+  if(breakfastCourses.length===0){
+    html += `<div style="font-size:11px;color:var(--muted-ink,#7a8a8e);">まだ朝食の項目がありません（未登録の間は、朝食原価に全国共通の目安値：¥${Math.round(BREAKFAST_UNIT).toLocaleString()}が使われます）。</div>`;
+  } else {
+    breakfastCourses.forEach(course=>{ html += renderCourseCard(course); });
+  }
+
   wrap.innerHTML = html;
 }
 
@@ -1544,11 +1680,33 @@ function updateChildPricingValue(category, value){
   scheduleAutoSync();
 }
 
-function addMenuCourse(){
+function addMenuCourse(mealType){
   const plan = getEditingMenuPlan();
   if(!plan) return;
-  plan.courses.push({ id: dpNewId(), name: "新しい項目", items: [] });
+  plan.courses.push({ id: dpNewId(), name: "新しい項目", mealType: mealType==="breakfast" ? "breakfast" : "dinner", items: [] });
   renderMenuCostSection();
+  scheduleAutoSync();
+}
+
+// 他のプランに登録済みの項目（コース）を、今編集中のプランへコピーして追加する
+function addMenuCourseFromExisting(){
+  const sel = document.getElementById("copyFromCourseSelect");
+  if(!sel || !sel.value) return;
+  const [sourcePlanId, sourceCourseId] = sel.value.split("::");
+  const sourcePlan = MENU_COST_PLANS.find(p=>p.id===sourcePlanId);
+  const sourceCourse = sourcePlan && sourcePlan.courses.find(c=>c.id===sourceCourseId);
+  if(!sourceCourse) return;
+  const plan = getEditingMenuPlan();
+  if(!plan) return;
+  plan.courses.push({
+    id: dpNewId(),
+    name: sourceCourse.name,
+    mealType: sourceCourse.mealType || "dinner",
+    items: (sourceCourse.items||[]).map(it=>({ id: dpNewId(), name: it.name, unit: it.unit, price: it.price })),
+  });
+  sel.value = "";
+  renderMenuCostSection();
+  recalc();
   scheduleAutoSync();
 }
 
@@ -2447,7 +2605,16 @@ function renderJobSummaryTable(){
   }
   if(sidebarLink) sidebarLink.style.display = "";
   if(printLabel) printLabel.style.display = "";
-  if(panel){ panel.style.display = ""; panel.open = true; }
+  if(panel){
+    panel.open = true;
+    // 「1つずつ表示」モードの時は、今アクティブなパネルでない限り表示しない
+    // （元々使われていないと非表示になる仕組みだが、それがVIEW_MODEの状態を無視して強制的に表示に戻してしまわないようにする）
+    if(VIEW_MODE==="one"){
+      panel.style.display = (SIDEBAR_ACTIVE_PANEL==="panelJobSummary") ? "" : "none";
+    } else {
+      panel.style.display = "";
+    }
+  }
 
   const colgroup = buildAlignedColgroup();
   const wStaff = PRINT_MODE ? `width:${PRINT_STAFFCOL_W}px;min-width:${PRINT_STAFFCOL_W}px;max-width:${PRINT_STAFFCOL_W}px;` : "";
@@ -3050,9 +3217,9 @@ function recalc(){
     // 朝食人数＝「無料朝食人数」＋ 朝食を含む設定にした項目の人数
     const twomeal = SUMMARY_VALUES[summaryKey("twomealguests", d)] || 0;
     const freeb = SUMMARY_VALUES[summaryKey("freebreak", d)] || 0;
-    const activePlan = getActiveMenuPlan();
     const perPersonDinnerCost = totalDinnerCost();
-    const bentoCost = activePlan ? (activePlan.bentoFixedCost || 0) : 0;
+    const perPersonBreakfastCost = totalBreakfastCost();
+    const bentoCost = activeBentoFixedCost();
 
     // innto連携でプラン名の内訳が届いている日は、実際に予約されたプランごとの原価で計算する（より正確）。
     // 内訳が無い日（手入力の月など）は、従来通り「1泊2食人数×使用中プランの原価」で計算する。
@@ -3060,7 +3227,7 @@ function recalc(){
     let dinnerN = breakdownResult ? breakdownResult.count : twomeal;
     let dinnerCost = breakdownResult ? breakdownResult.cost : (twomeal * perPersonDinnerCost);
     let breakfastN = freeb;
-    let breakfastCost = freeb * BREAKFAST_UNIT;
+    let breakfastCost = freeb * perPersonBreakfastCost;
 
     ["group","lunchbanquet","dinnerbanquet","daytrip","bento"].forEach(catKey=>{
       const cnt = SUMMARY_VALUES[summaryKey(catKey, d)] || 0;
@@ -3069,7 +3236,7 @@ function recalc(){
       if(!setting) return;
       const unitDinnerCost = (catKey==="bento") ? bentoCost : perPersonDinnerCost; // 弁当は外注弁当固定原価を使用
       if(setting.dinner){ dinnerN += cnt; dinnerCost += cnt * unitDinnerCost; }
-      if(setting.breakfast){ breakfastN += cnt; breakfastCost += cnt * BREAKFAST_UNIT; }
+      if(setting.breakfast){ breakfastN += cnt; breakfastCost += cnt * perPersonBreakfastCost; }
     });
 
     const revenue = REVENUE[d] || 0;
