@@ -269,6 +269,7 @@
   #menuCostCompareTable{min-width:0;width:100%;table-layout:fixed;}
   #menuCostCompareTable th, #menuCostCompareTable td{white-space:normal;word-break:break-word;font-size:11px;padding:4px 5px;}
   .menu-item-table th, .menu-item-table td{padding:1px 5px;}
+  #menuCostCourses .tablecard{margin-bottom:0;}
   .menu-item-table input{padding:1px 4px;}
   #sumtable, #jobsummarytable{table-layout:fixed;min-width:0;width:auto;}
   #sumtable th, #sumtable td, #jobsummarytable th, #jobsummarytable td{overflow:hidden;}
@@ -733,13 +734,19 @@
             <input type="number" step="any" class="price-input" placeholder="0" id="bentoFixedCostInput" onfocus="beginTextEditing()" onchange="updateMenuCostSetting('bentoFixedCost', this.value)" onblur="endTextEditing()" style="width:90px;">
           </div>
 
-          <div class="staffadd" style="margin-bottom:12px;">
+          <div class="staffadd" style="margin-bottom:8px;">
             <button class="btn" onclick="addMenuCourse('dinner')">＋ 夕食の項目を追加</button>
+            <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
+            <span class="t-label">他のプランの夕食項目をコピー：</span>
+            <select id="copyFromCourseSelectDinner" style="max-width:220px;"></select>
+            <button class="rmbtn" onclick="addMenuCourseFromExisting('dinner')">この項目を追加</button>
+          </div>
+          <div class="staffadd" style="margin-bottom:12px;">
             <button class="btn" onclick="addMenuCourse('breakfast')">＋ 朝食の項目を追加</button>
             <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
-            <span class="t-label">他のプランの項目をコピー：</span>
-            <select id="copyFromCourseSelect" style="max-width:220px;"></select>
-            <button class="rmbtn" onclick="addMenuCourseFromExisting()">この項目を追加</button>
+            <span class="t-label">他のプランの朝食項目をコピー：</span>
+            <select id="copyFromCourseSelectBreakfast" style="max-width:220px;"></select>
+            <button class="rmbtn" onclick="addMenuCourseFromExisting('breakfast')">この項目を追加</button>
           </div>
 
           <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer;margin-bottom:8px;">
@@ -753,7 +760,7 @@
 
           <div id="menuCostSummary" class="past-lock-bar unlocked"></div>
 
-          <div id="menuCostCourses" style="display:flex;flex-direction:column;gap:10px;"></div>
+          <div id="menuCostCourses" style="display:flex;flex-direction:column;gap:1px;"></div>
         </div>
       </div>
     </details>
@@ -1388,7 +1395,7 @@ function renderMenuPlanList(){
     const selected = plan.id === MENU_COST_CURRENT_EDIT_ID;
     html += `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid ${selected?'var(--teal-deep)':'var(--line)'};border-radius:8px;background:${selected?'var(--paper-soft)':'#fff'};">
       <span style="font-size:12px;font-weight:${selected?'700':'400'};flex:1;">${plan.year}年度　${plan.season||"（季節未設定）"}　${plan.courseName||"（プラン名未設定）"}</span>
-      <span style="font-size:11px;color:var(--muted-ink,#7a8a8e);">原価率 ${planCostRatio(plan).toFixed(1)}%</span>
+      <span style="font-size:11px;color:var(--muted-ink,#7a8a8e);">夕原価率 ${planCostRatio(plan).toFixed(1)}%　朝原価率 ${planBreakfastCostRatio(plan).toFixed(1)}%</span>
       ${plan.isActive ? `<button class="rmbtn" style="color:var(--profit-ink);font-weight:700;" onclick="setActiveMenuPlan('${plan.id}')">✓ 使用中（クリックで解除）</button>` : `<button class="rmbtn" onclick="setActiveMenuPlan('${plan.id}')">使用中にする</button>`}
       <button class="rmbtn" onclick="selectMenuPlan('${plan.id}')">編集</button>
       <button class="rmbtn" onclick="removeMenuPlan('${plan.id}')">削除</button>
@@ -1449,16 +1456,19 @@ function renderCopyFromPlanSelect(){
 
 // 全プランに登録されている項目（コース）を一覧表示し、今編集中のプランへコピーできるようにする
 function renderCopyFromCourseSelect(){
-  const sel = document.getElementById("copyFromCourseSelect");
+  renderCopyFromCourseSelectForMealType("dinner", "copyFromCourseSelectDinner");
+  renderCopyFromCourseSelectForMealType("breakfast", "copyFromCourseSelectBreakfast");
+}
+
+function renderCopyFromCourseSelectForMealType(mealType, selectId){
+  const sel = document.getElementById(selectId);
   if(!sel) return;
-  const editing = getEditingMenuPlan();
   let html = `<option value="">（コピーする項目を選択）</option>`;
   const sorted = [...MENU_COST_PLANS].sort((a,b)=> (b.year-a.year) || String(a.season).localeCompare(String(b.season)) || String(a.courseName).localeCompare(String(b.courseName)));
   sorted.forEach(p=>{
     (p.courses||[]).forEach(c=>{
-      if(editing && p.id===editing.id && c.id===MENU_COST_CURRENT_EDIT_ID) return; // 実質意味は無いが将来の誤コピー防止
-      const mealLabel = c.mealType==="breakfast" ? "朝食" : "夕食";
-      html += `<option value="${p.id}::${c.id}">[${mealLabel}] ${p.year}年度 ${p.season||""} ${p.courseName||"(名称未設定)"} － ${c.name||"(項目名未設定)"}</option>`;
+      if((c.mealType||"dinner")!==mealType) return; // 該当する食事の種類だけを表示する
+      html += `<option value="${p.id}::${c.id}">${p.year}年度 ${p.season||""} ${p.courseName||"(名称未設定)"} － ${c.name||"(項目名未設定)"}</option>`;
     });
   });
   sel.innerHTML = html;
@@ -1689,8 +1699,9 @@ function addMenuCourse(mealType){
 }
 
 // 他のプランに登録済みの項目（コース）を、今編集中のプランへコピーして追加する
-function addMenuCourseFromExisting(){
-  const sel = document.getElementById("copyFromCourseSelect");
+function addMenuCourseFromExisting(mealType){
+  const selectId = mealType==="breakfast" ? "copyFromCourseSelectBreakfast" : "copyFromCourseSelectDinner";
+  const sel = document.getElementById(selectId);
   if(!sel || !sel.value) return;
   const [sourcePlanId, sourceCourseId] = sel.value.split("::");
   const sourcePlan = MENU_COST_PLANS.find(p=>p.id===sourcePlanId);
@@ -3324,10 +3335,8 @@ function applyState(state){
   }
   if(MENU_COST_CURRENT_EDIT_ID===null && MENU_COST_PLANS.length>0) MENU_COST_CURRENT_EDIT_ID = getActiveMenuPlan().id;
   if(state.MEAL_CATEGORY_SETTINGS){
-    Object.keys(state.MEAL_CATEGORY_SETTINGS).forEach(k=>{
-      if(MEAL_CATEGORY_SETTINGS[k]) Object.assign(MEAL_CATEGORY_SETTINGS[k], state.MEAL_CATEGORY_SETTINGS[k]);
-      else MEAL_CATEGORY_SETTINGS[k] = state.MEAL_CATEGORY_SETTINGS[k]; // カスタム項目（保存時に追加されたもの）を復元
-    });
+    // 丸ごと置き換える（マージすると、削除した項目が既定値に残ったままになり復活してしまうため）
+    MEAL_CATEGORY_SETTINGS = state.MEAL_CATEGORY_SETTINGS;
   }
   if(state.DAILY_PLAN_BREAKDOWN) DAILY_PLAN_BREAKDOWN = state.DAILY_PLAN_BREAKDOWN;
   if(typeof state.wagesVisible === "boolean") wagesVisible = state.wagesVisible;
