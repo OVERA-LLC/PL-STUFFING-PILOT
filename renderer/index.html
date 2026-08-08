@@ -85,8 +85,7 @@
   .dp-gauge{position:absolute;top:3px;bottom:3px;border-radius:5px;color:#fff;font-size:10.5px;display:flex;align-items:center;overflow:hidden;cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,0.25);user-select:none;}
   .dp-gauge:active{cursor:grabbing;}
   .dp-gauge .dp-gauge-text{flex:1;padding:2px 7px;outline:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:transparent;border:none;color:#000;font-size:10.5px;cursor:text;}
-  .dp-gauge .dp-gauge-text.editing{pointer-events:auto;background:rgba(255,255,255,0.55);}
-  .dp-gauge .dp-gauge-text:focus{white-space:normal;overflow:visible;}
+  .dp-gauge .dp-gauge-text:focus{white-space:normal;overflow:visible;background:rgba(255,255,255,0.55);}
   .dp-gauge-handle{width:7px;align-self:stretch;cursor:ew-resize;background:rgba(255,255,255,0.35);flex:0 0 auto;}
   .dp-gauge-color{width:16px;height:16px;border:none;padding:0;flex:0 0 auto;margin-left:2px;cursor:pointer;background:transparent;}
   .dp-gauge-edit{flex:0 0 auto;background:rgba(255,255,255,0.3);color:#fff;border:none;width:16px;height:16px;line-height:16px;font-size:10px;border-radius:4px;margin-right:2px;cursor:pointer;padding:0;}
@@ -3525,7 +3524,7 @@ function renderDpRows(){
       html += `<div class="dp-gauge" data-row="${row.id}" data-block="${b.id}" style="left:${leftPct}%;width:${widthPct}%;background:${b.color};" title="${dpMinToLabel(b.startMin)}〜${dpMinToLabel(b.endMin)}">
         <div class="dp-gauge-handle dp-gauge-handle-l" data-role="resize-l"></div>
         <button type="button" class="dp-gauge-edit" onclick="dpEditBlockText(this)" title="文字を入力">✎</button>
-        <input class="dp-gauge-text" data-role="text" value="${(b.text||"").replace(/"/g,"&quot;")}" onchange="dpUpdateBlockText('${row.id}','${b.id}',this.value)" onblur="this.classList.remove('editing'); endTextEditing();">
+        <input class="dp-gauge-text" data-role="text" value="${(b.text||"").replace(/"/g,"&quot;")}" onfocus="beginTextEditing()" onchange="dpUpdateBlockText('${row.id}','${b.id}',this.value)" onblur="endTextEditing();">
         <input type="color" class="dp-gauge-color" value="${b.color}" onchange="dpUpdateBlockColor('${row.id}','${b.id}',this.value)">
         <button class="dp-gauge-del" onclick="dpRemoveBlock('${row.id}','${b.id}')">×</button>
         <div class="dp-gauge-handle dp-gauge-handle-r" data-role="resize-r"></div>
@@ -3623,8 +3622,6 @@ function dpEditBlockText(btn){
   if(!gaugeEl) return;
   const input = gaugeEl.querySelector('[data-role="text"]');
   if(!input) return;
-  input.classList.add("editing");
-  beginTextEditing();
   input.focus();
   input.select();
 }
@@ -3647,7 +3644,7 @@ function dpSnapMin(min){
 }
 
 function dpSetupTrackDrag(track, rowId){
-  let dragging = null; // {blockId, mode:'move'|'resize-l'|'resize-r', startX, origStart, origEnd, trackWidth, isTextClick, moved}
+  let dragging = null; // {blockId, mode:'move'|'resize-l'|'resize-r', startX, origStart, origEnd, trackWidth}
 
   track.addEventListener("mousedown", function(e){
     const gaugeEl = e.target.closest(".dp-gauge");
@@ -3655,7 +3652,7 @@ function dpSetupTrackDrag(track, rowId){
     if(e.target.tagName==="INPUT" && e.target.type==="color") return;
     if(e.target.classList.contains("dp-gauge-del")) return;
     if(e.target.classList.contains("dp-gauge-edit")) return;
-    if(e.target.classList.contains("editing")) return; // すでに編集中のテキスト欄は素通り（カーソル操作の邪魔をしない）
+    if(e.target.dataset.role==="text") return; // テキスト欄はブラウザ標準のクリック動作（カーソル配置・フォーカス）にまかせ、ドラッグは開始しない
     const blockId = gaugeEl.dataset.block;
     const day = dpEnsureDay(DP_CURRENT_DAY);
     const row = day.rows.find(r=>r.id===rowId);
@@ -3664,19 +3661,16 @@ function dpSetupTrackDrag(track, rowId){
     let mode = "move";
     if(e.target.dataset.role==="resize-l") mode = "resize-l";
     else if(e.target.dataset.role==="resize-r") mode = "resize-r";
-    const isTextClick = e.target.dataset.role === "text";
     dragging = {
       blockId, mode, startX: e.clientX,
       origStart: block.startMin, origEnd: block.endMin,
       trackWidth: track.getBoundingClientRect().width,
-      isTextClick, moved: false,
     };
-    if(!isTextClick) e.preventDefault(); // テキスト欄の場合はブラウザ標準のフォーカス・カーソル配置動作をそのまま活かす
+    e.preventDefault();
   });
   document.addEventListener("mousemove", function(e){
     if(!dragging) return;
     const dx = e.clientX - dragging.startX;
-    if(Math.abs(dx) > 3) dragging.moved = true; // 3px以上動いたら「クリック」ではなく「ドラッグ」とみなす
     const day = dpEnsureDay(DP_CURRENT_DAY);
     const row = day.rows.find(r=>r.id===rowId);
     const block = row && row.blocks.find(b=>b.id===dragging.blockId);
@@ -3705,17 +3699,6 @@ function dpSetupTrackDrag(track, rowId){
   });
   document.addEventListener("mouseup", function(){
     if(dragging){
-      // テキスト欄をクリックしただけ（ドラッグしていない）場合は、そのまま編集モードに入る（シングルクリックで反応）
-      if(dragging.isTextClick && !dragging.moved){
-        const gaugeEl = document.querySelector(`.dp-gauge[data-row="${rowId}"][data-block="${dragging.blockId}"]`);
-        const input = gaugeEl && gaugeEl.querySelector('[data-role="text"]');
-        if(input){
-          input.classList.add("editing");
-          beginTextEditing();
-          input.focus();
-          input.select();
-        }
-      }
       dragging = null;
       scheduleAutoSync();
     }
