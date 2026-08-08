@@ -3617,6 +3617,23 @@ function endTextEditing(){
   }
 }
 
+// アプリ全体の入力欄（現在・今後追加されるものも含めて）を自動的に保護する仕組み。
+// focusin/focusoutはイベントが上位へ伝わる（バブリングする）ため、1箇所に仕掛けるだけで
+// シフト表・予約状況サマリー・評価シートなど、個別にonfocus/onblurを書いていない入力欄も含めて
+// 「入力中は他端末の更新の反映を保留する」という保護が自動的にかかる。
+document.addEventListener("focusin", function(e){
+  const t = e.target;
+  if(t && (t.tagName==="INPUT" || t.tagName==="TEXTAREA" || t.tagName==="SELECT" || t.isContentEditable)){
+    beginTextEditing();
+  }
+});
+document.addEventListener("focusout", function(e){
+  const t = e.target;
+  if(t && (t.tagName==="INPUT" || t.tagName==="TEXTAREA" || t.tagName==="SELECT" || t.isContentEditable)){
+    endTextEditing();
+  }
+});
+
 function dpEditBlockText(btn){
   const gaugeEl = btn.closest(".dp-gauge");
   if(!gaugeEl) return;
