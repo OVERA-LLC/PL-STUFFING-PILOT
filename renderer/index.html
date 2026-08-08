@@ -3601,20 +3601,31 @@ function dpUpdateBlockText(rowId, blockId, text){
 // ✎ボタンをクリックすると、確実にそのゲージの文字入力欄を編集できる状態にする
 // テキスト入力中（Daily Pilotのゲージなど）に、自動同期で受信したリモート更新の再描画が
 // カーソル・フォーカスを奪ってしまわないようにするための仕組み。
-// 編集中はリモート更新の反映を保留し、編集が終わった時点でまとめて反映する。
+// 編集中はリモート更新の反映を保留し、編集が終わった時点で反映する。
+// ただし、編集中に実際に値を変更していた場合、保留していた（編集前の古い）更新をそのまま反映すると
+// たった今入力した内容を上書きしてしまうため、その場合は保留分を破棄する
+// （この端末の最新の変更は、次回の自動同期で正しくクラウドへ送られ、他端末にも伝わる）。
 let TEXT_EDITING_ACTIVE = false;
+let TEXT_EDITED_DURING_SESSION = false;
 let PENDING_REMOTE_UPDATE = null;
 
 function beginTextEditing(){
   TEXT_EDITING_ACTIVE = true;
+  TEXT_EDITED_DURING_SESSION = false;
+}
+function markTextEdited(){
+  TEXT_EDITED_DURING_SESSION = true;
 }
 function endTextEditing(){
   TEXT_EDITING_ACTIVE = false;
   if(PENDING_REMOTE_UPDATE){
     const update = PENDING_REMOTE_UPDATE;
     PENDING_REMOTE_UPDATE = null;
-    applyRemoteUpdate(update);
+    if(!TEXT_EDITED_DURING_SESSION){
+      applyRemoteUpdate(update);
+    }
   }
+  TEXT_EDITED_DURING_SESSION = false;
 }
 
 // アプリ全体の入力欄（現在・今後追加されるものも含めて）を自動的に保護する仕組み。
@@ -3631,6 +3642,19 @@ document.addEventListener("focusout", function(e){
   const t = e.target;
   if(t && (t.tagName==="INPUT" || t.tagName==="TEXTAREA" || t.tagName==="SELECT" || t.isContentEditable)){
     endTextEditing();
+  }
+});
+// 編集セッション中に実際に値を変更したかどうかを検知する（changeは入力欄・プルダウン用、inputは編集可能領域用）
+document.addEventListener("change", function(e){
+  const t = e.target;
+  if(t && (t.tagName==="INPUT" || t.tagName==="TEXTAREA" || t.tagName==="SELECT")){
+    markTextEdited();
+  }
+});
+document.addEventListener("input", function(e){
+  const t = e.target;
+  if(t && t.isContentEditable){
+    markTextEdited();
   }
 });
 
