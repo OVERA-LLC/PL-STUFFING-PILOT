@@ -3207,7 +3207,6 @@ function computeInntoSummaryAggregated(objs){
     // SUMROWSを動的に走査してCSVの列と突き合わせる（後から追加した項目も、同じ見出しの列があれば自動的に取り込まれる）。
     // 全角・半角の違い（例：「1泊2食」と「１泊２食」）は同じ項目として扱うため、比較前に正規化する。
     SUMROWS.forEach(([id,label])=>{
-      if(id==="plainguests") return; // 「素泊まり人数」に対応する列がこのCSVには無いため、ここは自動更新しません（手入力のままにします）
       const matchedKey = findMatchingCsvColumn(o, id, label);
       if(!matchedKey) return; // CSVにこの項目に対応する列が無ければ、既存の値をそのまま保持する
       setSumVal(id, day, num(o[matchedKey]));
@@ -3572,6 +3571,17 @@ function applyState(state){
   }
   if(MENU_COST_CURRENT_EDIT_ID===null && MENU_COST_PLANS.length>0) MENU_COST_CURRENT_EDIT_ID = getActiveMenuPlan().id;
   if(state.SUMROWS && Array.isArray(state.SUMROWS)) SUMROWS = state.SUMROWS;
+  // 過去のバージョンで保存されたデータに、修正前の古い項目名（表記ゆれ）が残っている場合に自動で直す。
+  // これをしないと、コード側は直っていても、保存済みデータの古いラベルがそのまま復元されてしまい、
+  // CSVの列見出しと一致しなくなる（結果、自動取込が反映されなくなる）。
+  const SUMROWS_LABEL_FIXUPS = {
+    "チェックイン人数": "CI人数",
+    "１泊２食部屋数": "1泊2食部屋数",
+    "１泊２食人数": "1泊2食人数",
+  };
+  SUMROWS.forEach(row=>{
+    if(SUMROWS_LABEL_FIXUPS[row[1]]) row[1] = SUMROWS_LABEL_FIXUPS[row[1]];
+  });
   // 各プランに自分専用の設定が無い場合は、初期値（または旧バージョンで施設全体共有だった設定）を割り当てる
   MENU_COST_PLANS.forEach(p=>{
     if(!p.mealCategorySettings){
