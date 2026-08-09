@@ -757,8 +757,9 @@
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
             <div style="font-size:12px;font-weight:700;color:var(--teal-deep);">🌙 夕食メニュー</div>
             <button class="btn" onclick="addMenuCourse('dinner')">＋ 項目を追加</button>
+            <button class="rmbtn" onclick="toggleExistingMenuPanel('dinner')">既存のメニューから追加 ▾</button>
           </div>
-          <div class="tablecard" style="padding:8px 10px;margin-bottom:8px;">
+          <div id="existingMenuPanelDinner" class="tablecard" style="display:none;padding:8px 10px;margin-bottom:8px;">
             <div style="font-size:11.5px;font-weight:700;margin-bottom:4px;">既存のメニューから品名を選んで追加（チェックした品名をまとめて追加できます）</div>
             <div id="existingMenuListDinner" style="max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:1px;margin-bottom:6px;"></div>
             <button class="rmbtn" onclick="addCheckedExistingMenuItems('dinner')">チェックした品名を追加</button>
@@ -769,8 +770,9 @@
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
             <div style="font-size:12px;font-weight:700;color:var(--teal-deep);">☀ 朝食メニュー</div>
             <button class="btn" onclick="addMenuCourse('breakfast')">＋ 項目を追加</button>
+            <button class="rmbtn" onclick="toggleExistingMenuPanel('breakfast')">既存のメニューから追加 ▾</button>
           </div>
-          <div class="tablecard" style="padding:8px 10px;margin-bottom:8px;">
+          <div id="existingMenuPanelBreakfast" class="tablecard" style="display:none;padding:8px 10px;margin-bottom:8px;">
             <div style="font-size:11.5px;font-weight:700;margin-bottom:4px;">既存のメニューから品名を選んで追加（チェックした品名をまとめて追加できます）</div>
             <div id="existingMenuListBreakfast" style="max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:1px;margin-bottom:6px;"></div>
             <button class="rmbtn" onclick="addCheckedExistingMenuItems('breakfast')">チェックした品名を追加</button>
@@ -1679,6 +1681,16 @@ function buildGroupedMenuItemList(){
     });
   });
   return groups;
+}
+
+// 「既存のメニューから追加」の一覧パネルを開閉する
+function toggleExistingMenuPanel(mealType){
+  const panelId = mealType==="breakfast" ? "existingMenuPanelBreakfast" : "existingMenuPanelDinner";
+  const panel = document.getElementById(panelId);
+  if(!panel) return;
+  const willShow = panel.style.display === "none";
+  panel.style.display = willShow ? "" : "none";
+  if(willShow) renderExistingMenuSelects(); // 開く時に最新の内容へ更新しておく
 }
 
 function renderExistingMenuSelects(){
