@@ -1680,12 +1680,24 @@ function addExistingMenuItem(targetMealType){
   if(!sourceItem) return;
   const plan = getEditingMenuPlan();
   if(!plan) return;
-  plan.courses.push({
-    id: dpNewId(),
-    name: sourceCourse.name,
-    mealType: targetMealType, // 元がどちらの食事だったかに関わらず、追加先の種類で登録する
-    items: [{ id: dpNewId(), name: sourceItem.name, unit: sourceItem.unit, price: sourceItem.price }],
-  });
+
+  const newItem = { id: dpNewId(), name: sourceItem.name, unit: sourceItem.unit, price: sourceItem.price };
+
+  // 同じ食事区分（夕食／朝食）の項目のうち、一番下にあるものに品名だけ追加する。
+  // その食事区分の項目がまだ1つも無い場合だけ、新しい項目を作ってそこに入れる。
+  const targetCourses = plan.courses.filter(c=>(c.mealType||"dinner")===targetMealType);
+  if(targetCourses.length>0){
+    const lastCourse = targetCourses[targetCourses.length-1];
+    lastCourse.items.push(newItem);
+  } else {
+    plan.courses.push({
+      id: dpNewId(),
+      name: "新しい項目",
+      mealType: targetMealType,
+      items: [newItem],
+    });
+  }
+
   sel.value = "";
   renderMenuCostSection();
   recalc();
