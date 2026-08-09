@@ -754,24 +754,26 @@
           <div id="menuCostSummary" class="past-lock-bar unlocked" style="margin-bottom:12px;"></div>
 
           <!-- 4行目：夕食メニュー -->
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
             <div style="font-size:12px;font-weight:700;color:var(--teal-deep);">🌙 夕食メニュー</div>
             <button class="btn" onclick="addMenuCourse('dinner')">＋ 項目を追加</button>
-            <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
-            <span class="t-label">既存のメニューを追加：</span>
-            <select id="existingMenuSelectDinner" style="max-width:280px;"></select>
-            <button class="rmbtn" onclick="addExistingMenuItem('dinner')">追加</button>
+          </div>
+          <div class="tablecard" style="padding:8px 10px;margin-bottom:8px;">
+            <div style="font-size:11.5px;font-weight:700;margin-bottom:4px;">既存のメニューから品名を選んで追加（チェックした品名をまとめて追加できます）</div>
+            <div id="existingMenuListDinner" style="max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:1px;margin-bottom:6px;"></div>
+            <button class="rmbtn" onclick="addCheckedExistingMenuItems('dinner')">チェックした品名を追加</button>
           </div>
           <div id="menuCoursesDinner" style="display:flex;flex-direction:column;gap:1px;margin-bottom:14px;"></div>
 
           <!-- 5行目：朝食メニュー -->
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
             <div style="font-size:12px;font-weight:700;color:var(--teal-deep);">☀ 朝食メニュー</div>
             <button class="btn" onclick="addMenuCourse('breakfast')">＋ 項目を追加</button>
-            <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
-            <span class="t-label">既存のメニューを追加：</span>
-            <select id="existingMenuSelectBreakfast" style="max-width:280px;"></select>
-            <button class="rmbtn" onclick="addExistingMenuItem('breakfast')">追加</button>
+          </div>
+          <div class="tablecard" style="padding:8px 10px;margin-bottom:8px;">
+            <div style="font-size:11.5px;font-weight:700;margin-bottom:4px;">既存のメニューから品名を選んで追加（チェックした品名をまとめて追加できます）</div>
+            <div id="existingMenuListBreakfast" style="max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:1px;margin-bottom:6px;"></div>
+            <button class="rmbtn" onclick="addCheckedExistingMenuItems('breakfast')">チェックした品名を追加</button>
           </div>
           <div id="menuCoursesBreakfast" style="display:flex;flex-direction:column;gap:1px;"></div>
         </div>
@@ -1118,14 +1120,17 @@ function cellW(isStaffCol){
 let FACILITY_OVERRIDE = {}; // {day: amount} 施設運転費の日別上書き
 
 // 予約状況サマリーの各項目（団体・昼宴会・夜宴会・日帰り・弁当）が、夕食・朝食を含むかどうかの設定。
+// プランごとに持つ（プランによって、団体は夕食に含める／含めないが違う場合があるため）。
 // ここでON にした項目の人数は、使用中の食材原価率プランの原価をもとに、月間食材費・日次損益に自動反映される。
-let MEAL_CATEGORY_SETTINGS = {
-  group:         { dinner: false, breakfast: false, label: "団体人数" },
-  lunchbanquet:  { dinner: false, breakfast: false, label: "昼宴会人数" },
-  dinnerbanquet: { dinner: false, breakfast: false, label: "夜宴会人数" },
-  daytrip:       { dinner: false, breakfast: false, label: "日帰り" },
-  bento:         { dinner: false, breakfast: false, label: "弁当（外注弁当原価を使用）" },
-};
+function newDefaultMealCategorySettings(){
+  return {
+    group:         { dinner: false, breakfast: false, label: "団体人数" },
+    lunchbanquet:  { dinner: false, breakfast: false, label: "昼宴会人数" },
+    dinnerbanquet: { dinner: false, breakfast: false, label: "夜宴会人数" },
+    daytrip:       { dinner: false, breakfast: false, label: "日帰り" },
+    bento:         { dinner: false, breakfast: false, label: "弁当（外注弁当原価を使用）" },
+  };
+}
 
 // 労務関連の料率設定（施設ごとに1つ）。健康保険料率・所得税概算率は都道府県や個人の状況で変わるため、
 // 必ず施設側で正しい数字に設定してから使用すること（社労士・税理士に確認推奨）。
@@ -1258,6 +1263,7 @@ function newMenuCostPlan(year, season, courseName){
     },
     bentoFixedCost: 0,
     courses: [],
+    mealCategorySettings: newDefaultMealCategorySettings(),
   };
 }
 
@@ -1360,9 +1366,12 @@ function calcChildPrice(category){
 function renderMealCategorySettings(){
   const wrap = document.getElementById("mealCategorySettings");
   if(!wrap) return;
+  const plan = getEditingMenuPlan();
+  if(!plan){ wrap.innerHTML = ""; return; }
+  if(!plan.mealCategorySettings) plan.mealCategorySettings = newDefaultMealCategorySettings(); // 旧データの救済
   let html = "";
-  Object.keys(MEAL_CATEGORY_SETTINGS).forEach(catKey=>{
-    const s = MEAL_CATEGORY_SETTINGS[catKey];
+  Object.keys(plan.mealCategorySettings).forEach(catKey=>{
+    const s = plan.mealCategorySettings[catKey];
     html += `<div style="display:flex;align-items:center;gap:14px;font-size:12px;flex-wrap:wrap;">
       <span style="width:200px;">${s.label}</span>
       <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" ${s.dinner?"checked":""} onchange="toggleMealCategory('${catKey}','dinner',this.checked)"> 夕食を含む</label>
@@ -1374,11 +1383,14 @@ function renderMealCategorySettings(){
 }
 
 function addCustomMealCategory(){
+  const plan = getEditingMenuPlan();
+  if(!plan) return;
   const input = document.getElementById("newCategoryLabelInput");
   const label = input.value.trim();
   if(!label){ alert("項目名を入力してください"); return; }
+  if(!plan.mealCategorySettings) plan.mealCategorySettings = newDefaultMealCategorySettings();
   const key = "custom_" + dpNewId();
-  MEAL_CATEGORY_SETTINGS[key] = { dinner:false, breakfast:false, label, custom:true };
+  plan.mealCategorySettings[key] = { dinner:false, breakfast:false, label, custom:true };
   input.value = "";
   renderMealCategorySettings();
   recalc();
@@ -1386,15 +1398,18 @@ function addCustomMealCategory(){
 }
 
 function removeMealCategory(catKey){
-  delete MEAL_CATEGORY_SETTINGS[catKey];
+  const plan = getEditingMenuPlan();
+  if(!plan || !plan.mealCategorySettings) return;
+  delete plan.mealCategorySettings[catKey];
   renderMealCategorySettings();
   recalc();
   scheduleAutoSync();
 }
 
 function toggleMealCategory(catKey, mealType, checked){
-  if(!MEAL_CATEGORY_SETTINGS[catKey]) return;
-  MEAL_CATEGORY_SETTINGS[catKey][mealType] = checked;
+  const plan = getEditingMenuPlan();
+  if(!plan || !plan.mealCategorySettings || !plan.mealCategorySettings[catKey]) return;
+  plan.mealCategorySettings[catKey][mealType] = checked;
   recalc();
   scheduleAutoSync();
 }
@@ -1645,60 +1660,80 @@ function renderMenuCostSection(){
 
 // 全プランに登録されている品名（品目）を一覧にする。夕食・朝食どちらの選択欄でも同じ内容を表示し、
 // 元がどちらの食事だったかに関わらず、追加する側（夕食メニュー／朝食メニュー）の種類で登録される。
-function buildExistingMenuItemOptionsHtml(){
-  let html = `<option value="">（品名を選択）</option>`;
-  const sorted = [...MENU_COST_PLANS].sort((a,b)=> (b.year-a.year) || String(a.season).localeCompare(String(b.season)) || String(a.courseName).localeCompare(String(b.courseName)));
-  sorted.forEach(p=>{
+// 全プランに登録されている品名を、プラン名を表示せず「品名」だけで重複なく一覧にする。
+// 同じ品名が複数のプランに登録されている場合は、最初に見つかったものの単位・価格を代表値として使う。
+function buildUniqueMenuItemList(){
+  const seen = new Map(); // name -> {name, unit, price}
+  MENU_COST_PLANS.forEach(p=>{
     (p.courses||[]).forEach(c=>{
       (c.items||[]).forEach(it=>{
-        if(!it.name) return;
-        const mealLabel = c.mealType==="breakfast" ? "朝食" : "夕食";
-        html += `<option value="${p.id}::${c.id}::${it.id}">[${mealLabel}] ${p.year}年度 ${p.season||""} ${p.courseName||"(名称未設定)"}－${c.name||"(項目未設定)"}－${it.name}（¥${Math.round(it.price||0).toLocaleString()}）</option>`;
+        if(!it.name || seen.has(it.name)) return;
+        seen.set(it.name, { name: it.name, unit: it.unit, price: it.price });
       });
     });
   });
-  return html;
+  return [...seen.values()].sort((a,b)=> String(a.name).localeCompare(String(b.name), "ja"));
 }
 
 function renderExistingMenuSelects(){
-  const html = buildExistingMenuItemOptionsHtml();
-  const d = document.getElementById("existingMenuSelectDinner");
-  const b = document.getElementById("existingMenuSelectBreakfast");
-  if(d) d.innerHTML = html;
-  if(b) b.innerHTML = html;
+  renderExistingMenuChecklist("dinner", "existingMenuListDinner");
+  renderExistingMenuChecklist("breakfast", "existingMenuListBreakfast");
 }
 
-// 選んだ品名を、指定した食事の種類（夕食／朝食）の新しい項目として、今編集中のプランへ追加する
-function addExistingMenuItem(targetMealType){
-  const selectId = targetMealType==="breakfast" ? "existingMenuSelectBreakfast" : "existingMenuSelectDinner";
-  const sel = document.getElementById(selectId);
-  if(!sel || !sel.value) return;
-  const [sourcePlanId, sourceCourseId, sourceItemId] = sel.value.split("::");
-  const sourcePlan = MENU_COST_PLANS.find(p=>p.id===sourcePlanId);
-  const sourceCourse = sourcePlan && sourcePlan.courses.find(c=>c.id===sourceCourseId);
-  const sourceItem = sourceCourse && sourceCourse.items.find(it=>it.id===sourceItemId);
-  if(!sourceItem) return;
+function renderExistingMenuChecklist(mealType, wrapId){
+  const wrap = document.getElementById(wrapId);
+  if(!wrap) return;
+  const items = buildUniqueMenuItemList();
+  if(items.length===0){
+    wrap.innerHTML = `<div style="font-size:11px;color:var(--muted-ink,#7a8a8e);">まだ登録されている品名がありません。</div>`;
+    return;
+  }
+  let html = "";
+  items.forEach(it=>{
+    html += `<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:2px 4px;cursor:pointer;">
+      <input type="checkbox" class="existing-menu-check" data-name="${(it.name||"").replace(/"/g,"&quot;")}" data-unit="${(it.unit||"").replace(/"/g,"&quot;")}" data-price="${it.price||0}">
+      <span>${it.name}</span>
+      <span style="color:var(--muted-ink,#7a8a8e);">（${it.unit||"-"} ／ ¥${Math.round(it.price||0).toLocaleString()}）</span>
+    </label>`;
+  });
+  wrap.innerHTML = html;
+}
+
+// チェックした品名を、指定した食事の種類（夕食／朝食）にまとめて追加する
+function addCheckedExistingMenuItems(targetMealType){
+  const wrapId = targetMealType==="breakfast" ? "existingMenuListBreakfast" : "existingMenuListDinner";
+  const wrap = document.getElementById(wrapId);
+  if(!wrap) return;
+  const checkedBoxes = wrap.querySelectorAll(".existing-menu-check:checked");
+  if(!checkedBoxes || checkedBoxes.length===0){
+    alert("追加したい品名にチェックを入れてください。");
+    return;
+  }
   const plan = getEditingMenuPlan();
   if(!plan) return;
 
-  const newItem = { id: dpNewId(), name: sourceItem.name, unit: sourceItem.unit, price: sourceItem.price };
+  const newItems = Array.from(checkedBoxes).map(cb=>({
+    id: dpNewId(),
+    name: cb.dataset.name,
+    unit: cb.dataset.unit,
+    price: parseFloat(cb.dataset.price) || 0,
+  }));
 
-  // 同じ食事区分（夕食／朝食）の項目のうち、一番下にあるものに品名だけ追加する。
+  // 同じ食事区分（夕食／朝食）の項目のうち、一番下にあるものにまとめて追加する。
   // その食事区分の項目がまだ1つも無い場合だけ、新しい項目を作ってそこに入れる。
   const targetCourses = plan.courses.filter(c=>(c.mealType||"dinner")===targetMealType);
   if(targetCourses.length>0){
     const lastCourse = targetCourses[targetCourses.length-1];
-    lastCourse.items.push(newItem);
+    newItems.forEach(it=> lastCourse.items.push(it));
   } else {
     plan.courses.push({
       id: dpNewId(),
       name: "新しい項目",
       mealType: targetMealType,
-      items: [newItem],
+      items: newItems,
     });
   }
 
-  sel.value = "";
   renderMenuCostSection();
   recalc();
   scheduleAutoSync();
@@ -3278,14 +3313,20 @@ function recalc(){
     let breakfastN = freeb;
     let breakfastCost = freeb * perPersonBreakfastCost;
 
-    ["group","lunchbanquet","dinnerbanquet","daytrip","bento"].forEach(catKey=>{
+    const activePlansForCategories = getActiveMenuPlans();
+    const categoryKeysSet = new Set();
+    activePlansForCategories.forEach(p=>{
+      if(p.mealCategorySettings) Object.keys(p.mealCategorySettings).forEach(k=>categoryKeysSet.add(k));
+    });
+    categoryKeysSet.forEach(catKey=>{
       const cnt = SUMMARY_VALUES[summaryKey(catKey, d)] || 0;
       if(cnt<=0) return;
-      const setting = MEAL_CATEGORY_SETTINGS[catKey];
-      if(!setting) return;
+      // いずれかの使用中プランで「含む」に設定されていれば、その項目を反映する
+      const dinnerIncluded = activePlansForCategories.some(p=> p.mealCategorySettings && p.mealCategorySettings[catKey] && p.mealCategorySettings[catKey].dinner);
+      const breakfastIncluded = activePlansForCategories.some(p=> p.mealCategorySettings && p.mealCategorySettings[catKey] && p.mealCategorySettings[catKey].breakfast);
       const unitDinnerCost = (catKey==="bento") ? bentoCost : perPersonDinnerCost; // 弁当は外注弁当固定原価を使用
-      if(setting.dinner){ dinnerN += cnt; dinnerCost += cnt * unitDinnerCost; }
-      if(setting.breakfast){ breakfastN += cnt; breakfastCost += cnt * perPersonBreakfastCost; }
+      if(dinnerIncluded){ dinnerN += cnt; dinnerCost += cnt * unitDinnerCost; }
+      if(breakfastIncluded){ breakfastN += cnt; breakfastCost += cnt * perPersonBreakfastCost; }
     });
 
     const revenue = REVENUE[d] || 0;
@@ -3350,7 +3391,6 @@ function collectState(){
     EVAL_ITEMS,
     LABOR_SETTINGS,
     MENU_COST_PLANS,
-    MEAL_CATEGORY_SETTINGS,
     DAILY_PLAN_BREAKDOWN,
     facilityBase: document.getElementById("facilityInput") ? document.getElementById("facilityInput").value : "35000",
     wagesVisible
@@ -3372,10 +3412,14 @@ function applyState(state){
     MENU_COST_PLANS = [Object.assign(newMenuCostPlan(CURRENT_YEAR, "", "既存の設定"), old, {id: dpNewId(), isActive: true})];
   }
   if(MENU_COST_CURRENT_EDIT_ID===null && MENU_COST_PLANS.length>0) MENU_COST_CURRENT_EDIT_ID = getActiveMenuPlan().id;
-  if(state.MEAL_CATEGORY_SETTINGS){
-    // 丸ごと置き換える（マージすると、削除した項目が既定値に残ったままになり復活してしまうため）
-    MEAL_CATEGORY_SETTINGS = state.MEAL_CATEGORY_SETTINGS;
-  }
+  // 各プランに自分専用の設定が無い場合は、初期値（または旧バージョンで施設全体共有だった設定）を割り当てる
+  MENU_COST_PLANS.forEach(p=>{
+    if(!p.mealCategorySettings){
+      p.mealCategorySettings = state.MEAL_CATEGORY_SETTINGS
+        ? JSON.parse(JSON.stringify(state.MEAL_CATEGORY_SETTINGS)) // 旧バージョンの共有設定を初期値として引き継ぐ
+        : newDefaultMealCategorySettings();
+    }
+  });
   if(state.DAILY_PLAN_BREAKDOWN) DAILY_PLAN_BREAKDOWN = state.DAILY_PLAN_BREAKDOWN;
   if(typeof state.wagesVisible === "boolean") wagesVisible = state.wagesVisible;
 
