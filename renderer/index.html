@@ -630,8 +630,8 @@
       <div id="staffSettingsLockedView">
         <p style="font-size:12.5px;color:var(--muted-ink,#7a8a8e);margin:0 0 10px;">この項目はパスコードで保護されています。パスコードを入力すると閲覧・編集できます。</p>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <input type="password" id="staffSettingsPasscodeInput" placeholder="パスコード" style="max-width:200px;" onkeydown="if(event.key==='Enter') submitWagePassword();">
-          <button class="btn" onclick="submitWagePassword()">ロック解除</button>
+          <input type="password" id="staffSettingsPasscodeInput" placeholder="パスコード" style="max-width:200px;" onkeydown="if(event.key==='Enter') submitWagePassword('staff');">
+          <button class="btn" onclick="submitWagePassword('staff')">ロック解除</button>
         </div>
         <div id="wagePasswordError" style="color:var(--loss-ink);font-size:11px;margin-top:6px;min-height:14px;"></div>
       </div>
@@ -662,8 +662,8 @@
       <div id="facilityCostLockedView">
         <p style="font-size:12.5px;color:var(--muted-ink,#7a8a8e);margin:0 0 10px;">この項目はパスコードで保護されています。パスコードを入力すると閲覧・編集できます。</p>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <input type="password" id="facilityCostPasscodeInput" placeholder="パスコード" style="max-width:200px;" onkeydown="if(event.key==='Enter') submitWagePassword();">
-          <button class="btn" onclick="submitWagePassword()">ロック解除</button>
+          <input type="password" id="facilityCostPasscodeInput" placeholder="パスコード" style="max-width:200px;" onkeydown="if(event.key==='Enter') submitWagePassword('facility');">
+          <button class="btn" onclick="submitWagePassword('facility')">ロック解除</button>
         </div>
         <div id="facilityCostPasswordError" style="color:var(--loss-ink);font-size:11px;margin-top:6px;min-height:14px;"></div>
       </div>
@@ -2545,9 +2545,11 @@ function lockStaffSettings(){
   document.getElementById("facilityCostSummaryLabel").innerHTML = "<b>🔒 施設運転費の設定（パスコード保護）</b>";
 }
 
-async function submitWagePassword(){
-  const input = document.getElementById("staffSettingsPasscodeInput") || document.getElementById("facilityCostPasscodeInput");
-  const errEl = document.getElementById("wagePasswordError") || document.getElementById("facilityCostPasswordError");
+async function submitWagePassword(which){
+  const inputId = which==="facility" ? "facilityCostPasscodeInput" : "staffSettingsPasscodeInput";
+  const errElId = which==="facility" ? "facilityCostPasswordError" : "wagePasswordError";
+  const input = document.getElementById(inputId);
+  const errEl = document.getElementById(errElId);
   if(await checkUnlockCode(input.value)){
     input.value = "";
     if(errEl) errEl.textContent = "";
