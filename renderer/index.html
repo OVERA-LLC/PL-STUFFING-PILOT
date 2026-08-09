@@ -4741,6 +4741,9 @@ window.addEventListener("afterprint", function(){
 updateMonthLabel();
 renderFacilityDaySelect();
 renderSummaryTable();
+// 起動直後の初回描画は、固定列（sticky）の位置計算のタイミングによって罫線が一部ずれて見えることがあるため、
+// 描画が落ち着いた直後にもう一度軽く再描画をかけて、見た目を安定させる。
+requestAnimationFrame(()=>{ renderSummaryTable(); });
 renderStaffTable();
 renderDailyPilot();
 renderMenuCostSection();
