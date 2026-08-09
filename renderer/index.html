@@ -1662,44 +1662,56 @@ function renderMenuCostSection(){
 // 元がどちらの食事だったかに関わらず、追加する側（夕食メニュー／朝食メニュー）の種類で登録される。
 // 全プランに登録されている品名を、プラン名を表示せず「品名」だけで重複なく一覧にする。
 // 同じ品名が複数のプランに登録されている場合は、最初に見つかったものの単位・価格を代表値として使う。
-function buildUniqueMenuItemList(){
-  const seen = new Map(); // name -> {name, unit, price}
+// 全プランに登録されている品名を、「項目（コース名）」でグループ化する。
+// 例：「先付け」というグループの中に、いろんなプランで先付けとして使われた品名が並ぶ。
+// 食事の種類（夕食／朝食）は問わず、すべてのプランの項目を対象にする。
+function buildGroupedMenuItemList(){
+  const groups = new Map(); // courseName -> Map(itemName -> {name, unit, price})
   MENU_COST_PLANS.forEach(p=>{
     (p.courses||[]).forEach(c=>{
+      const cName = c.name || "(項目名未設定)";
+      if(!groups.has(cName)) groups.set(cName, new Map());
+      const itemMap = groups.get(cName);
       (c.items||[]).forEach(it=>{
-        if(!it.name || seen.has(it.name)) return;
-        seen.set(it.name, { name: it.name, unit: it.unit, price: it.price });
+        if(!it.name || itemMap.has(it.name)) return;
+        itemMap.set(it.name, { name: it.name, unit: it.unit, price: it.price });
       });
     });
   });
-  return [...seen.values()].sort((a,b)=> String(a.name).localeCompare(String(b.name), "ja"));
+  return groups;
 }
 
 function renderExistingMenuSelects(){
-  renderExistingMenuChecklist("dinner", "existingMenuListDinner");
-  renderExistingMenuChecklist("breakfast", "existingMenuListBreakfast");
+  renderExistingMenuChecklist("existingMenuListDinner");
+  renderExistingMenuChecklist("existingMenuListBreakfast");
 }
 
-function renderExistingMenuChecklist(mealType, wrapId){
+function renderExistingMenuChecklist(wrapId){
   const wrap = document.getElementById(wrapId);
   if(!wrap) return;
-  const items = buildUniqueMenuItemList();
-  if(items.length===0){
+  const groups = buildGroupedMenuItemList();
+  if(groups.size===0){
     wrap.innerHTML = `<div style="font-size:11px;color:var(--muted-ink,#7a8a8e);">まだ登録されている品名がありません。</div>`;
     return;
   }
+  const courseNames = [...groups.keys()].sort((a,b)=> String(a).localeCompare(String(b), "ja"));
   let html = "";
-  items.forEach(it=>{
-    html += `<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:2px 4px;cursor:pointer;">
-      <input type="checkbox" class="existing-menu-check" data-name="${(it.name||"").replace(/"/g,"&quot;")}" data-unit="${(it.unit||"").replace(/"/g,"&quot;")}" data-price="${it.price||0}">
-      <span>${it.name}</span>
-      <span style="color:var(--muted-ink,#7a8a8e);">（${it.unit||"-"} ／ ¥${Math.round(it.price||0).toLocaleString()}）</span>
-    </label>`;
+  courseNames.forEach(cName=>{
+    const items = [...groups.get(cName).values()].sort((a,b)=> String(a.name).localeCompare(String(b.name), "ja"));
+    html += `<div style="font-size:11.5px;font-weight:700;margin-top:6px;color:var(--teal-deep);">${cName}</div>`;
+    items.forEach(it=>{
+      html += `<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:1px 4px 1px 14px;cursor:pointer;">
+        <input type="checkbox" class="existing-menu-check" data-course="${cName.replace(/"/g,"&quot;")}" data-name="${(it.name||"").replace(/"/g,"&quot;")}" data-unit="${(it.unit||"").replace(/"/g,"&quot;")}" data-price="${it.price||0}">
+        <span>${it.name}</span>
+        <span style="color:var(--muted-ink,#7a8a8e);">（${it.unit||"-"} ／ ¥${Math.round(it.price||0).toLocaleString()}）</span>
+      </label>`;
+    });
   });
   wrap.innerHTML = html;
 }
 
-// チェックした品名を、指定した食事の種類（夕食／朝食）にまとめて追加する
+// チェックした品名を、それぞれ元と同じ「項目（コース名）」ごとにまとめて、指定した食事の種類（夕食／朝食）へ追加する。
+// 追加先に同じ名前の項目が無ければ、その項目名で新しく作る。
 function addCheckedExistingMenuItems(targetMealType){
   const wrapId = targetMealType==="breakfast" ? "existingMenuListBreakfast" : "existingMenuListDinner";
   const wrap = document.getElementById(wrapId);
@@ -1712,27 +1724,16 @@ function addCheckedExistingMenuItems(targetMealType){
   const plan = getEditingMenuPlan();
   if(!plan) return;
 
-  const newItems = Array.from(checkedBoxes).map(cb=>({
-    id: dpNewId(),
-    name: cb.dataset.name,
-    unit: cb.dataset.unit,
-    price: parseFloat(cb.dataset.price) || 0,
-  }));
-
-  // 同じ食事区分（夕食／朝食）の項目のうち、一番下にあるものにまとめて追加する。
-  // その食事区分の項目がまだ1つも無い場合だけ、新しい項目を作ってそこに入れる。
-  const targetCourses = plan.courses.filter(c=>(c.mealType||"dinner")===targetMealType);
-  if(targetCourses.length>0){
-    const lastCourse = targetCourses[targetCourses.length-1];
-    newItems.forEach(it=> lastCourse.items.push(it));
-  } else {
-    plan.courses.push({
-      id: dpNewId(),
-      name: "新しい項目",
-      mealType: targetMealType,
-      items: newItems,
-    });
-  }
+  Array.from(checkedBoxes).forEach(cb=>{
+    const courseName = cb.dataset.course;
+    const newItem = { id: dpNewId(), name: cb.dataset.name, unit: cb.dataset.unit, price: parseFloat(cb.dataset.price) || 0 };
+    let targetCourse = plan.courses.find(c=>(c.mealType||"dinner")===targetMealType && c.name===courseName);
+    if(!targetCourse){
+      targetCourse = { id: dpNewId(), name: courseName, mealType: targetMealType, items: [] };
+      plan.courses.push(targetCourse);
+    }
+    targetCourse.items.push(newItem);
+  });
 
   renderMenuCostSection();
   recalc();
