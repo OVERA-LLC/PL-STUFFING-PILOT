@@ -1423,6 +1423,7 @@ function renderMealCategorySettings(){
       <span style="width:180px;">${s.label}</span>
       <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" ${s.dinner?"checked":""} onchange="toggleMealCategory('${catKey}','dinner',this.checked)"> 夕食を含む</label>
       <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" ${s.breakfast?"checked":""} onchange="toggleMealCategory('${catKey}','breakfast',this.checked)"> 朝食を含む</label>
+      ${s.type!=="planname" ? `<label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" ${s.useBentoCost?"checked":""} onchange="toggleMealCategoryBentoCost('${catKey}',this.checked)"> 外注弁当原価を使う</label>` : ""}
       <button class="rmbtn" onclick="removeMealCategory('${catKey}')">削除</button>
     </div>`;
   });
@@ -1459,6 +1460,14 @@ function toggleMealCategory(catKey, mealType, checked){
   const plan = getEditingMenuPlan();
   if(!plan || !plan.mealCategorySettings || !plan.mealCategorySettings[catKey]) return;
   plan.mealCategorySettings[catKey][mealType] = checked;
+  recalc();
+  scheduleAutoSync();
+}
+
+function toggleMealCategoryBentoCost(catKey, checked){
+  const plan = getEditingMenuPlan();
+  if(!plan || !plan.mealCategorySettings || !plan.mealCategorySettings[catKey]) return;
+  plan.mealCategorySettings[catKey].useBentoCost = checked;
   recalc();
   scheduleAutoSync();
 }
@@ -1632,8 +1641,10 @@ function renderMenuCostSection(){
 
   const rowsWrap = document.getElementById("childPricingRows");
   if(rowsWrap){
+    if(!plan.childPricing) plan.childPricing = {};
     let rowsHtml = "";
     ["A","B","C","D"].forEach(cat=>{
+      if(!plan.childPricing[cat]) plan.childPricing[cat] = { mode:"percent", value:0 };
       const c = plan.childPricing[cat];
       rowsHtml += `<div style="display:flex;align-items:center;gap:8px;">
         <span class="t-label" style="width:60px;">子供${cat}：</span>
@@ -1866,6 +1877,8 @@ function toggleChildPricingEnabled(checked){
 function updateChildPricingMode(category, mode){
   const plan = getEditingMenuPlan();
   if(!plan) return;
+  if(!plan.childPricing) plan.childPricing = {};
+  if(!plan.childPricing[category]) plan.childPricing[category] = { mode:"percent", value:0 };
   plan.childPricing[category].mode = mode;
   renderMenuCostSection();
   recalc();
@@ -1875,6 +1888,8 @@ function updateChildPricingMode(category, mode){
 function updateChildPricingValue(category, value){
   const plan = getEditingMenuPlan();
   if(!plan) return;
+  if(!plan.childPricing) plan.childPricing = {};
+  if(!plan.childPricing[category]) plan.childPricing[category] = { mode:"percent", value:0 };
   const v = parseFloat(value);
   plan.childPricing[category].value = isNaN(v) ? 0 : v;
   renderMenuCostSection();
@@ -3427,7 +3442,7 @@ function recalc(){
         // 集計項目タイプ：予約状況サマリー表の数字（団体人数など）を使う（従来通り）
         const cnt = SUMMARY_VALUES[summaryKey(catKey, d)] || 0;
         if(cnt<=0) return;
-        const unitDinnerCost = (catKey==="bento") ? bentoCost : perPersonDinnerCost; // 弁当は外注弁当固定原価を使用
+        const unitDinnerCost = settingSample.useBentoCost ? bentoCost : perPersonDinnerCost; // 「外注弁当原価を使う」がチェックされていれば固定原価を使用
         if(dinnerIncluded){ dinnerN += cnt; dinnerCost += cnt * unitDinnerCost; }
         if(breakfastIncluded){ breakfastN += cnt; breakfastCost += cnt * perPersonBreakfastCost; }
       }
