@@ -265,7 +265,7 @@
   table{border-collapse:collapse;font-size:12px;min-width:1900px;width:100%;}
   #labortable{min-width:0;}
   #labortable th, #labortable td{white-space:normal;}
-  #staffsettingstable{min-width:0;width:auto;}
+  #staffsettingstable{min-width:0;width:100%;table-layout:auto;}
   #menuCostCompareTable{min-width:0;width:100%;table-layout:fixed;}
   #menuCostCompareTable th, #menuCostCompareTable td{white-space:normal;word-break:break-word;font-size:11px;padding:4px 5px;}
   .menu-item-table th, .menu-item-table td{padding:1px 5px;}
@@ -444,7 +444,8 @@
       <a href="#panelLabor" class="sidebar-link" data-panel="panelLabor" onclick="sidebarNavigate(event,'panelLabor')">🧾 労務</a>
 
       <div class="sidebar-group-label">設定</div>
-      <a href="#staffAddSection" class="sidebar-link" data-panel="staffAddSection" onclick="sidebarNavigate(event,'staffAddSection')">⚙ 従業員・施設運転費</a>
+      <a href="#staffAddSection" class="sidebar-link" data-panel="staffAddSection" onclick="sidebarNavigate(event,'staffAddSection')">👤 従業員</a>
+      <a href="#facilityCostSection" class="sidebar-link" data-panel="facilityCostSection" onclick="sidebarNavigate(event,'facilityCostSection')">🏢 施設運転費</a>
       <a href="#menuCostSection" class="sidebar-link" data-panel="menuCostSection" onclick="sidebarNavigate(event,'menuCostSection')">🍽 食材原価率登録</a>
       <a href="#manualSection" class="sidebar-link" data-panel="manualSection" onclick="sidebarNavigate(event,'manualSection')">📖 操作マニュアル</a>
     </nav>
@@ -624,7 +625,7 @@
     </details>
 
     <details class="notes" id="staffAddSection" open>
-      <summary id="staffSettingsSummaryLabel"><b>🔒 従業員・時給・交通費・施設運転費の設定（パスコード保護）</b></summary>
+      <summary id="staffSettingsSummaryLabel"><b>🔒 従業員・時給・交通費・寮費の設定（パスコード保護）</b></summary>
 
       <div id="staffSettingsLockedView">
         <p style="font-size:12.5px;color:var(--muted-ink,#7a8a8e);margin:0 0 10px;">この項目はパスコードで保護されています。パスコードを入力すると閲覧・編集できます。</p>
@@ -644,6 +645,31 @@
           <input type="number" id="newBrk" placeholder="休憩(分)">
           <button class="btn" onclick="addStaff()">追加</button>
           <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
+          <button class="rmbtn" onclick="lockStaffSettings()">🔒 ロックする</button>
+        </div>
+
+        <div class="tablecard" style="margin-top:12px;">
+          <div class="scroll">
+            <table id="staffsettingstable"></table>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <details class="notes" id="facilityCostSection" open>
+      <summary id="facilityCostSummaryLabel"><b>🔒 施設運転費の設定（パスコード保護）</b></summary>
+
+      <div id="facilityCostLockedView">
+        <p style="font-size:12.5px;color:var(--muted-ink,#7a8a8e);margin:0 0 10px;">この項目はパスコードで保護されています。パスコードを入力すると閲覧・編集できます。</p>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input type="password" id="facilityCostPasscodeInput" placeholder="パスコード" style="max-width:200px;" onkeydown="if(event.key==='Enter') submitWagePassword();">
+          <button class="btn" onclick="submitWagePassword()">ロック解除</button>
+        </div>
+        <div id="facilityCostPasswordError" style="color:var(--loss-ink);font-size:11px;margin-top:6px;min-height:14px;"></div>
+      </div>
+
+      <div id="facilityCostUnlockedView" style="display:none;">
+        <div class="staffadd">
           <span class="t-label">施設運転費 基本値（円/日）：</span>
           <input type="number" id="facilityInput" value="35000" onchange="recalc(); scheduleAutoSync();" style="width:90px;">
           <span style="width:1px;height:22px;background:var(--line);margin:0 6px;"></span>
@@ -656,12 +682,6 @@
           <span class="t-label">施設コード：<b id="facilitySettingsLabel">-</b></span>
           <button class="rmbtn" onclick="openFacilityChangeStep1Modal()">施設コードを変更</button>
           <button class="rmbtn" onclick="lockStaffSettings()">🔒 ロックする</button>
-        </div>
-
-        <div class="tablecard" style="margin-top:12px;">
-          <div class="scroll">
-            <table id="staffsettingstable"></table>
-          </div>
         </div>
       </div>
     </details>
@@ -863,7 +883,7 @@
       <b>■ 損益・評価</b>
       <ul class="notes-numbered">
         <li>①　<b>日次損益</b>：売上・人件費・食材原価・施設運転費から、その日の黒字／赤字を自動計算します。人件費は深夜・時間外・法定休日の割増や、有給休暇の賃金計算も含めた労働基準法に準拠した金額です。</li>
-        <li>②　<b>従業員・施設運転費の設定</b>：従業員の追加、時給・休憩・交通費・所定労働時間・扶養情報や、施設運転費の基本値・日別上書きを設定します。パスコード保護されています。</li>
+        <li>②　<b>従業員／施設運転費の設定</b>：従業員の追加、時給・休憩・交通費・寮費・所定労働時間・扶養情報（従業員）と、施設運転費の基本値・日別上書き（施設運転費）を、それぞれ設定します。どちらもパスコード保護されています。</li>
         <li>③　<b>評価シート</b>：従業員ごとの人事評価を記録します。評価項目は自由に追加・編集できます。パスコード保護されています。</li>
         <li>④　<b>食材原価率登録・比較</b>：夕食・朝食のメニュー構成（項目・品名・単位・価格）から、1人前の原価と原価率を自動計算します。季節・プラン名・年度ごとに複数のプランを登録し、比較できます。パスコード保護されています。</li>
         <li>⑤　<b>労務</b>：勤務時間、社会保険料・雇用保険料（従業員負担分・会社負担分）、所得税の概算、交通費などを従業員ごとに自動計算して確認できます。パスコード保護されています。</li>
@@ -928,6 +948,25 @@
     <div style="display:flex;gap:8px;margin-top:14px;">
       <button class="btn" style="flex:1;" onclick="saveCommuteSettings()">保存</button>
       <button class="rmbtn" style="flex:1;" onclick="closeCommuteModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<div id="dormitoryModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <h3 id="dormitoryModalTitle">寮費設定</h3>
+    <div style="display:flex;flex-direction:column;gap:8px;font-size:12.5px;">
+      <label>寮名：
+        <input type="text" id="dormitoryNameInput" placeholder="例：第一寮" style="width:100%;margin-top:3px;">
+      </label>
+      <label>金額（円／月）：
+        <input type="number" id="dormitoryAmountInput" min="0" style="width:100%;margin-top:3px;">
+      </label>
+      <div style="font-size:11px;color:var(--muted-ink,#7a8a8e);">月ごとの固定額として、月間人件費に反映されます。</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn" style="flex:1;" onclick="saveDormitorySettings()">保存</button>
+      <button class="rmbtn" style="flex:1;" onclick="closeDormitoryModal()">キャンセル</button>
     </div>
   </div>
 </div>
@@ -2225,6 +2264,39 @@ function calcDailyCommuteAmount(staff){
   return c.fixedAmount || 0;
 }
 
+let dormitoryEditIndex = null;
+function openDormitoryModal(si){
+  dormitoryEditIndex = si;
+  const st = STAFF[si];
+  const d = st.dormitory || { name:"", amount:0 };
+  document.getElementById("dormitoryModalTitle").textContent = `寮費設定（${st.name}）`;
+  document.getElementById("dormitoryNameInput").value = d.name || "";
+  document.getElementById("dormitoryAmountInput").value = d.amount || 0;
+  document.getElementById("dormitoryModal").style.display = "flex";
+}
+
+function closeDormitoryModal(){
+  dormitoryEditIndex = null;
+  document.getElementById("dormitoryModal").style.display = "none";
+}
+
+function saveDormitorySettings(){
+  if(dormitoryEditIndex===null) return;
+  STAFF[dormitoryEditIndex].dormitory = {
+    name: document.getElementById("dormitoryNameInput").value.trim(),
+    amount: parseFloat(document.getElementById("dormitoryAmountInput").value) || 0,
+  };
+  closeDormitoryModal();
+  renderStaffSettingsTable();
+  recalc();
+  scheduleAutoSync();
+}
+
+// この従業員の、月あたりの寮費固定額
+function calcMonthlyDormitoryAmount(staff){
+  return (staff.dormitory && staff.dormitory.amount) || 0;
+}
+
 /* ===================== 労務・料率設定 ===================== */
 function openLaborSettingsModal(){
   document.getElementById("laborEmploymentRateInput").value = LABOR_SETTINGS.employmentInsuranceRate;
@@ -2299,10 +2371,11 @@ function computeStaffMonthlySummary(si){
   const employerHealthInsurance = isSocialInsured ? grossWage * (LABOR_SETTINGS.employerHealthInsuranceRate/100) : 0;
   const employerPensionInsurance = isSocialInsured ? grossWage * (LABOR_SETTINGS.employerPensionRate/100) : 0;
   const employerBurdenTotal = employerEmploymentInsurance + employerHealthInsurance + employerPensionInsurance;
+  const dormitoryTotal = calcMonthlyDormitoryAmount(st); // 寮費は出勤日数に関わらず月あたりの固定額
   return {
     name: st.name, workDays, totalHours, avgWeeklyHours, grossWage,
     isSocialInsured, employmentInsurance, healthInsurance, pensionInsurance,
-    incomeTaxEstimate, commuteTotal, paidLeaveDays, paidLeaveWage,
+    incomeTaxEstimate, commuteTotal, dormitoryTotal, paidLeaveDays, paidLeaveWage,
     employerEmploymentInsurance, employerHealthInsurance, employerPensionInsurance, employerBurdenTotal,
   };
 }
@@ -2466,24 +2539,30 @@ function lockStaffSettings(){
   wagesVisible = false;
   document.getElementById("staffSettingsLockedView").style.display = "";
   document.getElementById("staffSettingsUnlockedView").style.display = "none";
-  document.getElementById("staffSettingsSummaryLabel").innerHTML = "<b>🔒 従業員・時給・交通費・施設運転費の設定（パスコード保護）</b>";
+  document.getElementById("staffSettingsSummaryLabel").innerHTML = "<b>🔒 従業員・時給・交通費・寮費の設定（パスコード保護）</b>";
+  document.getElementById("facilityCostLockedView").style.display = "";
+  document.getElementById("facilityCostUnlockedView").style.display = "none";
+  document.getElementById("facilityCostSummaryLabel").innerHTML = "<b>🔒 施設運転費の設定（パスコード保護）</b>";
 }
 
 async function submitWagePassword(){
-  const input = document.getElementById("staffSettingsPasscodeInput");
-  const errEl = document.getElementById("wagePasswordError");
+  const input = document.getElementById("staffSettingsPasscodeInput") || document.getElementById("facilityCostPasscodeInput");
+  const errEl = document.getElementById("wagePasswordError") || document.getElementById("facilityCostPasswordError");
   if(await checkUnlockCode(input.value)){
     input.value = "";
-    errEl.textContent = "";
+    if(errEl) errEl.textContent = "";
     wagesVisible = true;
     document.getElementById("staffSettingsLockedView").style.display = "none";
     document.getElementById("staffSettingsUnlockedView").style.display = "";
-    document.getElementById("staffSettingsSummaryLabel").innerHTML = "<b>🔓 従業員・時給・交通費・施設運転費の設定（パスコード保護）</b>";
+    document.getElementById("staffSettingsSummaryLabel").innerHTML = "<b>🔓 従業員・時給・交通費・寮費の設定（パスコード保護）</b>";
+    document.getElementById("facilityCostLockedView").style.display = "none";
+    document.getElementById("facilityCostUnlockedView").style.display = "";
+    document.getElementById("facilityCostSummaryLabel").innerHTML = "<b>🔓 施設運転費の設定（パスコード保護）</b>";
     renderStaffSettingsTable();
     renderStaffTable();
     recalc();
   } else {
-    errEl.textContent = "パスコードが違います";
+    if(errEl){ errEl.textContent = "パスコードが違います"; }
     input.value = "";
     input.focus();
   }
@@ -2495,7 +2574,7 @@ function renderStaffSettingsTable(){
   if(!table) return;
   let html = `<thead><tr>
     <th class="staffcol">区分・氏名</th><th>時給（円）</th><th>休憩（分）</th><th>所定労働時間（h）</th>
-    <th>配偶者</th><th>扶養人数</th><th>交通費</th><th></th>
+    <th>配偶者</th><th>扶養人数</th><th>交通費</th><th>寮費</th><th></th>
   </tr></thead><tbody>`;
   STAFF.forEach((st,si)=>{
     const missing = st.wage===null || st.wage===undefined;
@@ -2507,6 +2586,7 @@ function renderStaffSettingsTable(){
       <td><input type="checkbox" ${st.hasSpouse?'checked':''} data-si="${si}" data-field="hasSpouse" onchange="updateWageCheckbox(this)" title="源泉控除対象配偶者の有無（所得税の計算に使用）"></td>
       <td><input type="number" min="0" value="${st.dependents??0}" data-si="${si}" data-field="dependents" onchange="updateWage(this)" style="width:50px;" title="扶養親族等の数（所得税の計算に使用）"></td>
       <td><button class="rmbtn" onclick="openCommuteModal(${si})">🚃交通費を設定</button></td>
+      <td><button class="rmbtn" onclick="openDormitoryModal(${si})">🏠寮費を設定</button></td>
       <td><button class="rmbtn" onclick="removeStaff(${si})">削除</button></td>
     </tr>`;
   });
@@ -3508,17 +3588,19 @@ function recalc(){
     monthBreakfastC += breakfastCost; monthFacility += facilityCost; monthCommute += commute; monthPL += pl;
   }
 
-  // 会社負担分の社会保険料・雇用保険料（月単位の概念のため、日次ではなく月間人件費にまとめて加算する）
-  let monthEmployerBurden = 0;
+  // 会社負担分の社会保険料・雇用保険料・寮費（月単位の概念のため、日次ではなく月間人件費にまとめて加算する）
+  let monthEmployerBurden = 0, monthDormitory = 0;
   STAFF.forEach((st,si)=>{
-    monthEmployerBurden += computeStaffMonthlySummary(si).employerBurdenTotal;
+    const s = computeStaffMonthlySummary(si);
+    monthEmployerBurden += s.employerBurdenTotal;
+    monthDormitory += s.dormitoryTotal;
   });
-  const monthLaborTotal = monthLabor + monthCommute + monthEmployerBurden;
-  const monthPLWithEmployerBurden = monthPL - monthEmployerBurden;
+  const monthLaborTotal = monthLabor + monthCommute + monthEmployerBurden + monthDormitory;
+  const monthPLWithEmployerBurden = monthPL - monthEmployerBurden - monthDormitory;
 
   document.getElementById("cards").innerHTML = `
     <div class="card"><div class="label">月間売上（手数料控除後）</div><div class="value">¥${Math.round(monthRevenue).toLocaleString()}</div></div>
-    <div class="card"><div class="label">月間人件費（交通費・会社負担分社保込み）</div><div class="value">¥${Math.round(monthLaborTotal).toLocaleString()}</div></div>
+    <div class="card"><div class="label">月間人件費（交通費・寮費・会社負担分社保込み）</div><div class="value">¥${Math.round(monthLaborTotal).toLocaleString()}</div></div>
     <div class="card"><div class="label">月間食材原価（夕＋朝）</div><div class="value">¥${Math.round(monthDinnerC+monthBreakfastC).toLocaleString()}</div></div>
     <div class="card"><div class="label">月間施設運転費</div><div class="value">¥${Math.round(monthFacility).toLocaleString()}</div></div>
     <div class="card ${monthPLWithEmployerBurden>=0?'profit':'loss'}"><div class="label">月間収支</div><div class="value">¥${Math.round(monthPLWithEmployerBurden).toLocaleString()}</div></div>
@@ -3731,7 +3813,7 @@ async function loadFromDesktopApp(){
 /* ===================== サイドバー：ナビゲーション・表示モード ===================== */
 let VIEW_MODE = "all"; // "all"（全部表示）| "one"（1つずつ表示）
 let SIDEBAR_ACTIVE_PANEL = "panelSummary";
-const SIDEBAR_PANEL_IDS = ["panelSummary","panelJobSummary","panelDailyPilot","panelStaff","panelDailyPL","panelEvaluation","panelLabor","staffAddSection","menuCostSection","menuCostCompareSection","manualSection","cardsSection"];
+const SIDEBAR_PANEL_IDS = ["panelSummary","panelJobSummary","panelDailyPilot","panelStaff","panelDailyPL","panelEvaluation","panelLabor","staffAddSection","facilityCostSection","menuCostSection","menuCostCompareSection","manualSection","cardsSection"];
 
 function sidebarNavigate(evt, panelId){
   if(evt) evt.preventDefault();
@@ -3743,6 +3825,9 @@ function sidebarNavigate(evt, panelId){
   if(target){
     target.open = true;
     if(VIEW_MODE==="one") applyViewMode();
+    if(panelId==="panelSummary" && document.getElementById("sumtable")){
+      requestAnimationFrame(()=>{ renderSummaryTable(); });
+    }
     target.scrollIntoView({behavior:"smooth", block:"start"});
   }
 }
@@ -3752,6 +3837,12 @@ function setViewMode(mode){
   document.getElementById("viewModeAllBtn").classList.toggle("active", mode==="all");
   document.getElementById("viewModeOneBtn").classList.toggle("active", mode==="one");
   applyViewMode();
+  // 「全部表示」に切り替えると、それまで非表示だったパネルが表示状態に変わる。
+  // このタイミングで、固定列（sticky）の位置計算が一瞬ずれて罫線が乱れて見えることがあるため、
+  // 表示が落ち着いた直後にもう一度軽く再描画をかけて安定させる。
+  if(mode==="all" && document.getElementById("sumtable")){
+    requestAnimationFrame(()=>{ renderSummaryTable(); });
+  }
 }
 
 function applyViewMode(){
