@@ -3439,8 +3439,12 @@ function recalc(){
         if(dinnerIncluded){ dinnerN += pax; dinnerCost += pax * dinnerUnitCost; }
         if(breakfastIncluded){ breakfastN += pax; breakfastCost += pax * breakfastUnitCost; }
       } else {
-        // 集計項目タイプ：予約状況サマリー表の数字（団体人数など）を使う（従来通り）
-        const cnt = SUMMARY_VALUES[summaryKey(catKey, d)] || 0;
+        // 集計項目タイプ：ラベル名で予約状況サマリー（SUMROWS）の該当する行を探し、そのIDで人数を取得する。
+        // 食材原価率登録側の項目と、予約状況サマリー側の行は、それぞれ別々に発行されたIDを持つため、
+        // 内部IDでは一致しない（ラベル名でひも付ける必要がある）。
+        const matchingRow = SUMROWS.find(r=>r[1]===settingSample.label);
+        const sumRowId = matchingRow ? matchingRow[0] : catKey; // 一致する行が見つからない場合は念のため従来のIDでも試す
+        const cnt = SUMMARY_VALUES[summaryKey(sumRowId, d)] || 0;
         if(cnt<=0) return;
         const unitDinnerCost = settingSample.useBentoCost ? bentoCost : perPersonDinnerCost; // 「外注弁当原価を使う」がチェックされていれば固定原価を使用
         if(dinnerIncluded){ dinnerN += cnt; dinnerCost += cnt * unitDinnerCost; }
