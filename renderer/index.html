@@ -1127,13 +1127,9 @@ let FACILITY_OVERRIDE = {}; // {day: amount} 施設運転費の日別上書き
 // プランごとに持つ（プランによって、団体は夕食に含める／含めないが違う場合があるため）。
 // ここでON にした項目の人数は、使用中の食材原価率プランの原価をもとに、月間食材費・日次損益に自動反映される。
 function newDefaultMealCategorySettings(){
-  return {
-    group:         { dinner: false, breakfast: false, label: "団体人数" },
-    lunchbanquet:  { dinner: false, breakfast: false, label: "昼宴会人数" },
-    dinnerbanquet: { dinner: false, breakfast: false, label: "夜宴会人数" },
-    daytrip:       { dinner: false, breakfast: false, label: "日帰り" },
-    bento:         { dinner: false, breakfast: false, label: "弁当（外注弁当原価を使用）" },
-  };
+  // 新しいプランは、団体・宴会などの項目を最初から持たせず、空の状態から始める。
+  // 施設側で「＋ 追加」から必要な項目だけを追加してもらう。
+  return {};
 }
 
 // 労務関連の料率設定（施設ごとに1つ）。健康保険料率・所得税概算率は都道府県や個人の状況で変わるため、
@@ -1670,17 +1666,19 @@ function renderMenuCostSection(){
 // 例：「先付け」というグループの中に、いろんなプランで先付けとして使われた品名が並ぶ。
 // 食事の種類（夕食／朝食）は問わず、すべてのプランの項目を対象にする。
 function buildGroupedMenuItemList(){
-  // メニューの構成（分量・工程）が重要なため、品名や価格が同じに見えても一切まとめず、
-  // 登録されているすべての品目をそのまま一覧にする（項目＝コース名でのグループ分けのみ行う）。
-  const groups = new Map(); // courseName -> [{name, unit, price}, ...]（重複除去なし）
+  // 品名・単位・価格がすべて完全に一致する品目は、選んでも計算結果に差が出ないため1件にまとめる。
+  // 品名が同じでも価格（または単位）が違う場合は、意味のある別の品目として両方とも残す。
+  const groups = new Map(); // courseName -> Map(重複判定キー -> {name, unit, price})
   MENU_COST_PLANS.forEach(p=>{
     (p.courses||[]).forEach(c=>{
       const cName = c.name || "(項目名未設定)";
-      if(!groups.has(cName)) groups.set(cName, []);
-      const arr = groups.get(cName);
+      if(!groups.has(cName)) groups.set(cName, new Map());
+      const itemMap = groups.get(cName);
       (c.items||[]).forEach(it=>{
         if(!it.name) return;
-        arr.push({ name: it.name, unit: it.unit, price: it.price });
+        const key = `${it.name}__${it.unit||""}__${it.price||0}`;
+        if(itemMap.has(key)) return;
+        itemMap.set(key, { name: it.name, unit: it.unit, price: it.price });
       });
     });
   });
@@ -1723,7 +1721,7 @@ function renderExistingMenuModalList(){
   const courseNames = [...groups.keys()].sort((a,b)=> String(a).localeCompare(String(b), "ja"));
   let html = "";
   courseNames.forEach((cName, idx)=>{
-    const items = [...groups.get(cName)].sort((a,b)=> String(a.name).localeCompare(String(b.name), "ja"));
+    const items = [...groups.get(cName).values()].sort((a,b)=> String(a.name).localeCompare(String(b.name), "ja"));
     const expanded = EXISTING_MENU_EXPANDED_INDEXES.has(idx);
     html += `<div style="border-bottom:1px solid var(--line);padding-bottom:2px;">
       <div style="display:flex;align-items:center;gap:6px;padding:3px 0;">
