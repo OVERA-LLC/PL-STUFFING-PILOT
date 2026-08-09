@@ -2908,9 +2908,9 @@ let SUMROWS = [
   ["resrooms","予約部屋数","row-resrooms"],
   ["plainrooms","素泊まり部屋数","row-plainrooms"],
   ["plainguests","素泊まり人数","row-plainguests"],
-  ["twomealrooms","１泊２食部屋数","row-twomealrooms"],
-  ["twomealguests","１泊２食人数","row-twomealguests"],
-  ["checkin","チェックイン人数","row-checkin"],
+  ["twomealrooms","1泊2食部屋数","row-twomealrooms"],
+  ["twomealguests","1泊2食人数","row-twomealguests"],
+  ["checkin","CI人数","row-checkin"],
   ["consecutive","連泊人数","row-consecutive"],
   ["group","団体人数","row-group"],
   ["lunchbanquet","昼宴会人数","row-lunchbanquet"],
@@ -3158,6 +3158,39 @@ function computeInntoSummary(objs){
 }
 
 // 新形式：innto側ですでに日別集計済みのCSV（1日1行）
+// 全角の数字・英字（例：１２３ＡＢＣ）を半角に変換し、前後の空白も取り除く。
+// CSVの列見出しと項目名を比較する際、表記のわずかな違い（全角／半角）を同じ項目として扱うために使う。
+function normalizeLabelForMatch(str){
+  if(!str) return "";
+  return String(str).replace(/[０-９Ａ-Ｚａ-ｚ]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0)).trim();
+}
+
+// 各項目でよく使われる言い換え・略称（カタカナ／ローマ字／英語など）。
+// CSVの列見出しがSUMROWSの現在のラベルと完全一致しなくても、これらのいずれかと一致すれば同じ項目として取り込む。
+const SUMROWS_LABEL_ALIASES = {
+  resrooms: ["予約部屋数","予約室数","部屋数","room count"],
+  plainrooms: ["素泊まり部屋数","素泊まり室数","room only rooms"],
+  plainguests: ["素泊まり人数","room only guests"],
+  twomealrooms: ["1泊2食部屋数","一泊二食部屋数","夕朝食部屋数"],
+  twomealguests: ["1泊2食人数","一泊二食人数","夕朝食人数","二食人数"],
+  checkin: ["CI人数","CI","チェックイン人数","チェックイン","check-in","checkin"],
+  consecutive: ["連泊人数","連泊","連泊数"],
+  group: ["団体人数","団体","グループ人数","group"],
+  lunchbanquet: ["昼宴会人数","昼宴会","ランチ宴会人数","昼宴"],
+  dinnerbanquet: ["夜宴会人数","夜宴会","ディナー宴会人数","夜宴"],
+  freebreak: ["無料朝食人数","朝食人数","朝食サービス人数","無料朝食"],
+  ledger: ["台帳予約","台帳","手書き予約","ledger"],
+  bento: ["弁当","お弁当","弁当人数","bento"],
+  daytrip: ["日帰り","日帰り人数","デイユース","day use","dayuse","day trip"],
+  banquet: ["宴会","宴会（時間帯不明）","banquet"],
+};
+
+// CSVの中から、指定した項目（現在のラベル、または既知の言い換え）に一致する列を探す
+function findMatchingCsvColumn(o, sumRowId, sumRowLabel){
+  const candidates = [sumRowLabel, ...(SUMROWS_LABEL_ALIASES[sumRowId] || [])].map(normalizeLabelForMatch);
+  return Object.keys(o).find(k => candidates.includes(normalizeLabelForMatch(k)));
+}
+
 function computeInntoSummaryAggregated(objs){
   const dateList = objs.map(o=>parseDateFlexible(o["日付"])).filter(Boolean);
   detectAndApplyMonth(dateList);
@@ -3171,11 +3204,13 @@ function computeInntoSummaryAggregated(objs){
     matched++;
 
     const num = (v)=> parseInt((v||"0").toString().replace(/,/g,""),10) || 0;
-    // SUMROWSを動的に走査してCSVの列と突き合わせる（後から追加した項目も、同じ見出しの列があれば自動的に取り込まれる）
+    // SUMROWSを動的に走査してCSVの列と突き合わせる（後から追加した項目も、同じ見出しの列があれば自動的に取り込まれる）。
+    // 全角・半角の違い（例：「1泊2食」と「１泊２食」）は同じ項目として扱うため、比較前に正規化する。
     SUMROWS.forEach(([id,label])=>{
       if(id==="plainguests") return; // 「素泊まり人数」に対応する列がこのCSVには無いため、ここは自動更新しません（手入力のままにします）
-      if(!(label in o)) return; // CSVにこの項目に対応する列が無ければ、既存の値をそのまま保持する
-      setSumVal(id, day, num(o[label]));
+      const matchedKey = findMatchingCsvColumn(o, id, label);
+      if(!matchedKey) return; // CSVにこの項目に対応する列が無ければ、既存の値をそのまま保持する
+      setSumVal(id, day, num(o[matchedKey]));
     });
   });
   recalc();
@@ -3404,7 +3439,7 @@ function recalc(){
       }
     });
 
-    // 夕食人数＝「１泊２食人数」＋ 夕食を含む設定にした項目（団体・昼宴会・夜宴会・日帰り・弁当）の人数
+    // 夕食人数＝「1泊2食人数」＋ 夕食を含む設定にした項目（団体・昼宴会・夜宴会・日帰り・弁当）の人数
     // 朝食人数＝「無料朝食人数」＋ 朝食を含む設定にした項目の人数
     const twomeal = SUMMARY_VALUES[summaryKey("twomealguests", d)] || 0;
     const freeb = SUMMARY_VALUES[summaryKey("freebreak", d)] || 0;
