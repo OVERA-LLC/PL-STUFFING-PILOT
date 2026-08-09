@@ -278,7 +278,7 @@
   thead tr.wk th{background:#3C6A70;font-size:10.5px;font-weight:500;}
   thead tr.wk th.sat{background:#5B8CA6;}
   thead tr.wk th.sun{background:#B36B6B;}
-  .staffcol{position:sticky;left:0;background:var(--paper-soft);z-index:2;text-align:left;min-width:160px;box-shadow:2px 0 0 var(--line);}
+  .staffcol{position:sticky;left:0;background:var(--paper-soft);z-index:2;text-align:left;min-width:160px;}
   thead .staffcol{background:var(--teal-deep);z-index:4;}
   .cat{font-size:10px;color:var(--gold);}
   .catname{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 auto;}
@@ -542,18 +542,6 @@
       <div class="tablecard">
         <div class="scroll">
           <table id="sumtable" class="sumtable"></table>
-        </div>
-      </div>
-      <div id="sumRowsEditSection" style="display:none;margin-top:12px;">
-        <div class="tablecard" style="padding:10px 12px;">
-          <div style="font-size:12px;font-weight:700;margin-bottom:6px;">項目の追加・編集・削除</div>
-          <div style="font-size:11px;color:var(--muted-ink,#7a8a8e);margin-bottom:8px;">項目を、施設に合わせて自由に追加・削除できます。項目名を変更すると、その項目に対応するCSVの列見出しも変わるのでご注意ください。</div>
-          <div id="sumRowsSettings" style="display:flex;flex-direction:column;gap:4px;"></div>
-          <div class="staffadd" style="margin-top:10px;">
-            <span class="t-label">項目を追加：</span>
-            <input type="text" id="newSumRowLabelInput" placeholder="項目名（例：貸切風呂利用人数）" style="width:200px;">
-            <button class="btn" onclick="addCustomSumRow()">＋ 追加</button>
-          </div>
         </div>
       </div>
     </details>
@@ -1366,34 +1354,18 @@ function calcChildPrice(category){
 
 /* ===================== 食材原価率設定（夕食メニュー構成） ===================== */
 // 予約状況サマリーの表そのものの項目（SUMROWS）を編集・追加・削除する
-function renderSumRowsSettings(){
-  const wrap = document.getElementById("sumRowsSettings");
-  if(!wrap) return;
-  let html = "";
-  SUMROWS.forEach(([id,label])=>{
-    html += `<div style="display:flex;align-items:center;gap:8px;font-size:12px;">
-      <input type="text" value="${(label||"").replace(/"/g,"&quot;")}" onfocus="beginTextEditing()" onchange="renameSumRow('${id}', this.value)" onblur="endTextEditing()" style="flex:1;">
-      <button class="rmbtn" onclick="removeSumRow('${id}')">削除</button>
-    </div>`;
-  });
-  wrap.innerHTML = html;
-}
-
 function addCustomSumRow(){
   const input = document.getElementById("newSumRowLabelInput");
   const label = input.value.trim();
   if(!label){ alert("項目名を入力してください"); return; }
   const id = "custom_" + dpNewId();
   SUMROWS.push([id, label, "row-" + id]);
-  input.value = "";
-  renderSumRowsSettings();
   renderSummaryTable();
   scheduleAutoSync();
 }
 
 function removeSumRow(id){
   SUMROWS = SUMROWS.filter(row=>row[0]!==id);
-  renderSumRowsSettings();
   renderSummaryTable();
   recalc();
   scheduleAutoSync();
@@ -1403,7 +1375,16 @@ function renameSumRow(id, newLabel){
   const row = SUMROWS.find(r=>r[0]===id);
   if(!row) return;
   row[1] = newLabel;
-  renderSumRowsSettings();
+  renderSummaryTable();
+  scheduleAutoSync();
+}
+
+function moveSumRow(idx, dir){
+  const target = idx + dir;
+  if(target < 0 || target >= SUMROWS.length) return;
+  const tmp = SUMROWS[idx];
+  SUMROWS[idx] = SUMROWS[target];
+  SUMROWS[target] = tmp;
   renderSummaryTable();
   scheduleAutoSync();
 }
@@ -2990,11 +2971,6 @@ function updatePastLockBar(){
     if(unlockBtn) unlockBtn.style.display = "";
     if(relockBtn) relockBtn.style.display = "none";
   }
-  const sumRowsSection = document.getElementById("sumRowsEditSection");
-  if(sumRowsSection){
-    sumRowsSection.style.display = SUMMARY_PAST_UNLOCKED ? "" : "none";
-    if(SUMMARY_PAST_UNLOCKED) renderSumRowsSettings();
-  }
 }
 
 function renderSummaryTable(){
@@ -3007,8 +2983,19 @@ function renderSummaryTable(){
   thead += "</tr></thead>";
 
   let tbody = "<tbody>";
-  SUMROWS.forEach(([id,label,cls])=>{
-    tbody += `<tr class="${cls}"><td class="staffcol"${cellW(true)}>${label}</td>`;
+  SUMROWS.forEach(([id,label,cls], idx)=>{
+    let labelCell;
+    if(SUMMARY_PAST_UNLOCKED){
+      labelCell = `<div style="display:flex;align-items:center;gap:4px;">
+        <input type="text" value="${(label||"").replace(/"/g,"&quot;")}" onfocus="beginTextEditing()" onchange="renameSumRow('${id}', this.value)" onblur="endTextEditing()" style="flex:1;min-width:70px;">
+        <button class="rmbtn" onclick="moveSumRow(${idx},-1)" title="上に移動" ${idx===0?"disabled":""} style="padding:1px 5px;">↑</button>
+        <button class="rmbtn" onclick="moveSumRow(${idx},1)" title="下に移動" ${idx===SUMROWS.length-1?"disabled":""} style="padding:1px 5px;">↓</button>
+        <button class="rmbtn" onclick="removeSumRow('${id}')" style="padding:1px 6px;">削除</button>
+      </div>`;
+    } else {
+      labelCell = label;
+    }
+    tbody += `<tr class="${cls}"><td class="staffcol"${cellW(true)}>${labelCell}</td>`;
     for(let d=1; d<=DAYS; d++){
       const val = SUMMARY_VALUES[summaryKey(id,d)];
       const locked = isSummaryLocked(d);
@@ -3017,6 +3004,14 @@ function renderSummaryTable(){
     }
     tbody += "</tr>";
   });
+  if(SUMMARY_PAST_UNLOCKED){
+    tbody += `<tr><td class="staffcol"${cellW(true)}>
+      <div class="staffadd" style="gap:4px;">
+        <input type="text" id="newSumRowLabelInput" placeholder="項目名を追加" style="flex:1;min-width:70px;">
+        <button class="btn" onclick="addCustomSumRow()" style="padding:2px 8px;">＋</button>
+      </div>
+    </td>${`<td${cellW(false)}></td>`.repeat(DAYS)}</tr>`;
+  }
   tbody += "</tbody>";
   table.innerHTML = colgroup + thead + tbody;
   updatePastLockBar();
