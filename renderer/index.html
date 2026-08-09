@@ -507,6 +507,18 @@
     </div>
   </div>
 
+  <div id="existingMenuModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box" style="max-width:420px;">
+      <h3 id="existingMenuModalTitle">既存のメニューから追加</h3>
+      <p style="font-size:11px;color:var(--muted-ink,#7a8a8e);margin:0 0 10px;">項目名（先付け等）ごとにまとめて追加するか、「±」で開いて品名を個別に選べます。</p>
+      <div id="existingMenuModalList" style="max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn" style="flex:1;" onclick="addCheckedExistingMenuItems()">チェックした内容を追加</button>
+        <button class="rmbtn" style="flex:1;" onclick="closeExistingMenuModal()">閉じる</button>
+      </div>
+    </div>
+  </div>
+
   <div id="printPreviewBar" style="display:none;">
     <span>🖨 印刷プレビュー中</span>
     <button class="btn" onclick="executePrintFromPreview()">この内容で印刷する</button>
@@ -757,12 +769,7 @@
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
             <div style="font-size:12px;font-weight:700;color:var(--teal-deep);">🌙 夕食メニュー</div>
             <button class="btn" onclick="addMenuCourse('dinner')">＋ 項目を追加</button>
-            <button class="rmbtn" onclick="toggleExistingMenuPanel('dinner')">既存のメニューから追加 ▾</button>
-          </div>
-          <div id="existingMenuPanelDinner" class="tablecard" style="display:none;padding:8px 10px;margin-bottom:8px;">
-            <div style="font-size:11.5px;font-weight:700;margin-bottom:4px;">既存のメニューから品名を選んで追加（チェックした品名をまとめて追加できます）</div>
-            <div id="existingMenuListDinner" style="max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:1px;margin-bottom:6px;"></div>
-            <button class="rmbtn" onclick="addCheckedExistingMenuItems('dinner')">チェックした品名を追加</button>
+            <button class="rmbtn" onclick="openExistingMenuModal('dinner')">既存のメニューから追加 ▾</button>
           </div>
           <div id="menuCoursesDinner" style="display:flex;flex-direction:column;gap:1px;margin-bottom:14px;"></div>
 
@@ -770,12 +777,7 @@
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
             <div style="font-size:12px;font-weight:700;color:var(--teal-deep);">☀ 朝食メニュー</div>
             <button class="btn" onclick="addMenuCourse('breakfast')">＋ 項目を追加</button>
-            <button class="rmbtn" onclick="toggleExistingMenuPanel('breakfast')">既存のメニューから追加 ▾</button>
-          </div>
-          <div id="existingMenuPanelBreakfast" class="tablecard" style="display:none;padding:8px 10px;margin-bottom:8px;">
-            <div style="font-size:11.5px;font-weight:700;margin-bottom:4px;">既存のメニューから品名を選んで追加（チェックした品名をまとめて追加できます）</div>
-            <div id="existingMenuListBreakfast" style="max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:1px;margin-bottom:6px;"></div>
-            <button class="rmbtn" onclick="addCheckedExistingMenuItems('breakfast')">チェックした品名を追加</button>
+            <button class="rmbtn" onclick="openExistingMenuModal('breakfast')">既存のメニューから追加 ▾</button>
           </div>
           <div id="menuCoursesBreakfast" style="display:flex;flex-direction:column;gap:1px;"></div>
         </div>
@@ -1683,23 +1685,33 @@ function buildGroupedMenuItemList(){
   return groups;
 }
 
-// 「既存のメニューから追加」の一覧パネルを開閉する
-function toggleExistingMenuPanel(mealType){
-  const panelId = mealType==="breakfast" ? "existingMenuPanelBreakfast" : "existingMenuPanelDinner";
-  const panel = document.getElementById(panelId);
-  if(!panel) return;
-  const willShow = panel.style.display === "none";
-  panel.style.display = willShow ? "" : "none";
-  if(willShow) renderExistingMenuSelects(); // 開く時に最新の内容へ更新しておく
+// 「既存のメニューから追加」のモーダル関連の状態
+let EXISTING_MENU_MODAL_MEAL_TYPE = "dinner"; // 今モーダルがどちらの食事向けに開かれているか
+let EXISTING_MENU_EXPANDED_INDEXES = new Set(); // 「±」で展開中の項目（コース）グループ
+
+function openExistingMenuModal(mealType){
+  EXISTING_MENU_MODAL_MEAL_TYPE = mealType;
+  EXISTING_MENU_EXPANDED_INDEXES = new Set();
+  const modal = document.getElementById("existingMenuModal");
+  const title = document.getElementById("existingMenuModalTitle");
+  if(title) title.textContent = "既存のメニューから追加（" + (mealType==="breakfast" ? "朝食" : "夕食") + "）";
+  if(modal) modal.style.display = "flex";
+  renderExistingMenuModalList();
 }
 
+function closeExistingMenuModal(){
+  const modal = document.getElementById("existingMenuModal");
+  if(modal) modal.style.display = "none";
+}
+
+// 互換用：他の場所から呼ばれても新しいモーダル方式にまとめて反映されるようにしておく
 function renderExistingMenuSelects(){
-  renderExistingMenuChecklist("existingMenuListDinner");
-  renderExistingMenuChecklist("existingMenuListBreakfast");
+  const modal = document.getElementById("existingMenuModal");
+  if(modal && modal.style.display !== "none") renderExistingMenuModalList();
 }
 
-function renderExistingMenuChecklist(wrapId){
-  const wrap = document.getElementById(wrapId);
+function renderExistingMenuModalList(){
+  const wrap = document.getElementById("existingMenuModalList");
   if(!wrap) return;
   const groups = buildGroupedMenuItemList();
   if(groups.size===0){
@@ -1708,25 +1720,46 @@ function renderExistingMenuChecklist(wrapId){
   }
   const courseNames = [...groups.keys()].sort((a,b)=> String(a).localeCompare(String(b), "ja"));
   let html = "";
-  courseNames.forEach(cName=>{
+  courseNames.forEach((cName, idx)=>{
     const items = [...groups.get(cName).values()].sort((a,b)=> String(a.name).localeCompare(String(b.name), "ja"));
-    html += `<div style="font-size:11.5px;font-weight:700;margin-top:6px;color:var(--teal-deep);">${cName}</div>`;
+    const expanded = EXISTING_MENU_EXPANDED_INDEXES.has(idx);
+    html += `<div style="border-bottom:1px solid var(--line);padding-bottom:2px;">
+      <div style="display:flex;align-items:center;gap:6px;padding:3px 0;">
+        <input type="checkbox" class="existing-menu-course-check" onchange="toggleExistingMenuCourseCheckAll(${idx}, this.checked)">
+        <span style="font-weight:700;font-size:12.5px;flex:1;">${cName}</span>
+        <button type="button" class="rmbtn" style="padding:1px 9px;font-size:12px;" onclick="toggleExistingMenuCourseExpand(${idx})">${expanded ? "－" : "＋"}</button>
+      </div>
+      <div style="display:${expanded ? "flex" : "none"};flex-direction:column;padding-left:22px;">`;
     items.forEach(it=>{
-      html += `<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:1px 4px 1px 14px;cursor:pointer;">
-        <input type="checkbox" class="existing-menu-check" data-course="${cName.replace(/"/g,"&quot;")}" data-name="${(it.name||"").replace(/"/g,"&quot;")}" data-unit="${(it.unit||"").replace(/"/g,"&quot;")}" data-price="${it.price||0}">
+      html += `<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:1px 0;cursor:pointer;">
+        <input type="checkbox" class="existing-menu-check" data-group-idx="${idx}" data-course="${cName.replace(/"/g,"&quot;")}" data-name="${(it.name||"").replace(/"/g,"&quot;")}" data-unit="${(it.unit||"").replace(/"/g,"&quot;")}" data-price="${it.price||0}">
         <span>${it.name}</span>
         <span style="color:var(--muted-ink,#7a8a8e);">（${it.unit||"-"} ／ ¥${Math.round(it.price||0).toLocaleString()}）</span>
       </label>`;
     });
+    html += `</div></div>`;
   });
   wrap.innerHTML = html;
 }
 
-// チェックした品名を、それぞれ元と同じ「項目（コース名）」ごとにまとめて、指定した食事の種類（夕食／朝食）へ追加する。
+// 項目（コース）名の「±」：品名の内訳を開閉する
+function toggleExistingMenuCourseExpand(idx){
+  if(EXISTING_MENU_EXPANDED_INDEXES.has(idx)) EXISTING_MENU_EXPANDED_INDEXES.delete(idx);
+  else EXISTING_MENU_EXPANDED_INDEXES.add(idx);
+  renderExistingMenuModalList();
+}
+
+// 項目（コース）名のチェック：その項目に属するすべての品名を一括でチェック／解除する
+function toggleExistingMenuCourseCheckAll(idx, checked){
+  const boxes = document.querySelectorAll(`.existing-menu-check[data-group-idx="${idx}"]`);
+  boxes.forEach(cb=>{ cb.checked = checked; });
+}
+
+// チェックした品名を、それぞれ元と同じ「項目（コース名）」ごとにまとめて、モーダルが開かれた食事の種類（夕食／朝食）へ追加する。
 // 追加先に同じ名前の項目が無ければ、その項目名で新しく作る。
-function addCheckedExistingMenuItems(targetMealType){
-  const wrapId = targetMealType==="breakfast" ? "existingMenuListBreakfast" : "existingMenuListDinner";
-  const wrap = document.getElementById(wrapId);
+function addCheckedExistingMenuItems(){
+  const targetMealType = EXISTING_MENU_MODAL_MEAL_TYPE;
+  const wrap = document.getElementById("existingMenuModalList");
   if(!wrap) return;
   const checkedBoxes = wrap.querySelectorAll(".existing-menu-check:checked");
   if(!checkedBoxes || checkedBoxes.length===0){
@@ -1747,6 +1780,7 @@ function addCheckedExistingMenuItems(targetMealType){
     targetCourse.items.push(newItem);
   });
 
+  closeExistingMenuModal();
   renderMenuCostSection();
   recalc();
   scheduleAutoSync();
