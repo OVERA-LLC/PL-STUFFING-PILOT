@@ -3571,16 +3571,15 @@ function applyState(state){
   }
   if(MENU_COST_CURRENT_EDIT_ID===null && MENU_COST_PLANS.length>0) MENU_COST_CURRENT_EDIT_ID = getActiveMenuPlan().id;
   if(state.SUMROWS && Array.isArray(state.SUMROWS)) SUMROWS = state.SUMROWS;
-  // 過去のバージョンで保存されたデータに、修正前の古い項目名（表記ゆれ）が残っている場合に自動で直す。
-  // これをしないと、コード側は直っていても、保存済みデータの古いラベルがそのまま復元されてしまい、
-  // CSVの列見出しと一致しなくなる（結果、自動取込が反映されなくなる）。
-  const SUMROWS_LABEL_FIXUPS = {
-    "チェックイン人数": "CI人数",
-    "１泊２食部屋数": "1泊2食部屋数",
-    "１泊２食人数": "1泊2食人数",
+  // 「チェックイン人数」「1泊2食部屋数」「1泊2食人数」は、CSVの自動取込に使う項目名と必ず一致している必要があるため、
+  // 過去にどんな表記（全角・省略形など）に変わっていたとしても、IDで判定して強制的に正しい項目名に戻す。
+  const CANONICAL_SUMROWS_LABELS = {
+    checkin: "CI人数",
+    twomealrooms: "1泊2食部屋数",
+    twomealguests: "1泊2食人数",
   };
   SUMROWS.forEach(row=>{
-    if(SUMROWS_LABEL_FIXUPS[row[1]]) row[1] = SUMROWS_LABEL_FIXUPS[row[1]];
+    if(CANONICAL_SUMROWS_LABELS[row[0]]) row[1] = CANONICAL_SUMROWS_LABELS[row[0]];
   });
   // 各プランに自分専用の設定が無い場合は、初期値（または旧バージョンで施設全体共有だった設定）を割り当てる
   MENU_COST_PLANS.forEach(p=>{
