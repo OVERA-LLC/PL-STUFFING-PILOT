@@ -1670,15 +1670,17 @@ function renderMenuCostSection(){
 // 例：「先付け」というグループの中に、いろんなプランで先付けとして使われた品名が並ぶ。
 // 食事の種類（夕食／朝食）は問わず、すべてのプランの項目を対象にする。
 function buildGroupedMenuItemList(){
-  const groups = new Map(); // courseName -> Map(itemName -> {name, unit, price})
+  // メニューの構成（分量・工程）が重要なため、品名や価格が同じに見えても一切まとめず、
+  // 登録されているすべての品目をそのまま一覧にする（項目＝コース名でのグループ分けのみ行う）。
+  const groups = new Map(); // courseName -> [{name, unit, price}, ...]（重複除去なし）
   MENU_COST_PLANS.forEach(p=>{
     (p.courses||[]).forEach(c=>{
       const cName = c.name || "(項目名未設定)";
-      if(!groups.has(cName)) groups.set(cName, new Map());
-      const itemMap = groups.get(cName);
+      if(!groups.has(cName)) groups.set(cName, []);
+      const arr = groups.get(cName);
       (c.items||[]).forEach(it=>{
-        if(!it.name || itemMap.has(it.name)) return;
-        itemMap.set(it.name, { name: it.name, unit: it.unit, price: it.price });
+        if(!it.name) return;
+        arr.push({ name: it.name, unit: it.unit, price: it.price });
       });
     });
   });
@@ -1721,7 +1723,7 @@ function renderExistingMenuModalList(){
   const courseNames = [...groups.keys()].sort((a,b)=> String(a).localeCompare(String(b), "ja"));
   let html = "";
   courseNames.forEach((cName, idx)=>{
-    const items = [...groups.get(cName).values()].sort((a,b)=> String(a.name).localeCompare(String(b.name), "ja"));
+    const items = [...groups.get(cName)].sort((a,b)=> String(a.name).localeCompare(String(b.name), "ja"));
     const expanded = EXISTING_MENU_EXPANDED_INDEXES.has(idx);
     html += `<div style="border-bottom:1px solid var(--line);padding-bottom:2px;">
       <div style="display:flex;align-items:center;gap:6px;padding:3px 0;">
