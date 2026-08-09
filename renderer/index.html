@@ -728,6 +728,18 @@
             <button class="btn" onclick="confirmMenuPlanEdit()">✓ 確定（閉じる）</button>
           </div>
 
+          <!-- このプラン名が、実際のinnto予約でどちらの食事にあたるか -->
+          <div class="tablecard" style="padding:10px 12px;margin-bottom:12px;">
+            <div style="font-size:11.5px;font-weight:700;margin-bottom:4px;">このプラン名（上のプラン名欄）は、inntoの予約で夕食・朝食のどちらを含みますか？</div>
+            <div style="font-size:11px;color:var(--muted-ink,#7a8a8e);margin-bottom:6px;">プラン名が、inntoから届く実際の予約プラン名と一致すると、その予約人数が自動的に夕食・朝食の集計に使われます。どちらでもない場合はチェック不要です。</div>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer;margin-bottom:4px;">
+              <input type="checkbox" id="planDinnerIncludedCheckbox" onchange="updateMenuPlanFlag('dinnerIncluded', this.checked)"> 夕食を含む
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer;">
+              <input type="checkbox" id="planBreakfastIncludedCheckbox" onchange="updateMenuPlanFlag('breakfastIncluded', this.checked)"> 朝食を含む
+            </label>
+          </div>
+
           <!-- 2行目：夕食・朝食販売価格、外注弁当固定原価 -->
           <div class="staffadd" style="margin-bottom:12px;">
             <span class="t-label">夕食販売価格（円）：</span>
@@ -760,6 +772,18 @@
                 <input type="text" id="newCategoryLabelInput" placeholder="項目名（例：貸切風呂利用）" style="width:180px;">
                 <button class="btn" onclick="addCustomMealCategory()">＋ 追加</button>
               </div>
+            </div>
+          </div>
+
+          <!-- 予約状況サマリーの表そのものの項目（列）を編集・追加・削除する -->
+          <div class="tablecard" style="padding:10px 12px;margin-bottom:12px;">
+            <div style="font-size:12px;font-weight:700;margin-bottom:6px;">予約状況サマリーの項目一覧（編集・追加・削除）</div>
+            <div style="font-size:11px;color:var(--muted-ink,#7a8a8e);margin-bottom:8px;">予約状況サマリー表の項目を、施設に合わせて自由に追加・削除できます。項目名を変更すると、その項目に対応するCSVの列見出しも変わるのでご注意ください。</div>
+            <div id="sumRowsSettings" style="display:flex;flex-direction:column;gap:4px;"></div>
+            <div class="staffadd" style="margin-top:10px;">
+              <span class="t-label">項目を追加：</span>
+              <input type="text" id="newSumRowLabelInput" placeholder="項目名（例：貸切風呂利用人数）" style="width:200px;">
+              <button class="btn" onclick="addCustomSumRow()">＋ 追加</button>
             </div>
           </div>
 
@@ -1218,8 +1242,15 @@ function isDinnerPlanNameHeuristic(planName){
   return planName.includes("一泊二食") || planName.includes("朝夕食付") || planName.includes("プランインクル");
 }
 
+// プラン名から「朝食が付くプランかどうか」を推定する
+function isBreakfastPlanNameHeuristic(planName){
+  if(!planName) return false;
+  return planName.includes("朝夕食付") || planName.includes("素泊まり") || planName.includes("プランインクル") || planName.includes("朝食");
+}
+
 // その日のプラン別内訳から、実際に予約されたプランに基づく夕食原価・人数を計算する。
-// 登録済みプランに一致すればその原価を、一致しない場合は夕食が付くプランと推定できる時だけ「使用中プラン」の原価を使う。
+// 登録済みプラン（食材原価率登録）に名前が一致すれば、そのプランの「夕食を含む」チェックの有無で判定する
+// （チェックが入っていなければ、その予約は夕食原価に含めない）。未登録のプラン名は、従来通りキーワードで推定する。
 // 内訳データが無い日はnullを返し、呼び出し側で従来通りの計算（1泊2食人数×使用中プラン原価）にフォールバックする。
 function calcPlanBreakdownDinnerCost(day){
   const breakdown = DAILY_PLAN_BREAKDOWN[day];
@@ -1231,13 +1262,39 @@ function calcPlanBreakdownDinnerCost(day){
     if(pax<=0) return;
     const registered = matchMenuPlanByName(planName);
     if(registered){
-      cost += pax * planTotalCost(registered);
-      count += pax;
+      if(registered.dinnerIncluded){
+        cost += pax * planTotalCost(registered);
+        count += pax;
+      }
+      // 登録済みだが「夕食を含む」がチェックされていない場合は、意図的に対象外（何もしない）
     } else if(isDinnerPlanNameHeuristic(planName)){
       cost += pax * fallbackCost;
       count += pax;
     }
     // それ以外（素泊まりプランなど、夕食が付かないと判断されるもの）は夕食原価に含めない
+  });
+  return { cost, count };
+}
+
+// 朝食版（夕食と同じ考え方）。登録済みプランの「朝食を含む」チェックの有無で判定する。
+function calcPlanBreakdownBreakfastCost(day){
+  const breakdown = DAILY_PLAN_BREAKDOWN[day];
+  if(!breakdown) return null;
+  const fallbackCost = totalBreakfastCost();
+  let cost = 0, count = 0;
+  Object.keys(breakdown).forEach(planName=>{
+    const pax = breakdown[planName] || 0;
+    if(pax<=0) return;
+    const registered = matchMenuPlanByName(planName);
+    if(registered){
+      if(registered.breakfastIncluded){
+        cost += pax * planBreakfastCostForCalc(registered);
+        count += pax;
+      }
+    } else if(isBreakfastPlanNameHeuristic(planName)){
+      cost += pax * fallbackCost;
+      count += pax;
+    }
   });
   return { cost, count };
 }
@@ -1264,6 +1321,10 @@ function newMenuCostPlan(year, season, courseName){
     bentoFixedCost: 0,
     courses: [],
     mealCategorySettings: newDefaultMealCategorySettings(),
+    // このプラン名（＝実際のinnto予約プラン名と一致させる）が、夕食・朝食を含むかどうか。
+    // どの施設でも共通で使うため、初期状態はどちらも未チェックにしておく（他施設の設定が紛れ込まないように）。
+    dinnerIncluded: false,
+    breakfastIncluded: false,
   };
 }
 
@@ -1363,6 +1424,49 @@ function calcChildPrice(category){
 }
 
 /* ===================== 食材原価率設定（夕食メニュー構成） ===================== */
+// 予約状況サマリーの表そのものの項目（SUMROWS）を編集・追加・削除する
+function renderSumRowsSettings(){
+  const wrap = document.getElementById("sumRowsSettings");
+  if(!wrap) return;
+  let html = "";
+  SUMROWS.forEach(([id,label])=>{
+    html += `<div style="display:flex;align-items:center;gap:8px;font-size:12px;">
+      <input type="text" value="${(label||"").replace(/"/g,"&quot;")}" onfocus="beginTextEditing()" onchange="renameSumRow('${id}', this.value)" onblur="endTextEditing()" style="flex:1;">
+      <button class="rmbtn" onclick="removeSumRow('${id}')">削除</button>
+    </div>`;
+  });
+  wrap.innerHTML = html;
+}
+
+function addCustomSumRow(){
+  const input = document.getElementById("newSumRowLabelInput");
+  const label = input.value.trim();
+  if(!label){ alert("項目名を入力してください"); return; }
+  const id = "custom_" + dpNewId();
+  SUMROWS.push([id, label, "row-" + id]);
+  input.value = "";
+  renderSumRowsSettings();
+  renderSummaryTable();
+  scheduleAutoSync();
+}
+
+function removeSumRow(id){
+  SUMROWS = SUMROWS.filter(row=>row[0]!==id);
+  renderSumRowsSettings();
+  renderSummaryTable();
+  recalc();
+  scheduleAutoSync();
+}
+
+function renameSumRow(id, newLabel){
+  const row = SUMROWS.find(r=>r[0]===id);
+  if(!row) return;
+  row[1] = newLabel;
+  renderSumRowsSettings();
+  renderSummaryTable();
+  scheduleAutoSync();
+}
+
 function renderMealCategorySettings(){
   const wrap = document.getElementById("mealCategorySettings");
   if(!wrap) return;
@@ -1559,6 +1663,7 @@ function renderMenuCostSection(){
   renderCopyFromPlanSelect();
   renderExistingMenuSelects();
   renderMealCategorySettings();
+  renderSumRowsSettings();
 
   const editForm = document.getElementById("menuPlanEditForm");
   const plan = getEditingMenuPlan();
@@ -1575,6 +1680,11 @@ function renderMenuCostSection(){
   if(priceEl) priceEl.value = plan.dinnerSellingPrice || '';
   if(breakfastPriceEl) breakfastPriceEl.value = plan.breakfastSellingPrice || '';
   if(bentoEl) bentoEl.value = plan.bentoFixedCost || '';
+
+  const planDinnerCb = document.getElementById("planDinnerIncludedCheckbox");
+  const planBreakfastCb = document.getElementById("planBreakfastIncludedCheckbox");
+  if(planDinnerCb) planDinnerCb.checked = !!plan.dinnerIncluded;
+  if(planBreakfastCb) planBreakfastCb.checked = !!plan.breakfastIncluded;
 
   const enabledCb = document.getElementById("childPricingEnabledCheckbox");
   const fieldsWrap = document.getElementById("childPricingFields");
@@ -1792,6 +1902,14 @@ function setMenuCourseCollapsed(courseId, collapsed){
   if(!c) return;
   c.collapsed = collapsed;
   renderMenuCostSection();
+  scheduleAutoSync();
+}
+
+function updateMenuPlanFlag(field, checked){
+  const plan = getEditingMenuPlan();
+  if(!plan) return;
+  plan[field] = checked;
+  recalc();
   scheduleAutoSync();
 }
 
@@ -2840,7 +2958,7 @@ document.addEventListener("click", (e)=>{
 });
 
 /* ===================== 予約状況サマリー ===================== */
-const SUMROWS = [
+let SUMROWS = [
   ["resrooms","予約部屋数","row-resrooms"],
   ["plainrooms","素泊まり部屋数","row-plainrooms"],
   ["plainguests","素泊まり人数","row-plainguests"],
@@ -3102,21 +3220,12 @@ function computeInntoSummaryAggregated(objs){
     matched++;
 
     const num = (v)=> parseInt((v||"0").toString().replace(/,/g,""),10) || 0;
-    setSumVal("resrooms", day, num(o["予約部屋数"]));
-    setSumVal("plainrooms", day, num(o["素泊まり部屋数"]));
-    // 「素泊まり人数」に対応する列がこのCSVには無いため、ここは自動更新しません（手入力のままにします）
-    setSumVal("twomealrooms", day, num(o["1泊2食部屋数"]));
-    setSumVal("twomealguests", day, num(o["1泊2食人数"]));
-    setSumVal("checkin", day, num(o["CI人数"]));
-    setSumVal("consecutive", day, num(o["連泊人数"]));
-    setSumVal("group", day, num(o["団体人数"]));
-    setSumVal("lunchbanquet", day, num(o["昼宴会人数"]));
-    setSumVal("dinnerbanquet", day, num(o["夜宴会人数"]));
-    setSumVal("freebreak", day, num(o["無料朝食人数"]));
-    setSumVal("ledger", day, num(o["台帳予約"]));
-    setSumVal("bento", day, num(o["弁当"]));
-    setSumVal("daytrip", day, num(o["日帰り"]));
-    setSumVal("banquet", day, num(o["宴会"]));
+    // SUMROWSを動的に走査してCSVの列と突き合わせる（後から追加した項目も、同じ見出しの列があれば自動的に取り込まれる）
+    SUMROWS.forEach(([id,label])=>{
+      if(id==="plainguests") return; // 「素泊まり人数」に対応する列がこのCSVには無いため、ここは自動更新しません（手入力のままにします）
+      if(!(label in o)) return; // CSVにこの項目に対応する列が無ければ、既存の値をそのまま保持する
+      setSumVal(id, day, num(o[label]));
+    });
   });
   recalc();
   scheduleAutoSync();
@@ -3353,12 +3462,13 @@ function recalc(){
     const bentoCost = activeBentoFixedCost();
 
     // innto連携でプラン名の内訳が届いている日は、実際に予約されたプランごとの原価で計算する（より正確）。
-    // 内訳が無い日（手入力の月など）は、従来通り「1泊2食人数×使用中プランの原価」で計算する。
+    // 内訳が無い日（手入力の月など）は、従来通り「1泊2食人数／無料朝食人数×使用中プランの原価」で計算する。
     const breakdownResult = calcPlanBreakdownDinnerCost(d);
     let dinnerN = breakdownResult ? breakdownResult.count : twomeal;
     let dinnerCost = breakdownResult ? breakdownResult.cost : (twomeal * perPersonDinnerCost);
-    let breakfastN = freeb;
-    let breakfastCost = freeb * perPersonBreakfastCost;
+    const breakfastBreakdownResult = calcPlanBreakdownBreakfastCost(d);
+    let breakfastN = breakfastBreakdownResult ? breakfastBreakdownResult.count : freeb;
+    let breakfastCost = breakfastBreakdownResult ? breakfastBreakdownResult.cost : (freeb * perPersonBreakfastCost);
 
     const activePlansForCategories = getActiveMenuPlans();
     const categoryKeysSet = new Set();
@@ -3438,6 +3548,7 @@ function collectState(){
     EVAL_ITEMS,
     LABOR_SETTINGS,
     MENU_COST_PLANS,
+    SUMROWS,
     DAILY_PLAN_BREAKDOWN,
     facilityBase: document.getElementById("facilityInput") ? document.getElementById("facilityInput").value : "35000",
     wagesVisible
@@ -3459,6 +3570,7 @@ function applyState(state){
     MENU_COST_PLANS = [Object.assign(newMenuCostPlan(CURRENT_YEAR, "", "既存の設定"), old, {id: dpNewId(), isActive: true})];
   }
   if(MENU_COST_CURRENT_EDIT_ID===null && MENU_COST_PLANS.length>0) MENU_COST_CURRENT_EDIT_ID = getActiveMenuPlan().id;
+  if(state.SUMROWS && Array.isArray(state.SUMROWS)) SUMROWS = state.SUMROWS;
   // 各プランに自分専用の設定が無い場合は、初期値（または旧バージョンで施設全体共有だった設定）を割り当てる
   MENU_COST_PLANS.forEach(p=>{
     if(!p.mealCategorySettings){
