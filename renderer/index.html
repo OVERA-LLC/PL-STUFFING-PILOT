@@ -432,6 +432,7 @@
       <a href="#cardsSection" class="sidebar-link" data-panel="cardsSection" onclick="sidebarNavigate(event,'cardsSection')">📈 月間サマリー</a>
       <a href="#panelSummary" class="sidebar-link" data-panel="panelSummary" onclick="sidebarNavigate(event,'panelSummary')">📅 予約状況サマリー</a>
       <a href="#panelJobSummary" class="sidebar-link" data-panel="panelJobSummary" id="sidebarLinkJobSummary" onclick="sidebarNavigate(event,'panelJobSummary')" style="display:none;">📊 仕事内容日別集計</a>
+      <a href="#panelOrder" class="sidebar-link" data-panel="panelOrder" onclick="sidebarNavigate(event,'panelOrder')">📦 発注</a>
 
       <div class="sidebar-group-label">人員配置</div>
       <a href="#panelDailyPilot" class="sidebar-link" data-panel="panelDailyPilot" onclick="sidebarNavigate(event,'panelDailyPilot')">🗂 Daily Pilot</a>
@@ -552,6 +553,40 @@
       <div class="tablecard">
         <div class="scroll">
           <table id="jobsummarytable"></table>
+        </div>
+      </div>
+    </details>
+
+    <details class="tabpanel" data-tab="order" id="panelOrder" open>
+      <summary><b>📦 発注（食材原価率登録の品目をもとに、日別・月間の必要数を自動計算）</b></summary>
+      <div style="font-size:11px;color:var(--muted-ink,#7a8a8e);margin-bottom:8px;">
+        1泊2食・無料朝食・弁当・日帰りなど、その日の予約人数から、登録済みプランの品目（品名）ごとに必要な数量を計算します。
+        inntoの実際の予約プラン内訳がある日はそれを使い、無い日は「使用中」のプランで代用します。
+        在庫は、日付が変わったタイミングで前日分の使用量が自動的に差し引かれます（同じ食材名・発注単位のものは、プラン・項目をまたいで在庫を共有します）。
+      </div>
+
+      <div style="font-size:12px;font-weight:700;color:var(--teal-deep);margin:6px 0 2px;">📅 1週間分の在庫予定</div>
+      <div class="staffadd" style="margin-bottom:8px;">
+        <span class="t-label">開始日：</span>
+        <input type="date" id="orderWeekStartInput" onchange="renderWeeklyStockTable()">
+        <span style="font-size:11px;color:var(--muted-ink,#7a8a8e);">選んだ日から7日間の、必要数と在庫の推移を表示します。</span>
+      </div>
+      <div class="tablecard">
+        <div class="scroll">
+          <table id="weeklyStockTable" class="sumtable"></table>
+        </div>
+      </div>
+
+      <div style="font-size:12px;font-weight:700;color:var(--teal-deep);margin:14px 0 2px;">🌙 夕食の発注（月間）</div>
+      <div class="tablecard">
+        <div class="scroll">
+          <table id="orderTableDinner" class="sumtable"></table>
+        </div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:var(--teal-deep);margin:14px 0 2px;">☀ 朝食の発注（月間）</div>
+      <div class="tablecard">
+        <div class="scroll">
+          <table id="orderTableBreakfast" class="sumtable"></table>
         </div>
       </div>
     </details>
@@ -1374,6 +1409,345 @@ function totalBreakfastCost(){
   return actives.reduce((s,p)=>s+planBreakfastCostForCalc(p),0) / actives.length;
 }
 
+/* ===================== 発注数計算（食材原価率登録の品目をもとに、日別・月間の必要数を算出） ===================== */
+
+// その日、指定した食事の種類（dinner/breakfast）を消費する人数を、プランごとに分けて集計する。
+// inntoの実際のプラン内訳（DAILY_PLAN_BREAKDOWN）があればそれを最優先で使う（より正確なため）。
+// 無ければ、使用中プランで代用する（複数ある場合は人数を均等に案分）。
+// 戻り値: Map<plan.id, {plan, pax}>
+function getMealConsumerGroups(day, mealType){
+  const groups = new Map();
+  function addToGroup(plan, pax){
+    if(!plan || !pax || pax<=0) return;
+    if(!groups.has(plan.id)) groups.set(plan.id, {plan, pax:0});
+    groups.get(plan.id).pax += pax;
+  }
+
+  const breakdown = DAILY_PLAN_BREAKDOWN[day];
+  if(breakdown && Object.keys(breakdown).length>0){
+    Object.keys(breakdown).forEach(planName=>{
+      const pax = breakdown[planName] || 0;
+      const registered = matchMenuPlanByName(planName);
+      if(registered) addToGroup(registered, pax);
+      // 未登録のプラン名は、品目が分からないため発注数の計算には使わない
+    });
+  } else {
+    const sumKey = mealType==="dinner" ? "twomealguests" : "freebreak";
+    const cnt = SUMMARY_VALUES[summaryKey(sumKey, day)] || 0;
+    if(cnt>0){
+      const actives = getActiveMenuPlans();
+      if(actives.length>0){
+        const per = cnt / actives.length;
+        actives.forEach(p=>addToGroup(p, per));
+      }
+    }
+  }
+
+  // 予約状況サマリーの各項目に、夕食・朝食を含める設定（団体・弁当・日帰りなど）で追加される人数も、同じ考え方で加算する
+  const activePlansForCategories = getActiveMenuPlans();
+  const categoryKeysSet = new Set();
+  activePlansForCategories.forEach(p=>{
+    if(p.mealCategorySettings) Object.keys(p.mealCategorySettings).forEach(k=>categoryKeysSet.add(k));
+  });
+  categoryKeysSet.forEach(catKey=>{
+    const settingSample = activePlansForCategories.map(p=>p.mealCategorySettings && p.mealCategorySettings[catKey]).find(s=>s);
+    if(!settingSample) return;
+    const included = activePlansForCategories.some(p=> p.mealCategorySettings && p.mealCategorySettings[catKey] && p.mealCategorySettings[catKey][mealType]);
+    if(!included) return;
+
+    if(settingSample.type==="planname"){
+      const breakdownPax = (DAILY_PLAN_BREAKDOWN[day] && DAILY_PLAN_BREAKDOWN[day][settingSample.label]) || 0;
+      if(breakdownPax<=0) return;
+      const registered = matchMenuPlanByName(settingSample.label);
+      if(registered){
+        addToGroup(registered, breakdownPax);
+      } else if(activePlansForCategories.length>0){
+        const per = breakdownPax / activePlansForCategories.length;
+        activePlansForCategories.forEach(p=>addToGroup(p, per));
+      }
+    } else {
+      const matchingRow = SUMROWS.find(r=>r[1]===settingSample.label);
+      const sumRowId = matchingRow ? matchingRow[0] : catKey;
+      const cnt = SUMMARY_VALUES[summaryKey(sumRowId, day)] || 0;
+      if(cnt<=0) return;
+      if(activePlansForCategories.length>0){
+        const per = cnt / activePlansForCategories.length;
+        activePlansForCategories.forEach(p=>addToGroup(p, per));
+      }
+    }
+  });
+
+  return groups;
+}
+
+// その日・その食事の種類について、登録済み品目ごとの必要数を積み上げる（品目1つ＝1人前として計算）
+function getDayIngredientOrders(day, mealType){
+  const groups = getMealConsumerGroups(day, mealType);
+  const items = new Map();
+  groups.forEach(({plan, pax})=>{
+    (plan.courses||[]).forEach(course=>{
+      if((course.mealType||"dinner")!==mealType) return;
+      (course.items||[]).forEach(it=>{
+        if(!it.name) return;
+        const rawQty = (it.qty===undefined || it.qty===null || it.qty==="") ? 1 : (parseFloat(it.qty)||0); // 未設定の品目は従来通り1人前=1として扱う
+        const perServingQty = Math.max(0, rawQty); // マイナスが入力されていた場合、在庫が誤って増えてしまうため0として扱う
+        const key = `${course.name}__${it.name}__${it.unit||""}`;
+        if(!items.has(key)) items.set(key, { courseName: course.name, name: it.name, unit: it.unit, orderUnit: it.orderUnit||"", orderUnitRatio: it.orderUnitRatio||0, qty: 0 });
+        items.get(key).qty += pax * perServingQty;
+      });
+    });
+  });
+  return items;
+}
+
+// 実際に発注する数量に変換する（発注単位・換算数が設定されていれば、そちらに換算して切り上げる）
+function convertToOrderQty(rawQty, item){
+  if(item.orderUnit && item.orderUnitRatio && item.orderUnitRatio>0){
+    return { qty: Math.ceil(rawQty / item.orderUnitRatio), unit: item.orderUnit };
+  }
+  return { qty: Math.ceil(rawQty), unit: item.unit };
+}
+
+/* ===================== 在庫管理（食材名＋発注単位で、プラン・コースをまたいで共有する） ===================== */
+let INGREDIENT_STOCK = {}; // key: "食材名__最終単位" -> { stock: 数量 }
+// 「年-月-日」ごとに、その日実際に在庫から差し引いた数量（食材キーごと）を記録しておく。
+// 毎回ゼロから引き直すのではなく、前回差し引いた量との「差分」だけを反映することで、
+// 後からより正確な予約データ（プラン内訳）が届いた場合でも、過不足なく在庫に反映できるようにする。
+let STOCK_DEDUCTED_AMOUNTS = {}; // "年-月-日" -> { "食材キー": 数量 }
+
+// その品目の「最終的な発注単位」を返す（発注単位の換算設定があればそちら、無ければ通常の単位）
+function getItemFinalUnit(item){
+  return (item.orderUnit && item.orderUnitRatio && item.orderUnitRatio>0) ? item.orderUnit : (item.unit||"");
+}
+
+// 在庫を管理する上でのキー（食材名＋最終単位）。プラン・コースが違っても、同じ食材名・同じ単位なら在庫を共有する。
+function getIngredientStockKey(item){
+  return `${item.name}__${getItemFinalUnit(item)}`;
+}
+
+function getIngredientStock(key){
+  return (INGREDIENT_STOCK[key] && INGREDIENT_STOCK[key].stock) || 0;
+}
+
+function setIngredientStock(key, value){
+  if(!INGREDIENT_STOCK[key]) INGREDIENT_STOCK[key] = { stock: 0 };
+  INGREDIENT_STOCK[key].stock = value;
+  scheduleAutoSync();
+}
+
+// 入荷登録：発注したものが届いたら、指定した数量を在庫に足す
+function addIngredientStockDelivery(key, amount){
+  if(!amount || amount<=0) return;
+  if(!INGREDIENT_STOCK[key]) INGREDIENT_STOCK[key] = { stock: 0 };
+  INGREDIENT_STOCK[key].stock += amount;
+  renderOrderTable();
+  scheduleAutoSync();
+}
+
+// 実際の日付が変わったタイミングで、「今月の、すでに終わった日」の使用量を自動で在庫から引く。
+// 毎回すべての対象日を計算し直し、前回差し引いた量との「差分」だけを在庫に反映する。
+// これにより、後からより正確な予約データが届いた場合でも正しく調整され、何度実行しても結果が変わらない（二重に引かれない）。
+// 表示中の年月が今の実際の年月と違う場合は、安全のため何もしない（間違った月のデータで引いてしまうのを防ぐ）。
+function performAutoStockDeduction(){
+  const now = new Date();
+  const todayY = now.getFullYear(), todayM = now.getMonth()+1, todayD = now.getDate();
+  if(CURRENT_YEAR !== todayY || CURRENT_MONTH !== todayM) return;
+  let changedAny = false;
+  for(let d=1; d<todayD; d++){
+    const dateKey = `${CURRENT_YEAR}-${CURRENT_MONTH}-${d}`;
+    // 同じ食材が複数の項目（コース）に登場する場合、項目ごとに切り上げると実際より多く引かれてしまうため、
+    // まず食材ごとに「生の必要数」を合算し、最後に一度だけ発注単位へ換算・切り上げる。
+    const rawTotals = {}; // key -> { raw合計, 換算に使う情報 }
+    ["dinner","breakfast"].forEach(mealType=>{
+      const dayItems = getDayIngredientOrders(d, mealType);
+      dayItems.forEach(info=>{
+        if(info.qty<=0) return;
+        const key = getIngredientStockKey(info);
+        if(!rawTotals[key]) rawTotals[key] = { raw: 0, info };
+        rawTotals[key].raw += info.qty;
+      });
+    });
+    const newAmounts = {};
+    Object.keys(rawTotals).forEach(key=>{
+      const { raw, info } = rawTotals[key];
+      const { qty } = convertToOrderQty(raw, info);
+      if(qty>0) newAmounts[key] = qty;
+    });
+    const oldAmounts = STOCK_DEDUCTED_AMOUNTS[dateKey] || {};
+    const allKeys = new Set([...Object.keys(oldAmounts), ...Object.keys(newAmounts)]);
+    allKeys.forEach(key=>{
+      const diff = (newAmounts[key] || 0) - (oldAmounts[key] || 0);
+      if(diff===0) return;
+      if(!INGREDIENT_STOCK[key]) INGREDIENT_STOCK[key] = { stock: 0 };
+      INGREDIENT_STOCK[key].stock -= diff; // 必要量が増えていれば追加で差し引き、減っていれば差し引いた分を戻す
+      changedAny = true;
+    });
+    if(Object.keys(newAmounts).length>0 || Object.keys(oldAmounts).length>0){
+      STOCK_DEDUCTED_AMOUNTS[dateKey] = newAmounts;
+      changedAny = true;
+    }
+  }
+  if(changedAny) scheduleAutoSync();
+}
+
+// 月間全体：日ごとの発注数一覧（品目一覧＋日別の数量）を、夕食・朝食それぞれについてまとめる
+function computeMonthlyOrderData(){
+  const result = { dinner: new Map(), breakfast: new Map() }; // key: courseName__itemName__unit -> {courseName, name, unit, orderUnit, orderUnitRatio, byDay:{d:qty}}
+  ["dinner","breakfast"].forEach(mealType=>{
+    for(let d=1; d<=DAYS; d++){
+      const dayItems = getDayIngredientOrders(d, mealType);
+      dayItems.forEach((info, key)=>{
+        if(!result[mealType].has(key)){
+          result[mealType].set(key, { courseName: info.courseName, name: info.name, unit: info.unit, orderUnit: info.orderUnit, orderUnitRatio: info.orderUnitRatio, byDay: {} });
+        }
+        result[mealType].get(key).byDay[d] = (result[mealType].get(key).byDay[d] || 0) + info.qty;
+      });
+    }
+  });
+  return result;
+}
+
+// 選んだ開始日から7日間の、食材ごとの必要数と在庫の推移を計算・表示する。
+// 表示中の年月（CURRENT_YEAR/CURRENT_MONTH）の範囲外の日付は、データが無いため計算対象外になる。
+let WEEKLY_STOCK_ROWS = []; // 直近の描画内容（入荷ボタンから参照するため保持）
+function renderWeeklyStockTable(){
+  const table = document.getElementById("weeklyStockTable");
+  if(!table) return;
+  const startInput = document.getElementById("orderWeekStartInput");
+  if(!startInput) return;
+  if(!startInput.value){
+    const now = new Date();
+    startInput.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+  }
+  const startDate = new Date(startInput.value + "T00:00:00");
+
+  const days = [];
+  for(let i=0; i<7; i++){
+    const d = new Date(startDate.getTime() + i*86400000);
+    const inCurrentMonth = (d.getFullYear()===CURRENT_YEAR && (d.getMonth()+1)===CURRENT_MONTH);
+    days.push({ day: d.getDate(), inCurrentMonth, label: `${d.getMonth()+1}/${d.getDate()}` });
+  }
+
+  const ingredientNeeds = new Map(); // key -> { name, unit, byDayIndex: [7個] }
+  days.forEach((dayInfo, idx)=>{
+    if(!dayInfo.inCurrentMonth) return;
+    // 同じ食材が複数の項目（コース）に登場する場合、項目ごとに切り上げると実際より多くなってしまうため、
+    // まず食材ごとに「生の必要数」を合算し、最後に一度だけ発注単位へ換算・切り上げる。
+    const rawTotals = {};
+    ["dinner","breakfast"].forEach(mealType=>{
+      const dayItems = getDayIngredientOrders(dayInfo.day, mealType);
+      dayItems.forEach(info=>{
+        if(info.qty<=0) return;
+        const key = getIngredientStockKey(info);
+        if(!rawTotals[key]) rawTotals[key] = { raw: 0, info };
+        rawTotals[key].raw += info.qty;
+      });
+    });
+    Object.keys(rawTotals).forEach(key=>{
+      const { raw, info } = rawTotals[key];
+      const { qty, unit } = convertToOrderQty(raw, info);
+      if(qty<=0) return;
+      if(!ingredientNeeds.has(key)) ingredientNeeds.set(key, { name: info.name, unit, byDayIndex: new Array(7).fill(0) });
+      ingredientNeeds.get(key).byDayIndex[idx] += qty;
+    });
+  });
+
+  if(ingredientNeeds.size===0){
+    table.innerHTML = `<tbody><tr><td style="padding:10px;color:var(--muted-ink,#7a8a8e);">この期間に該当する食材データがありません（表示中の月の範囲外の日付は計算対象外です）。</td></tr></tbody>`;
+    WEEKLY_STOCK_ROWS = [];
+    return;
+  }
+
+  const rows = [...ingredientNeeds.entries()].sort((a,b)=>String(a[1].name).localeCompare(String(b[1].name),"ja"));
+  WEEKLY_STOCK_ROWS = rows.map(([key, info])=>({ key, name: info.name, unit: info.unit }));
+
+  let thead = `<thead><tr><th class="staffcol">食材名</th><th style="width:70px;">現在庫</th>`;
+  days.forEach(d=> thead += `<th>${d.label}${d.inCurrentMonth?"":"<br>(対象外)"}</th>`);
+  thead += `<th style="width:110px;">入荷登録</th></tr></thead>`;
+
+  let tbody = "<tbody>";
+  rows.forEach(([key, info], rowIdx)=>{
+    const currentStock = getIngredientStock(key);
+    let runningStock = currentStock;
+    tbody += `<tr><td class="staffcol">${info.name}（${info.unit}）</td>
+      <td><input type="number" step="any" class="price-input" value="${currentStock || ''}" placeholder="0" onfocus="beginTextEditing()" onchange="setIngredientStock('${key.replace(/'/g,"\\'")}', parseFloat(this.value)||0); renderWeeklyStockTable();" onblur="endTextEditing()" style="width:55px;"></td>`;
+    days.forEach((d, idx)=>{
+      const need = info.byDayIndex[idx];
+      runningStock -= need;
+      const shortage = runningStock < 0;
+      const style = shortage ? "background:#FCE8E8;color:#8C2F2F;font-weight:700;" : "";
+      tbody += `<td style="${style}">${need>0?`必要${need.toLocaleString()}<br>`:""}残${runningStock.toLocaleString()}</td>`;
+    });
+    tbody += `<td>
+      <input type="number" step="any" placeholder="数量" id="restockInput_${rowIdx}" style="width:55px;">
+      <button class="rmbtn" onclick="submitRestock(${rowIdx})">入荷</button>
+    </td></tr>`;
+  });
+  tbody += "</tbody>";
+  table.innerHTML = thead + tbody;
+}
+
+function submitRestock(rowIdx){
+  const row = WEEKLY_STOCK_ROWS[rowIdx];
+  if(!row) return;
+  const input = document.getElementById(`restockInput_${rowIdx}`);
+  const amount = parseFloat(input.value) || 0;
+  if(amount<=0){ alert("入荷した数量を入力してください。"); return; }
+  addIngredientStockDelivery(row.key, amount);
+  renderWeeklyStockTable();
+}
+
+function renderOrderTable(){
+  const dinnerTable = document.getElementById("orderTableDinner");
+  const breakfastTable = document.getElementById("orderTableBreakfast");
+  if(!dinnerTable && !breakfastTable) return; // パネルが未表示の時は計算をスキップ（負荷軽減）
+  renderWeeklyStockTable();
+
+  const data = computeMonthlyOrderData();
+  const colgroup = buildAlignedColgroup();
+
+  function buildTable(table, mealData, emptyMessage){
+    if(!table) return;
+    if(mealData.size===0){
+      table.innerHTML = `<tbody><tr><td style="padding:10px;color:var(--muted-ink,#7a8a8e);">${emptyMessage}</td></tr></tbody>`;
+      return;
+    }
+    let thead = `<thead><tr><th class='staffcol'${cellW(true)}>品名</th>`;
+    for(let d=1; d<=DAYS; d++) thead += `<th${cellW(false)}>${d}日</th>`;
+    thead += `<th${cellW(false)}>月間合計</th></tr><tr class='wk'><th class='staffcol'${cellW(true)}>曜日</th>`;
+    for(let d=1; d<=DAYS; d++) thead += `<th class="${wkClass(d)}"${cellW(false)}>${weekdayOf(d)}</th>`;
+    thead += `<th${cellW(false)}></th></tr></thead>`;
+
+    // 項目（コース）名でグループ化して見出しを挟みながら表示する
+    const grouped = new Map();
+    [...mealData.values()].forEach(item=>{
+      if(!grouped.has(item.courseName)) grouped.set(item.courseName, []);
+      grouped.get(item.courseName).push(item);
+    });
+
+    let tbody = "<tbody>";
+    [...grouped.keys()].sort((a,b)=>String(a).localeCompare(String(b),"ja")).forEach(courseName=>{
+      tbody += `<tr><td class="staffcol" colspan="${DAYS+2}" style="text-align:left;font-weight:700;background:var(--paper-soft);">${courseName}</td></tr>`;
+      grouped.get(courseName).sort((a,b)=>String(a.name).localeCompare(String(b.name),"ja")).forEach(item=>{
+        let monthTotal = 0;
+        const displayUnit = (item.orderUnit && item.orderUnitRatio && item.orderUnitRatio>0) ? item.orderUnit : item.unit;
+        tbody += `<tr><td class="staffcol"${cellW(true)}>${item.name}${displayUnit?`（${displayUnit}）`:""}</td>`;
+        for(let d=1; d<=DAYS; d++){
+          const { qty } = convertToOrderQty(item.byDay[d] || 0, item);
+          monthTotal += qty;
+          tbody += `<td${cellW(false)}>${qty>0 ? qty.toLocaleString() : ""}</td>`;
+        }
+        tbody += `<td${cellW(false)} style="font-weight:700;">${monthTotal.toLocaleString()}</td></tr>`;
+      });
+    });
+    tbody += "</tbody>";
+    table.innerHTML = colgroup + thead + tbody;
+  }
+
+  buildTable(dinnerTable, data.dinner, "夕食の項目（食材原価率登録）に品目が登録されていません。");
+  buildTable(breakfastTable, data.breakfast, "朝食の項目（食材原価率登録）に品目が登録されていません。");
+}
+
 // 使用中プランの、外注弁当など固定原価の平均値
 function activeBentoFixedCost(){
   const actives = getActiveMenuPlans();
@@ -1705,13 +2079,16 @@ function renderMenuCostSection(){
       </div>`;
     if(!collapsed){
       html += `<table class="menu-item-table" style="min-width:0;width:100%;"><thead><tr>
-        <th style="text-align:left;">品名</th><th style="width:80px;">単位</th><th style="width:90px;">価格（円）</th><th style="width:40px;"></th>
+        <th style="text-align:left;">品名</th><th style="width:60px;">数量<br>（1人前）</th><th style="width:70px;">単位</th><th style="width:80px;">価格（円）</th><th style="width:70px;">発注単位<br>（任意）</th><th style="width:60px;">換算数<br>（1発注単位）</th><th style="width:40px;"></th>
       </tr></thead><tbody>`;
       (course.items||[]).forEach(item=>{
         html += `<tr>
-          <td><input type="text" value="${(item.name||"").replace(/"/g,"&quot;")}" placeholder="品名（例：白身魚昆布締め）" onfocus="beginTextEditing()" onchange="updateMenuItem('${course.id}','${item.id}','name',this.value)" onblur="endTextEditing()" style="width:100%;"></td>
+          <td><input type="text" value="${(item.name||"").replace(/"/g,"&quot;")}" placeholder="品名（例：トマト）" onfocus="beginTextEditing()" onchange="updateMenuItem('${course.id}','${item.id}','name',this.value)" onblur="endTextEditing()" style="width:100%;"></td>
+          <td><input type="number" step="any" class="price-input" placeholder="1" value="${item.qty || ''}" onfocus="beginTextEditing()" onchange="updateMenuItem('${course.id}','${item.id}','qty',this.value)" onblur="endTextEditing()" style="width:100%;" title="1人前あたりの数量（例：1/4切れを2個使うなら数量2）"></td>
           <td><input type="text" value="${(item.unit||"").replace(/"/g,"&quot;")}" placeholder="例：尾" onfocus="beginTextEditing()" onchange="updateMenuItem('${course.id}','${item.id}','unit',this.value)" onblur="endTextEditing()" style="width:100%;"></td>
           <td><input type="number" step="any" class="price-input" placeholder="0" value="${item.price || ''}" onfocus="beginTextEditing()" onchange="updateMenuItem('${course.id}','${item.id}','price',this.value)" onblur="endTextEditing()" style="width:100%;"></td>
+          <td><input type="text" value="${(item.orderUnit||"").replace(/"/g,"&quot;")}" placeholder="例：玉" onfocus="beginTextEditing()" onchange="updateMenuItem('${course.id}','${item.id}','orderUnit',this.value)" onblur="endTextEditing()" style="width:100%;" title="実際に仕入れる単位（未入力なら「単位」欄と同じ単位のまま発注数を表示）"></td>
+          <td><input type="number" step="any" class="price-input" placeholder="1" value="${item.orderUnitRatio || ''}" onfocus="beginTextEditing()" onchange="updateMenuItem('${course.id}','${item.id}','orderUnitRatio',this.value)" onblur="endTextEditing()" style="width:100%;" title="発注単位1つに、上の「単位」が何個分含まれるか（例：1/4切れ×4＝玉1つなら4）"></td>
           <td><button class="rmbtn" onclick="removeMenuItem('${course.id}','${item.id}')">削除</button></td>
         </tr>`;
       });
@@ -1746,9 +2123,9 @@ function renderMenuCostSection(){
 // 例：「先付け」というグループの中に、いろんなプランで先付けとして使われた品名が並ぶ。
 // 食事の種類（夕食／朝食）は問わず、すべてのプランの項目を対象にする。
 function buildGroupedMenuItemList(){
-  // 品名・単位・価格がすべて完全に一致する品目は、選んでも計算結果に差が出ないため1件にまとめる。
-  // 品名が同じでも価格（または単位）が違う場合は、意味のある別の品目として両方とも残す。
-  const groups = new Map(); // courseName -> Map(重複判定キー -> {name, unit, price})
+  // 品名・数量・単位・価格がすべて完全に一致する品目は、選んでも計算結果に差が出ないため1件にまとめる。
+  // いずれか1つでも違う場合は、意味のある別の品目として両方とも残す。
+  const groups = new Map(); // courseName -> Map(重複判定キー -> {name, unit, price, qty})
   MENU_COST_PLANS.forEach(p=>{
     (p.courses||[]).forEach(c=>{
       const cName = c.name || "(項目名未設定)";
@@ -1756,9 +2133,10 @@ function buildGroupedMenuItemList(){
       const itemMap = groups.get(cName);
       (c.items||[]).forEach(it=>{
         if(!it.name) return;
-        const key = `${it.name}__${it.unit||""}__${it.price||0}`;
+        const qty = (it.qty===undefined || it.qty===null || it.qty==="") ? 1 : it.qty;
+        const key = `${it.name}__${it.unit||""}__${it.price||0}__${qty}`;
         if(itemMap.has(key)) return;
-        itemMap.set(key, { name: it.name, unit: it.unit, price: it.price });
+        itemMap.set(key, { name: it.name, unit: it.unit, price: it.price, qty });
       });
     });
   });
@@ -1812,9 +2190,9 @@ function renderExistingMenuModalList(){
       <div style="display:${expanded ? "flex" : "none"};flex-direction:column;padding-left:22px;">`;
     items.forEach(it=>{
       html += `<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:1px 0;cursor:pointer;">
-        <input type="checkbox" class="existing-menu-check" data-group-idx="${idx}" data-course="${cName.replace(/"/g,"&quot;")}" data-name="${(it.name||"").replace(/"/g,"&quot;")}" data-unit="${(it.unit||"").replace(/"/g,"&quot;")}" data-price="${it.price||0}">
+        <input type="checkbox" class="existing-menu-check" data-group-idx="${idx}" data-course="${cName.replace(/"/g,"&quot;")}" data-name="${(it.name||"").replace(/"/g,"&quot;")}" data-unit="${(it.unit||"").replace(/"/g,"&quot;")}" data-price="${it.price||0}" data-qty="${it.qty||1}">
         <span>${it.name}</span>
-        <span style="color:var(--muted-ink,#7a8a8e);">（${it.unit||"-"} ／ ¥${Math.round(it.price||0).toLocaleString()}）</span>
+        <span style="color:var(--muted-ink,#7a8a8e);">（${it.qty||1}${it.unit||"-"} ／ ¥${Math.round(it.price||0).toLocaleString()}）</span>
       </label>`;
     });
     html += `</div></div>`;
@@ -1851,7 +2229,7 @@ function addCheckedExistingMenuItems(){
 
   Array.from(checkedBoxes).forEach(cb=>{
     const courseName = cb.dataset.course;
-    const newItem = { id: dpNewId(), name: cb.dataset.name, unit: cb.dataset.unit, price: parseFloat(cb.dataset.price) || 0 };
+    const newItem = { id: dpNewId(), name: cb.dataset.name, unit: cb.dataset.unit, price: parseFloat(cb.dataset.price) || 0, qty: parseFloat(cb.dataset.qty) || 1 };
     let targetCourse = plan.courses.find(c=>(c.mealType||"dinner")===targetMealType && c.name===courseName);
     if(!targetCourse){
       targetCourse = { id: dpNewId(), name: courseName, mealType: targetMealType, items: [] };
@@ -1944,7 +2322,7 @@ function addMenuItem(courseId){
   const plan = getEditingMenuPlan();
   const c = plan && plan.courses.find(c=>c.id===courseId);
   if(!c) return;
-  c.items.push({ id: dpNewId(), name: "", unit: "", price: 0 });
+  c.items.push({ id: dpNewId(), name: "", unit: "", price: 0, qty: 1 });
   renderMenuCostSection();
   scheduleAutoSync();
 }
@@ -1964,7 +2342,7 @@ function updateMenuItem(courseId, itemId, field, value){
   const c = plan && plan.courses.find(c=>c.id===courseId);
   const it = c && c.items.find(it=>it.id===itemId);
   if(!it) return;
-  it[field] = field==="price" ? (parseFloat(value)||0) : value;
+  it[field] = (field==="price" || field==="qty" || field==="orderUnitRatio") ? (parseFloat(value)||0) : value;
   renderMenuCostSection();
   recalc();
   scheduleAutoSync();
@@ -3609,6 +3987,8 @@ function recalc(){
   `;
   updateAttendanceSummary();
   renderLaborPanel();
+  performAutoStockDeduction();
+  renderOrderTable();
 }
 function setText(prefix,day,val){
   const el = document.getElementById(`${prefix}-${day}`);
@@ -3628,6 +4008,8 @@ function collectState(){
     LABOR_SETTINGS,
     MENU_COST_PLANS,
     SUMROWS,
+    INGREDIENT_STOCK,
+    STOCK_DEDUCTED_AMOUNTS,
     DAILY_PLAN_BREAKDOWN,
     facilityBase: document.getElementById("facilityInput") ? document.getElementById("facilityInput").value : "35000",
     wagesVisible
@@ -3650,6 +4032,8 @@ function applyState(state){
   }
   if(MENU_COST_CURRENT_EDIT_ID===null && MENU_COST_PLANS.length>0) MENU_COST_CURRENT_EDIT_ID = getActiveMenuPlan().id;
   if(state.SUMROWS && Array.isArray(state.SUMROWS)) SUMROWS = state.SUMROWS;
+  if(state.INGREDIENT_STOCK) INGREDIENT_STOCK = state.INGREDIENT_STOCK;
+  if(state.STOCK_DEDUCTED_AMOUNTS) STOCK_DEDUCTED_AMOUNTS = state.STOCK_DEDUCTED_AMOUNTS;
   // 「チェックイン人数」「1泊2食部屋数」「1泊2食人数」は、CSVの自動取込に使う項目名と一致している必要がある。
   // ただし、すでに認識できる表記（正式名、または既知の言い換え）になっていればそのまま尊重し、
   // 誤字や想定外の表記（例：「チェクイン人数」「１泊２食数」）の時だけ、正しい項目名に自動で戻す。
@@ -3815,7 +4199,7 @@ async function loadFromDesktopApp(){
 /* ===================== サイドバー：ナビゲーション・表示モード ===================== */
 let VIEW_MODE = "all"; // "all"（全部表示）| "one"（1つずつ表示）
 let SIDEBAR_ACTIVE_PANEL = "panelSummary";
-const SIDEBAR_PANEL_IDS = ["panelSummary","panelJobSummary","panelDailyPilot","panelStaff","panelDailyPL","panelEvaluation","panelLabor","staffAddSection","facilityCostSection","menuCostSection","menuCostCompareSection","manualSection","cardsSection"];
+const SIDEBAR_PANEL_IDS = ["panelSummary","panelJobSummary","panelOrder","panelDailyPilot","panelStaff","panelDailyPL","panelEvaluation","panelLabor","staffAddSection","facilityCostSection","menuCostSection","menuCostCompareSection","manualSection","cardsSection"];
 
 function sidebarNavigate(evt, panelId){
   if(evt) evt.preventDefault();
