@@ -92,6 +92,20 @@
   input.price-input::-webkit-outer-spin-button,
   input.price-input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
   input.price-input{ -moz-appearance:textfield; }
+  /* 在庫かんたん入力ヘルパー（電卓小窓） */
+  .stock-helper-overlay{position:fixed;inset:0;background:rgba(20,30,50,0.45);z-index:1000;display:flex;align-items:center;justify-content:center;}
+  .stock-helper-box{background:#fff;border-radius:12px;padding:18px 20px;width:340px;max-width:92vw;box-shadow:0 12px 36px rgba(0,0,0,0.3);font-size:12.5px;}
+  .stock-helper-title{font-weight:700;color:var(--teal-deep);font-size:14px;margin-bottom:4px;}
+  .stock-helper-sub{font-size:11px;color:#7a8a8e;margin-bottom:10px;line-height:1.6;}
+  .stock-helper-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
+  .stock-helper-row input{width:80px;padding:4px 6px;font-size:13px;border:1px solid var(--line);border-radius:6px;}
+  .stock-helper-result{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:10px 0;font-size:12.5px;line-height:1.7;}
+  .stock-helper-result b{color:var(--teal-deep);font-size:15px;}
+  .stock-helper-btns{display:flex;gap:8px;justify-content:flex-end;}
+  .stock-helper-btns button{padding:6px 14px;border-radius:7px;border:1px solid var(--line);background:#fff;cursor:pointer;font-family:inherit;font-size:12.5px;}
+  .stock-helper-btns button.primary{background:var(--teal-deep);color:#fff;border-color:var(--teal-deep);font-weight:700;}
+  .stock-helper-calcbtn{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;font-size:12px;padding:2px 5px;line-height:1;}
+  .stock-helper-calcbtn:hover{background:var(--paper);}
   .dp-gauge-edit{flex:0 0 auto;background:rgba(255,255,255,0.3);color:#fff;border:none;width:16px;height:16px;line-height:16px;font-size:10px;border-radius:4px;margin-right:2px;cursor:pointer;padding:0;}
   .dp-gauge-del{flex:0 0 auto;background:rgba(0,0,0,0.25);color:#fff;border:none;width:14px;height:14px;line-height:14px;font-size:10px;border-radius:50%;margin:0 3px;cursor:pointer;}
   .dp-floor-head{font-weight:700;color:var(--teal-deep);font-size:13px;margin:4px 0 8px;}
@@ -1647,7 +1661,7 @@ function renderWeeklyStockTable(){
       const { raw, info } = rawTotals[key];
       const { qty, unit } = convertToOrderQty(raw, info);
       if(qty<=0) return;
-      if(!ingredientNeeds.has(key)) ingredientNeeds.set(key, { name: info.name, unit, byDayIndex: new Array(7).fill(0) });
+      if(!ingredientNeeds.has(key)) ingredientNeeds.set(key, { name: info.name, unit, rawUnit: info.unit || "", ratio: (info.orderUnit && info.orderUnitRatio>0) ? info.orderUnitRatio : 0, byDayIndex: new Array(7).fill(0) });
       ingredientNeeds.get(key).byDayIndex[idx] += qty;
     });
   });
@@ -1659,7 +1673,7 @@ function renderWeeklyStockTable(){
   }
 
   const rows = [...ingredientNeeds.entries()].sort((a,b)=>String(a[1].name).localeCompare(String(b[1].name),"ja"));
-  WEEKLY_STOCK_ROWS = rows.map(([key, info])=>({ key, name: info.name, unit: info.unit }));
+  WEEKLY_STOCK_ROWS = rows.map(([key, info])=>({ key, name: info.name, unit: info.unit, rawUnit: info.rawUnit || "", ratio: info.ratio || 0 }));
 
   let thead = `<thead><tr><th class="staffcol">食材名</th><th style="width:70px;">現在庫</th>`;
   days.forEach(d=> thead += `<th>${d.label}${d.inCurrentMonth?"":"<br>(対象外)"}</th>`);
@@ -1670,7 +1684,7 @@ function renderWeeklyStockTable(){
     const currentStock = getIngredientStock(key);
     let runningStock = currentStock;
     tbody += `<tr><td class="staffcol">${info.name}（${info.unit}）</td>
-      <td><input type="number" step="any" class="price-input" value="${currentStock || ''}" placeholder="0" onfocus="beginTextEditing()" onchange="setIngredientStock('${key.replace(/'/g,"\\'")}', parseFloat(this.value)||0); renderWeeklyStockTable();" onblur="endTextEditing()" style="width:55px;"></td>`;
+      <td style="white-space:nowrap;"><input type="number" step="any" class="price-input" value="${currentStock || ''}" placeholder="0" onfocus="beginTextEditing()" onchange="setIngredientStock('${key.replace(/'/g,"\\'")}', parseFloat(this.value)||0); renderWeeklyStockTable();" onblur="endTextEditing()" style="width:55px;"><button class="stock-helper-calcbtn" onclick="openStockHelper(${rowIdx},'stock')" title="内容量×個数から、かんたんに計算して入力">🧮</button></td>`;
     days.forEach((d, idx)=>{
       const need = info.byDayIndex[idx];
       runningStock -= need;
@@ -1678,8 +1692,8 @@ function renderWeeklyStockTable(){
       const style = shortage ? "background:#FCE8E8;color:#8C2F2F;font-weight:700;" : "";
       tbody += `<td style="${style}">${need>0?`必要${need.toLocaleString()}<br>`:""}残${runningStock.toLocaleString()}</td>`;
     });
-    tbody += `<td>
-      <input type="number" step="any" placeholder="数量" id="restockInput_${rowIdx}" style="width:55px;">
+    tbody += `<td style="white-space:nowrap;">
+      <input type="number" step="any" placeholder="数量" id="restockInput_${rowIdx}" style="width:55px;"><button class="stock-helper-calcbtn" onclick="openStockHelper(${rowIdx},'restock')" title="内容量×個数から、かんたんに計算して入力">🧮</button>
       <button class="rmbtn" onclick="submitRestock(${rowIdx})">入荷</button>
     </td></tr>`;
   });
@@ -1695,6 +1709,110 @@ function submitRestock(rowIdx){
   if(amount<=0){ alert("入荷した数量を入力してください。"); return; }
   addIngredientStockDelivery(row.key, amount);
   renderWeeklyStockTable();
+}
+
+/* ===================== 在庫かんたん入力ヘルパー（電卓小窓） =====================
+ * 「1個あたりの量 × 個数」を入れるだけで、換算数を使って発注単位（箱・パック等）に
+ * 自動変換し、現在庫／入荷登録の欄へ入力してくれる小窓。
+ * 例）アガーが500g×10袋で1箱（換算数5000）→「500」「10」と入れると「1箱」と計算される。
+ */
+let STOCK_HELPER_CTX = null; // { rowIdx, target: "stock" | "restock" }
+
+function openStockHelper(rowIdx, target){
+  const row = WEEKLY_STOCK_ROWS[rowIdx];
+  if(!row) return;
+  closeStockHelper();
+  STOCK_HELPER_CTX = { rowIdx, target };
+  const ratio = row.ratio || 0;
+  const rawUnit = row.rawUnit || row.unit || "";
+  const finalUnit = row.unit || "";
+  const targetLabel = target === "stock" ? "現在庫" : "入荷登録";
+  const ratioNote = ratio > 0
+    ? `この食材は「1${finalUnit}＝${ratio.toLocaleString()}${rawUnit}」で登録されています。手元の量を${rawUnit}で入れると、${finalUnit}数に自動で換算します。`
+    : `この食材は換算設定が無いため、そのまま「${finalUnit}」の数で計算します。`;
+  const overlay = document.createElement("div");
+  overlay.id = "stockHelperOverlay";
+  overlay.className = "stock-helper-overlay";
+  overlay.addEventListener("click", (e)=>{ if(e.target === overlay) closeStockHelper(); });
+  overlay.innerHTML = `
+    <div class="stock-helper-box">
+      <div class="stock-helper-title">🧮 ${row.name} の${targetLabel}をかんたん入力</div>
+      <div class="stock-helper-sub">${ratioNote}<br>例）500${rawUnit}入りの袋が10個 →「500」「10」</div>
+      <div class="stock-helper-row">
+        <span>1個あたりの量</span>
+        <input type="number" step="any" id="stockHelperPer" placeholder="例：500" oninput="updateStockHelperCalc()">
+        <span>${rawUnit}</span>
+        <span>×</span>
+        <span>個数</span>
+        <input type="number" step="any" id="stockHelperCount" placeholder="例：10" value="1" oninput="updateStockHelperCalc()">
+        <span>個</span>
+      </div>
+      <div class="stock-helper-result" id="stockHelperResult">量を入力してください</div>
+      <div class="stock-helper-btns">
+        <button onclick="closeStockHelper()">閉じる</button>
+        <button class="primary" id="stockHelperApplyBtn" onclick="applyStockHelper()" disabled>この値を${targetLabel}に入力</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const per = document.getElementById("stockHelperPer");
+  if(per) per.focus();
+}
+
+function stockHelperComputed(){
+  const row = STOCK_HELPER_CTX ? WEEKLY_STOCK_ROWS[STOCK_HELPER_CTX.rowIdx] : null;
+  if(!row) return null;
+  const per = parseFloat((document.getElementById("stockHelperPer")||{}).value) || 0;
+  const count = parseFloat((document.getElementById("stockHelperCount")||{}).value) || 0;
+  if(per<=0 || count<=0) return null;
+  const ratio = row.ratio || 0;
+  const totalRaw = per * count;
+  const converted = ratio > 0 ? totalRaw / ratio : totalRaw;
+  // 小数第2位までに丸める（0.005箱のような極端な端数は表示上見やすく）
+  const rounded = Math.round(converted * 100) / 100;
+  return { row, totalRaw, converted: rounded };
+}
+
+function updateStockHelperCalc(){
+  const resultEl = document.getElementById("stockHelperResult");
+  const applyBtn = document.getElementById("stockHelperApplyBtn");
+  if(!resultEl || !applyBtn) return;
+  const calc = stockHelperComputed();
+  if(!calc){
+    resultEl.textContent = "量を入力してください";
+    applyBtn.disabled = true;
+    return;
+  }
+  const { row, totalRaw, converted } = calc;
+  const rawUnit = row.rawUnit || row.unit || "";
+  const finalUnit = row.unit || "";
+  if(row.ratio > 0){
+    resultEl.innerHTML = `合計 ${totalRaw.toLocaleString()}${rawUnit} ÷ 換算数${row.ratio.toLocaleString()} ＝ <b>${converted.toLocaleString()} ${finalUnit}</b>`;
+  } else {
+    resultEl.innerHTML = `合計 <b>${converted.toLocaleString()} ${finalUnit}</b>`;
+  }
+  applyBtn.disabled = false;
+}
+
+function applyStockHelper(){
+  const calc = stockHelperComputed();
+  if(!calc || !STOCK_HELPER_CTX) return;
+  const { rowIdx, target } = STOCK_HELPER_CTX;
+  const { row, converted } = calc;
+  if(target === "stock"){
+    setIngredientStock(row.key, converted);
+    closeStockHelper();
+    renderWeeklyStockTable();
+  } else {
+    const input = document.getElementById(`restockInput_${rowIdx}`);
+    if(input) input.value = converted;
+    closeStockHelper();
+  }
+}
+
+function closeStockHelper(){
+  const overlay = document.getElementById("stockHelperOverlay");
+  if(overlay) overlay.remove();
+  STOCK_HELPER_CTX = null;
 }
 
 function renderOrderTable(){
