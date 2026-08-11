@@ -1,6 +1,6 @@
 {
   "name": "pl-stuffing-pilot",
-  "version": "1.4.9",
+  "version": "1.5.0",
   "description": "PL STUFFING PILOT",
   "main": "main.js",
   "author": "OVERA.LLC",
@@ -53,11 +53,15 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
     },
+    "releaseInfo": {
+      "releaseName": "PL STUFFING PILOT v1.5.0"
+    },
     "publish": [
       {
         "provider": "github",
         "owner": "OVERA-LLC",
-        "repo": "PL-STUFFING-PILOT"
+        "repo": "PL-STUFFING-PILOT",
+        "releaseType": "release"
       }
     ]
   }

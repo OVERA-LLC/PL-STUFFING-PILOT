@@ -1,6 +1,8 @@
 // package.json の version を読み書きするための小さな補助スクリプト
 // バッチファイルの中に直接JSを書くと、Windowsのコマンド解析（クォートの扱い）と衝突するため、
 // このファイルに分離しています。
+// バージョンを更新すると、GitHubのリリースタイトル（build.releaseInfo.releaseName）も
+// 「PL STUFFING PILOT v○.○.○」の形で自動的に書き換えます。
 const fs = require("fs");
 const path = require("path");
 
@@ -18,6 +20,13 @@ if (cmd === "get") {
     process.exit(1);
   }
   pkg.version = newVersion;
+
+  // GitHubのリリースタイトルも一緒に更新する
+  const productName = (pkg.build && pkg.build.productName) || pkg.name;
+  if (!pkg.build) pkg.build = {};
+  if (!pkg.build.releaseInfo) pkg.build.releaseInfo = {};
+  pkg.build.releaseInfo.releaseName = `${productName} v${newVersion}`;
+
   fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf-8");
   console.log("OK");
 } else {
