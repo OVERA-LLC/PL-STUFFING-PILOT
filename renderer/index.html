@@ -337,6 +337,8 @@
   .colorbar:hover{opacity:1;background:rgba(0,0,0,0.04);}
   .color-popup{position:absolute;z-index:50;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.18);padding:10px;min-width:190px;}
   .color-popup-title{font-size:11px;font-weight:600;color:var(--teal-deep);margin-bottom:6px;}
+  /* 確認モーダルは複数行のメッセージを出すことがあるため、改行をそのまま表示する */
+  #confirmModalText{white-space:pre-line;font-size:12.5px;line-height:1.7;text-align:left;}
   .color-popup-row{display:flex;gap:6px;margin-bottom:8px;}
   .color-popup-row input[type=text]{flex:1;font-size:12px;padding:4px 6px;border:1px solid var(--line);border-radius:5px;}
   .color-popup-row input[type=color]{width:34px;height:30px;border:1px solid var(--line);border-radius:5px;padding:2px;cursor:pointer;}
@@ -1768,6 +1770,7 @@ function buildGroupedMenuItemList(){
 // 「既存のメニューから追加」のモーダル関連の状態
 let EXISTING_MENU_MODAL_MEAL_TYPE = "dinner"; // 今モーダルがどちらの食事向けに開かれているか
 let EXISTING_MENU_EXPANDED_INDEXES = new Set(); // 「±」で展開中の項目（コース）グループ
+let EXISTING_MENU_RENDERED = []; // 直近に描画した内容（削除ボタンから参照するため保持）
 
 function openExistingMenuModal(mealType){
   EXISTING_MENU_MODAL_MEAL_TYPE = mealType;
@@ -1799,9 +1802,11 @@ function renderExistingMenuModalList(){
     return;
   }
   const courseNames = [...groups.keys()].sort((a,b)=> String(a).localeCompare(String(b), "ja"));
+  EXISTING_MENU_RENDERED = [];
   let html = "";
   courseNames.forEach((cName, idx)=>{
     const items = [...groups.get(cName).values()].sort((a,b)=> String(a.name).localeCompare(String(b.name), "ja"));
+    EXISTING_MENU_RENDERED.push({ course: cName, items });
     const expanded = EXISTING_MENU_EXPANDED_INDEXES.has(idx);
     html += `<div style="border-bottom:1px solid var(--line);padding-bottom:2px;">
       <div style="display:flex;align-items:center;gap:6px;padding:3px 0;">
@@ -1810,16 +1815,71 @@ function renderExistingMenuModalList(){
         <button type="button" class="rmbtn" style="padding:1px 9px;font-size:12px;" onclick="toggleExistingMenuCourseExpand(${idx})">${expanded ? "－" : "＋"}</button>
       </div>
       <div style="display:${expanded ? "flex" : "none"};flex-direction:column;padding-left:22px;">`;
-    items.forEach(it=>{
-      html += `<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:1px 0;cursor:pointer;">
-        <input type="checkbox" class="existing-menu-check" data-group-idx="${idx}" data-course="${cName.replace(/"/g,"&quot;")}" data-name="${(it.name||"").replace(/"/g,"&quot;")}" data-unit="${(it.unit||"").replace(/"/g,"&quot;")}" data-price="${it.price||0}">
-        <span>${it.name}</span>
-        <span style="color:var(--muted-ink,#7a8a8e);">（${it.unit||"-"} ／ ¥${Math.round(it.price||0).toLocaleString()}）</span>
-      </label>`;
+    items.forEach((it, itemIdx)=>{
+      html += `<div style="display:flex;align-items:center;gap:6px;padding:1px 0;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;flex:1;cursor:pointer;">
+          <input type="checkbox" class="existing-menu-check" data-group-idx="${idx}" data-course="${cName.replace(/"/g,"&quot;")}" data-name="${(it.name||"").replace(/"/g,"&quot;")}" data-unit="${(it.unit||"").replace(/"/g,"&quot;")}" data-price="${it.price||0}">
+          <span>${it.name}</span>
+          <span style="color:var(--muted-ink,#7a8a8e);">（${it.unit||"-"} ／ ¥${Math.round(it.price||0).toLocaleString()}）</span>
+        </label>
+        <button type="button" class="rmbtn" style="padding:0 7px;font-size:11px;" title="この品名を、登録されているすべてのプランから削除します" onclick="deleteExistingMenuItem(${idx}, ${itemIdx})">削除</button>
+      </div>`;
     });
     html += `</div></div>`;
   });
   wrap.innerHTML = html;
+}
+
+// モーダル上の「削除」：その品名（品名・単位・価格が一致するもの）を、
+// 登録されているすべての食材原価率プランから取り除く。
+// 一覧の見た目だけを消すのではなく元データを消すため、必ず影響範囲を提示して確認をとる。
+function deleteExistingMenuItem(groupIdx, itemIdx){
+  const group = EXISTING_MENU_RENDERED[groupIdx];
+  const target = group && group.items[itemIdx];
+  if(!group || !target) return;
+  const courseName = group.course;
+
+  // 影響範囲（どのプランの何件が消えるか）を先に数える
+  const affected = []; // { planLabel, count }
+  let totalCount = 0;
+  MENU_COST_PLANS.forEach(p=>{
+    let count = 0;
+    (p.courses||[]).forEach(c=>{
+      if((c.name || "(項目名未設定)") !== courseName) return;
+      (c.items||[]).forEach(it=>{
+        if(it.name === target.name && (it.unit||"") === (target.unit||"") && (it.price||0) === (target.price||0)) count++;
+      });
+    });
+    if(count>0){
+      const label = `${p.year}年度 ${p.season||"（季節未設定）"} ${p.courseName||"（プラン名未設定）"}${p.isActive ? "【使用中】" : ""}`;
+      affected.push({ planLabel: label, count });
+      totalCount += count;
+    }
+  });
+
+  if(totalCount===0){
+    renderExistingMenuModalList();
+    return;
+  }
+
+  const planLines = affected.map(a=>`・${a.planLabel}（${a.count}件）`).join("\n");
+  const msg = `「${courseName}」の品名「${target.name}」（${target.unit||"-"} ／ ¥${Math.round(target.price||0).toLocaleString()}）を削除します。\n\n次のプランから取り除かれ、原価と原価率が再計算されます。\n${planLines}\n\nよろしいですか？`;
+
+  askConfirm(msg).then(ok=>{
+    if(!ok) return;
+    MENU_COST_PLANS.forEach(p=>{
+      (p.courses||[]).forEach(c=>{
+        if((c.name || "(項目名未設定)") !== courseName) return;
+        c.items = (c.items||[]).filter(it=>
+          !(it.name === target.name && (it.unit||"") === (target.unit||"") && (it.price||0) === (target.price||0))
+        );
+      });
+    });
+    renderExistingMenuModalList();
+    renderMenuCostSection();
+    recalc();
+    scheduleAutoSync();
+  });
 }
 
 // 項目（コース）名の「±」：品名の内訳を開閉する
