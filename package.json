@@ -1,6 +1,6 @@
 {
   "name": "pl-stuffing-pilot",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "PL STUFFING PILOT",
   "main": "main.js",
   "author": "OVERA.LLC",
@@ -54,7 +54,7 @@
       "createStartMenuShortcut": true
     },
     "releaseInfo": {
-      "releaseName": "PL STUFFING PILOT v1.5.1"
+      "releaseName": "PL STUFFING PILOT v1.5.2"
     },
     "publish": [
       {

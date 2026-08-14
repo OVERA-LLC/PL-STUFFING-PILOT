@@ -93,16 +93,22 @@ function createWindow() {
   autoUpdater.checkForUpdatesAndNotify();
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  // セッション保存先（userDataフォルダ）をcloudモジュールに知らせる。必ずウィンドウ作成前に行う。
+  cloud.init(app.getPath("userData"));
+
   createWindow();
   startBridgeServer();
 
   currentFacilityCode = loadFacilityCodeFromDisk();
-  if (currentFacilityCode) {
+
+  // 保存済みセッションがあれば自動ログイン扱いになる。
+  // ログイン済み かつ 施設コード設定済み の場合だけクラウド同期を開始する。
+  // （未ログインの場合は、renderer側のログイン画面でログインされた後、"auth:login" 経由で開始される）
+  const user = await cloud.getSessionUser();
+  if (user && currentFacilityCode) {
     startCloudSyncForFacility(currentFacilityCode);
   }
-  // 施設コードがまだ無い場合は、renderer側のオンボーディング画面で入力されたあと
-  // "facility:set" 経由で startCloudSyncForFacility が呼ばれる
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -125,12 +131,40 @@ ipcMain.handle("facility:get", async () => {
 
 ipcMain.handle("facility:set", async (event, code) => {
   saveFacilityCodeToDisk(code);
-  startCloudSyncForFacility(code);
+  const user = await cloud.getSessionUser();
+  if (user) {
+    startCloudSyncForFacility(code);
+  } else {
+    currentFacilityCode = code; // 未ログイン時はコードだけ覚えておき、ログイン後にsync開始
+  }
   return { ok: true };
 });
 
 ipcMain.handle("facility:verifyDeveloperCode", async (event, code) => {
   return code === DEVELOPER_UNLOCK_CODE;
+});
+
+/* ===================== ログイン関連のIPC ===================== */
+ipcMain.handle("auth:login", async (event, { email, password }) => {
+  try {
+    const user = await cloud.login(email, password);
+    // ログインできたら、施設コードが設定済みならその場でクラウド同期を開始する
+    if (currentFacilityCode) startCloudSyncForFacility(currentFacilityCode);
+    return { ok: true, user };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+
+ipcMain.handle("auth:logout", async () => {
+  cloud.unsubscribeFromChanges();
+  await cloud.logout();
+  return { ok: true };
+});
+
+ipcMain.handle("auth:status", async () => {
+  const user = await cloud.getSessionUser();
+  return { loggedIn: !!user, email: user ? user.email : null };
 });
 
 /* ===================== データの保存・読み込み（SQLite） ===================== */

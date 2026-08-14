@@ -15,6 +15,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
   onRealtimeStatus: (callback) => {
     ipcRenderer.on("cloud:realtime-status", (event, info) => callback(info));
   },
+  login: (email, password) => ipcRenderer.invoke("auth:login", { email, password }),
+  logout: () => ipcRenderer.invoke("auth:logout"),
+  getAuthStatus: () => ipcRenderer.invoke("auth:status"),
   getFacilityCode: () => ipcRenderer.invoke("facility:get"),
   setFacilityCode: (code) => ipcRenderer.invoke("facility:set", code),
   verifyDeveloperCode: (code) => ipcRenderer.invoke("facility:verifyDeveloperCode", code),
