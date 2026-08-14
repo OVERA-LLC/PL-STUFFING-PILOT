@@ -37,10 +37,10 @@ function startCloudSyncForFacility(code) {
   cloud.subscribeToChanges(
     (update) => {
       console.log("[Realtime] forwarding update to renderer, updated_at=", update.updated_at);
-      if (mainWindow) mainWindow.webContents.send("cloud:remote-update", update);
+      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("cloud:remote-update", update);
     },
     (status, err) => {
-      if (mainWindow) mainWindow.webContents.send("cloud:realtime-status", { status, err });
+      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("cloud:realtime-status", { status, err });
     },
     code
   );
@@ -88,6 +88,11 @@ function createWindow() {
   });
 
   mainWindow.loadFile(path.join(__dirname, "renderer", "index.html"));
+
+  // ウィンドウが閉じられたら参照を消す（閉じた後のRealtime通知で落ちるのを防ぐ）
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
 
   // 起動時に一度だけ、GitHubに新しいバージョンがないか確認する
   autoUpdater.checkForUpdatesAndNotify();
@@ -201,15 +206,15 @@ ipcMain.handle("cloud:pull", async () => {
 
 /* ===================== 自動アップデート関連の通知 ===================== */
 autoUpdater.on("update-available", () => {
-  if (mainWindow) mainWindow.webContents.send("update:status", "新しいバージョンが見つかりました。ダウンロード中です…");
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("update:status", "新しいバージョンが見つかりました。ダウンロード中です…");
 });
 
 autoUpdater.on("update-not-available", () => {
-  if (mainWindow) mainWindow.webContents.send("update:status", "最新バージョンです。");
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("update:status", "最新バージョンです。");
 });
 
 autoUpdater.on("download-progress", (progress) => {
-  if (mainWindow) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("update:status", `更新をダウンロード中… ${Math.round(progress.percent)}%`);
   }
 });
@@ -231,5 +236,5 @@ autoUpdater.on("update-downloaded", () => {
 });
 
 autoUpdater.on("error", (err) => {
-  if (mainWindow) mainWindow.webContents.send("update:status", "アップデート確認でエラーが発生しました: " + err.message);
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("update:status", "アップデート確認でエラーが発生しました: " + err.message);
 });
